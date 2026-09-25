@@ -1,0 +1,315 @@
+@import "tailwindcss";
+@import "@fontsource/playfair-display/400.css";
+@import "@fontsource/playfair-display/500.css";
+@import "@fontsource/playfair-display/600.css";
+@import "@fontsource/playfair-display/700.css";
+@import "@fontsource/cormorant-garamond/400-italic.css";
+@import "@fontsource/cormorant-garamond/600-italic.css";
+@import "@fontsource/poppins/300.css";
+@import "@fontsource/poppins/400.css";
+@import "@fontsource/poppins/500.css";
+@import "@fontsource/poppins/600.css";
+@import "@fontsource/poppins/700.css";
+
+@theme {
+  --font-serif: "Playfair Display", ui-serif, Georgia, serif;
+  --font-script: "Cormorant Garamond", ui-serif, Georgia, serif;
+  --font-sans: "Poppins", ui-sans-serif, system-ui, sans-serif;
+
+  --color-cream: #fffaf9;
+  --color-blush-50: #fff5f8;
+  --color-blush-100: #fce7ef;
+  --color-blush-200: #f8d0e0;
+  --color-blush-300: #f3aec8;
+  --color-brand-300: #f193b5;
+  --color-brand-400: #ec6d9c;
+  --color-brand-500: #e34c86;
+  --color-brand-600: #cf3573;
+  --color-brand-700: #ab275e;
+  --color-brand-800: #7d1c46;
+  --color-ink-900: #241318;
+  --color-ink-700: #4a2a34;
+  --color-ink-500: #7a5560;
+  --color-ink-300: #b79aa2;
+  --color-gold-500: #b8935a;
+
+  --shadow-luxe: 0 10px 40px -12px rgba(171, 39, 94, 0.18);
+  --shadow-luxe-sm: 0 4px 18px -6px rgba(171, 39, 94, 0.15);
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    background-color: var(--color-cream);
+    color: var(--color-ink-900);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3, h4 {
+    font-family: var(--font-serif);
+    letter-spacing: 0.01em;
+  }
+}
+
+@layer utilities {
+  .font-script {
+    font-family: var(--font-script);
+    font-style: italic;
+  }
+  .text-balance {
+    text-wrap: balance;
+  }
+  .shadow-luxe {
+    box-shadow: var(--shadow-luxe);
+  }
+  .shadow-luxe-sm {
+    box-shadow: var(--shadow-luxe-sm);
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-none {
+    scrollbar-width: none;
+  }
+}
+
+@keyframes marquee-rtl {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+@keyframes marquee-ltr {
+  from { transform: translateX(-50%); }
+  to { transform: translateX(0); }
+}
+.animate-marquee-rtl {
+  animation: marquee-rtl linear infinite;
+}
+.animate-marquee-ltr {
+  animation: marquee-ltr linear infinite;
+}
+.marquee-pause:hover .animate-marquee-rtl,
+.marquee-pause:hover .animate-marquee-ltr {
+  animation-play-state: paused;
+}
+
+@keyframes kenburns {
+  from { transform: scale(1); }
+  to { transform: scale(1.09); }
+}
+.animate-kenburns {
+  animation: kenburns 9s ease-in-out infinite alternate;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+/* "Buy Now" attention effect: a quick shiver every few seconds plus a soft pulsing glow. Pauses on hover. */
+@keyframes buyShiver {
+  0%, 68%, 100% { transform: translateX(0) rotate(0); }
+  71% { transform: translateX(-3px) rotate(-1.2deg); }
+  74% { transform: translateX(3px) rotate(1.2deg); }
+  77% { transform: translateX(-3px) rotate(-1deg); }
+  80% { transform: translateX(3px) rotate(1deg); }
+  83% { transform: translateX(-2px) rotate(-0.6deg); }
+  86% { transform: translateX(2px) rotate(0.6deg); }
+  89% { transform: translateX(0) rotate(0); }
+}
+@keyframes buyGlow {
+  0% { box-shadow: 0 0 0 0 rgba(207, 53, 115, 0.5); }
+  70%, 100% { box-shadow: 0 0 0 12px rgba(207, 53, 115, 0); }
+}
+.btn-shiver:not(:disabled) {
+  animation: buyShiver 3.2s ease-in-out infinite, buyGlow 1.8s ease-out infinite;
+}
+.btn-shiver:not(:disabled):hover {
+  animation: none;
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 12px 26px -8px rgba(171, 39, 94, 0.55);
+}
+@media (prefers-reduced-motion: reduce) {
+  .btn-shiver:not(:disabled) {
+    animation: none;
+  }
+}
+
+/* Stronger, always-noticeable version for the phone sticky bar: bigger shake, gentle pulse and a shine sweep. */
+@keyframes buyShake2 {
+  0%, 52%, 100% { transform: translateX(0) rotate(0) scale(1); }
+  55% { transform: translateX(-5px) rotate(-2deg) scale(1.06); }
+  59% { transform: translateX(5px) rotate(2deg) scale(1.06); }
+  63% { transform: translateX(-5px) rotate(-2deg) scale(1.06); }
+  67% { transform: translateX(5px) rotate(2deg) scale(1.06); }
+  71% { transform: translateX(-3px) rotate(-1deg) scale(1.04); }
+  75% { transform: translateX(3px) rotate(1deg) scale(1.04); }
+  80% { transform: translateX(0) rotate(0) scale(1.03); }
+  90% { transform: translateX(0) rotate(0) scale(1); }
+}
+@keyframes buyShine {
+  0%, 40% { left: -60%; }
+  75%, 100% { left: 140%; }
+}
+.btn-shiver-strong {
+  position: relative;
+  overflow: hidden;
+}
+.btn-shiver-strong::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -60%;
+  width: 40%;
+  height: 100%;
+  transform: skewX(-20deg);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.55), transparent);
+  pointer-events: none;
+}
+.btn-shiver-strong:not(:disabled) {
+  animation: buyShake2 2.4s ease-in-out infinite, buyGlow 1.6s ease-out infinite;
+}
+.btn-shiver-strong:not(:disabled)::after {
+  animation: buyShine 2.4s ease-in-out infinite;
+}
+.btn-shiver-strong:not(:disabled):active {
+  animation: none;
+  transform: scale(0.97);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn-shiver-strong:not(:disabled),
+  .btn-shiver-strong:not(:disabled)::after {
+    animation: none;
+  }
+}
+
+/* Two-handle price slider (Shop filters): both inputs sit on top of each other; only the thumbs take pointer events. */
+.range-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 100%;
+  height: 0;
+  margin: 0;
+  background: transparent;
+  pointer-events: none;
+}
+.range-thumb::-webkit-slider-runnable-track {
+  -webkit-appearance: none;
+  height: 0;
+  background: transparent;
+}
+.range-thumb::-moz-range-track {
+  height: 0;
+  background: transparent;
+}
+.range-thumb::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  pointer-events: auto;
+  width: 22px;
+  height: 22px;
+  margin-top: -11px;
+  border-radius: 9999px;
+  background: #fff;
+  border: 3px solid var(--color-brand-600);
+  box-shadow: 0 2px 8px rgba(171, 39, 94, 0.35);
+  cursor: grab;
+  transition: transform 0.15s ease;
+}
+.range-thumb::-moz-range-thumb {
+  pointer-events: auto;
+  width: 16px;
+  height: 16px;
+  border-radius: 9999px;
+  background: #fff;
+  border: 3px solid var(--color-brand-600);
+  box-shadow: 0 2px 8px rgba(171, 39, 94, 0.35);
+  cursor: grab;
+}
+.range-thumb:active::-webkit-slider-thumb {
+  cursor: grabbing;
+  transform: scale(1.15);
+}
+.range-thumb:focus-visible::-webkit-slider-thumb {
+  outline: 3px solid rgba(227, 76, 134, 0.35);
+}
+
+/* Lift the floating WhatsApp button above the phone sticky purchase bar. */
+.whatsapp-fab {
+  transition: bottom 0.3s ease, transform 0.2s ease;
+}
+@media (max-width: 767px) {
+  body.has-sticky-bar .whatsapp-fab {
+    bottom: 6rem;
+  }
+}
+
+@keyframes livePop {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes proofIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.blog-content {
+  color: var(--color-ink-700);
+  font-size: 0.9375rem;
+  line-height: 1.75;
+}
+.blog-content > * + * {
+  margin-top: 1.1em;
+}
+.blog-content h2 {
+  font-size: 1.5rem;
+  color: var(--color-ink-900);
+}
+.blog-content h3 {
+  font-size: 1.2rem;
+  color: var(--color-ink-900);
+}
+.blog-content a {
+  color: var(--color-brand-600);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.blog-content img {
+  border-radius: 1rem;
+  width: 100%;
+  object-fit: cover;
+}
+.blog-content ul,
+.blog-content ol {
+  padding-left: 1.4em;
+}
+.blog-content ul {
+  list-style: disc;
+}
+.blog-content ol {
+  list-style: decimal;
+}
+.blog-content blockquote {
+  border-left: 3px solid var(--color-brand-300);
+  padding-left: 1em;
+  font-style: italic;
+  color: var(--color-ink-500);
+}
+
+/* Cylinder: elliptical dome top, flat sides/base -- used for category portraits */
+.cylinder-shape {
+  border-radius: 50% 50% 8% 8% / 38% 38% 6% 6%;
+  position: relative;
+}
+.cylinder-shape::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(180deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0.12) 16%, rgba(255,255,255,0) 34%);
+  pointer-events: none;
+}

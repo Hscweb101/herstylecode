@@ -1,0 +1,60 @@
+import { useEffect, useState } from 'react'
+import { supabase } from '@/lib/supabase'
+import type { StoreSettingsMap } from '@/types'
+
+const DEFAULTS: StoreSettingsMap = {
+  store_info: {
+    name: 'HerStyleCode',
+    tagline: 'Your Style. Your Rules.',
+    support_email: 'herstylecodewebsite@gmail.com',
+    support_phone: '+91 90000 00000',
+    whatsapp_number: '+91 90000 00000',
+    address: '',
+  },
+  social_links: { instagram: '', facebook: '', pinterest: '' },
+  shipping: { free_shipping_threshold: 999, standard_shipping_fee: 59, cod_available: true, cod_fee: 0 },
+  tax: { gst_percentage: 0, prices_include_tax: true },
+  announcement_bar: {
+    enabled: true,
+    speed_seconds: 22,
+    items: ['Free shipping on prepaid orders above ₹999', 'Cash on Delivery available', 'Easy 7-day returns'],
+  },
+  analytics: { ga4_id: '', meta_pixel_id: '', gsc_verification: '' },
+}
+
+let cache: StoreSettingsMap | null = null
+
+export function useStoreSettings() {
+  const [settings, setSettings] = useState<StoreSettingsMap>(cache ?? DEFAULTS)
+  const [loading, setLoading] = useState(!cache)
+
+  useEffect(() => {
+    if (cache) return
+    let active = true
+    supabase
+      .from('store_settings')
+      .select('key, value')
+      .then(({ data }) => {
+        if (!active || !data) return
+        const merged = { ...DEFAULTS }
+        for (const row of data) {
+          ;(merged as Record<string, unknown>)[row.key] = {
+            ...(DEFAULTS as unknown as Record<string, object>)[row.key],
+            ...(row.value as object),
+          }
+        }
+        cache = merged
+        setSettings(merged)
+        setLoading(false)
+      })
+    return () => {
+      active = false
+    }
+  }, [])
+
+  return { settings, loading }
+}
+
+export function invalidateStoreSettingsCache() {
+  cache = null
+}
