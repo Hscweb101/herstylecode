@@ -36,14 +36,15 @@ export default function Blog() {
       {posts.length === 0 ? (
         <EmptyState title="No stories yet" description="We're working on our first post. Check back soon!" />
       ) : (
-        <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-2 sm:gap-6 md:grid-cols-3">
           {posts.map((post) => (
             <Link
               key={post.id}
               to={`/blog/${post.slug}`}
-              className="group overflow-hidden rounded-2xl bg-white shadow-luxe-sm transition-transform hover:-translate-y-1"
+              className="group flex overflow-hidden rounded-2xl bg-white shadow-luxe-sm transition-transform hover:-translate-y-1 sm:block"
             >
-              <div className="aspect-[4/3] w-full overflow-hidden bg-blush-100">
+              {/* phones: small thumbnail beside the text; sm+: full-width image on top */}
+              <div className="aspect-square w-28 shrink-0 overflow-hidden bg-blush-100 sm:aspect-[4/3] sm:w-full">
                 <img
                   src={post.cover_image_url ?? 'https://placehold.co/600x450/FCE7EF/D6336C?text=HerStyleCode'}
                   alt={post.title}
@@ -51,13 +52,13 @@ export default function Blog() {
                   loading="lazy"
                 />
               </div>
-              <div className="p-5">
+              <div className="min-w-0 flex-1 p-3 sm:p-5">
                 {post.tags.length > 0 && (
-                  <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-brand-600">{post.tags[0]}</p>
+                  <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-brand-600 sm:mb-1.5 sm:text-xs">{post.tags[0]}</p>
                 )}
-                <h3 className="font-serif text-lg leading-snug text-ink-900 group-hover:text-brand-600">{post.title}</h3>
-                {post.excerpt && <p className="mt-2 line-clamp-2 text-sm text-ink-500">{post.excerpt}</p>}
-                {post.published_at && <p className="mt-3 text-xs text-ink-300">{formatDate(post.published_at)}</p>}
+                <h3 className="line-clamp-2 font-serif text-base leading-snug text-ink-900 group-hover:text-brand-600 sm:text-lg">{post.title}</h3>
+                {post.excerpt && <p className="mt-1 line-clamp-2 text-[13px] text-ink-500 sm:mt-2 sm:text-sm">{post.excerpt}</p>}
+                {post.published_at && <p className="mt-2 text-xs text-ink-300 sm:mt-3">{formatDate(post.published_at)}</p>}
               </div>
             </Link>
           ))}

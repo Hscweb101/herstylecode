@@ -103,24 +103,29 @@ export function BlogTeaser() {
   if (hidden || posts.length === 0) return null
 
   return (
-    <section className="mx-auto mt-16 w-full max-w-7xl px-4 md:px-8">
-      <div className="rounded-3xl bg-blush-50 p-6 md:p-8">
-        <div className="mb-5 flex items-center justify-between">
-          <h3 className="font-serif text-xl text-ink-900 md:text-2xl">From the Blog</h3>
+    <section className="mx-auto mt-10 w-full max-w-7xl px-4 md:mt-16 md:px-8">
+      <div className="rounded-3xl bg-blush-50 py-4 md:p-8">
+        <div className="mb-3 flex items-center justify-between px-4 md:mb-5 md:px-0">
+          <h3 className="font-serif text-lg text-ink-900 md:text-2xl">From the Blog</h3>
           <Link to="/blog" className="inline-flex items-center gap-1 text-sm font-medium text-brand-600 hover:underline">
             View All <ArrowUpRight size={14} />
           </Link>
         </div>
-        <div className="grid gap-4 sm:grid-cols-3">
+        {/* phones: one short swipeable row instead of three stacked cards; sm+: regular grid */}
+        <div className="scrollbar-none flex scroll-px-4 snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-1 sm:grid sm:grid-cols-3 sm:gap-4 sm:overflow-visible sm:px-0 sm:pb-0">
           {posts.map((p) => (
-            <Link key={p.id} to={`/blog/${p.slug}`} className="group block overflow-hidden rounded-2xl bg-white shadow-luxe-sm">
-              <div className="aspect-[16/10] overflow-hidden bg-blush-100">
+            <Link
+              key={p.id}
+              to={`/blog/${p.slug}`}
+              className="group block w-[58%] shrink-0 snap-start overflow-hidden rounded-2xl bg-white shadow-luxe-sm sm:w-auto"
+            >
+              <div className="aspect-[16/9] overflow-hidden bg-blush-100 sm:aspect-[16/10]">
                 {p.cover_image_url && (
                   <img src={p.cover_image_url} alt={p.title} loading="lazy" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
                 )}
               </div>
-              <div className="p-3">
-                <p className="line-clamp-2 text-sm font-medium text-ink-900">{p.title}</p>
+              <div className="p-2.5 sm:p-3">
+                <p className="line-clamp-2 text-[13px] font-medium leading-snug text-ink-900 sm:text-sm">{p.title}</p>
               </div>
             </Link>
           ))}

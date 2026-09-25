@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   Truck, ShieldCheck, RotateCcw, Sparkles, ChevronLeft, ChevronRight, Gem, BadgeCheck, Package, Heart,
@@ -187,34 +187,17 @@ function OurStorySection() {
 
 function CategoryGrid({ categories }: { categories: Category[] }) {
   const topLevel = categories.filter((c) => !c.parent_id)
-  const scrollerRef = { current: null as HTMLDivElement | null }
+  const scrollerRef = useRef<HTMLDivElement>(null)
   const scrollBy = (dir: 1 | -1) => scrollerRef.current?.scrollBy({ left: dir * 360, behavior: 'smooth' })
   if (topLevel.length === 0) return null
   return (
     <section className="mx-auto max-w-7xl px-4 py-14 md:px-8">
-      <div className="mb-8 flex items-end justify-between">
-        <div>
-          <p className="font-script mb-1 text-lg text-brand-500">Curated For You</p>
-          <h2 className="text-2xl text-ink-900 md:text-3xl">Shop by Category</h2>
-        </div>
-        <div className="hidden items-center gap-2 md:flex">
-          <button
-            aria-label="Scroll categories left"
-            onClick={() => scrollBy(-1)}
-            className="rounded-full border border-blush-200 p-2 text-ink-700 hover:bg-blush-50"
-          >
-            <ChevronLeft size={18} />
-          </button>
-          <button
-            aria-label="Scroll categories right"
-            onClick={() => scrollBy(1)}
-            className="rounded-full border border-blush-200 p-2 text-ink-700 hover:bg-blush-50"
-          >
-            <ChevronRight size={18} />
-          </button>
-        </div>
+      <div className="mb-8">
+        <p className="font-script mb-1 text-lg text-brand-500">Curated For You</p>
+        <h2 className="text-2xl text-ink-900 md:text-3xl">Shop by Category</h2>
       </div>
-      <div ref={(el) => { scrollerRef.current = el }} className="scrollbar-none -mx-4 flex snap-x snap-mandatory gap-5 overflow-x-auto px-4 pb-2 md:gap-6">
+      {/* scroll-px keeps the first card clear of the screen edge when it snaps into place */}
+      <div ref={scrollerRef} className="scrollbar-none -mx-4 flex scroll-px-4 snap-x snap-mandatory gap-5 overflow-x-auto px-4 pb-2 md:gap-6">
         {topLevel.map((c) => (
           <Link
             key={c.id}
@@ -256,6 +239,22 @@ function CategoryGrid({ categories }: { categories: Category[] }) {
             <ChevronRight size={16} />
           </div>
         </Link>
+      </div>
+      <div className="mt-4 flex items-center justify-end gap-2">
+        <button
+          aria-label="Scroll categories left"
+          onClick={() => scrollBy(-1)}
+          className="rounded-full border border-blush-200 bg-white p-2 text-ink-700 transition-colors hover:bg-blush-50 active:scale-95"
+        >
+          <ChevronLeft size={18} />
+        </button>
+        <button
+          aria-label="Scroll categories right"
+          onClick={() => scrollBy(1)}
+          className="rounded-full border border-blush-200 bg-white p-2 text-ink-700 transition-colors hover:bg-blush-50 active:scale-95"
+        >
+          <ChevronRight size={18} />
+        </button>
       </div>
     </section>
   )
