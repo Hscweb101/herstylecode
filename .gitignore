@@ -31,3 +31,6 @@ supabase/.temp
 /*.png
 /*.jpg
 /*.jpeg
+
+# Temporary files used while moving the database (never commit)
+/.migration-files/
