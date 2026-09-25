@@ -1,0 +1,23 @@
+# Backup schedule for the database keep-alive ping (the primary schedule is the Vercel Cron in vercel.json).
+# Calls the public /api/keepalive endpoint of the deployed site. There are NO secrets in this file:
+# the site address comes from a repository *variable* (Settings > Secrets and variables > Actions > Variables > SITE_URL).
+name: Keep Supabase awake
+
+on:
+  schedule:
+    - cron: '0 6 */4 * *' # every 4 days
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call the keep-alive endpoint
+        env:
+          SITE_URL: ${{ vars.SITE_URL }}
+        run: |
+          if [ -z "$SITE_URL" ]; then
+            echo "SITE_URL variable is not set; nothing to ping."
+            exit 0
+          fi
+          curl --fail --silent --show-error --max-time 30 "$SITE_URL/api/keepalive"
