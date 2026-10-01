@@ -9,7 +9,7 @@ import { FullPageSpinner } from '@/components/ui/Misc'
 import type { StoreSettingsMap } from '@/types'
 
 const DEFAULTS: StoreSettingsMap = {
-  store_info: { name: 'HerStyleCode', tagline: 'Your Style. Your Rules.', support_email: '', support_phone: '', whatsapp_number: '', address: '' },
+  store_info: { name: 'HerStyleCode', tagline: 'Your Style. Your Rules.', support_email: 'herstylecode.in@gmail.com', support_phone: '', whatsapp_number: '', address: '' },
   social_links: DEFAULT_SOCIAL_LINKS,
   shipping: { free_shipping_threshold: 999, standard_shipping_fee: 59, cod_available: true, cod_fee: 0 },
   tax: { gst_percentage: 0, prices_include_tax: true },

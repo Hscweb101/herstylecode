@@ -13,7 +13,7 @@ const DEFAULTS: StoreSettingsMap = {
   store_info: {
     name: 'HerStyleCode',
     tagline: 'Your Style. Your Rules.',
-    support_email: 'herstylecodewebsite@gmail.com',
+    support_email: 'herstylecode.in@gmail.com',
     support_phone: '+91 90000 00000',
     whatsapp_number: '+91 90000 00000',
     address: '',
