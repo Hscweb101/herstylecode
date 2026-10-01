@@ -55,8 +55,8 @@ export function ReviewerAvatar({
  * "N people are viewing this right now".
  * Real number of people on this product page, via Supabase Realtime presence: every open
  * product page joins a per-product channel and the count is the number of live connections.
- * When fewer than 2 real viewers are present, local dev preview shows a dummy number instead
- * (see DUMMY PLACEHOLDERS below); a production build shows nothing.
+ * When fewer than 2 real viewers are present, a dummy number is shown instead
+ * (see DUMMY PLACEHOLDERS below).
  */
 export function LiveViewerCount({ productId }: { productId: string }) {
   const [count, setCount] = useState(0)
@@ -84,7 +84,6 @@ export function LiveViewerCount({ productId }: { productId: string }) {
   return (
     <div
       className="inline-flex items-center gap-2.5 rounded-full border border-brand-300/40 bg-gradient-to-r from-blush-50 via-white to-blush-50 py-1.5 pl-2 pr-4 text-[13px] text-ink-700 shadow-luxe-sm"
-      title={isReal ? undefined : 'Dummy placeholder - visible in local dev preview only'}
     >
       <span className="flex items-center gap-1.5 rounded-full bg-brand-500 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.14em] text-white">
         <span className="relative flex h-1.5 w-1.5">
@@ -105,12 +104,11 @@ export function LiveViewerCount({ productId }: { productId: string }) {
 }
 
 // ---------------------------------------------------------------------------
-// DUMMY PLACEHOLDERS - local dev preview only.
-// These exist so the layout can be designed before real data exists. They render only when
-// running `npm run dev` (import.meta.env.DEV) and are never included in what customers see
-// on a production build. Replace with real data (orders / reviews) when available.
+// DUMMY PLACEHOLDERS - shown in production too, on purpose (owner's decision) until real data exists.
+// The viewer count and the "purchased" pill are simulated. Replace with real data (orders / live
+// presence) when available, or set SHOW_DUMMY_PLACEHOLDERS to false to hide them everywhere.
 // ---------------------------------------------------------------------------
-const DEV_PLACEHOLDERS = import.meta.env.DEV
+const DEV_PLACEHOLDERS = true // SHOW_DUMMY_PLACEHOLDERS
 
 function seededRandom(seed: string): () => number {
   let h = 1779033703 ^ seed.length
@@ -216,8 +214,7 @@ function useCountUp(target: number, durationMs = 1100) {
 
 /**
  * "Anjali Verma (verified) and 112 others purchased" pill with overlapping profile photos.
- * The people rotate every 2-3 seconds. Dummy data, local dev preview only; hidden on production
- * builds. For real data, render the same markup with real customer names + photos
+ * The people rotate every 2-3 seconds. Dummy data (see DUMMY PLACEHOLDERS below). For real data, render the same markup with real customer names + photos
  * (<ReviewerAvatar name imageUrl />) and a real count.
  */
 export function PurchaseSocialProof({ productId }: { productId: string }) {
@@ -244,7 +241,6 @@ export function PurchaseSocialProof({ productId }: { productId: string }) {
   return (
     <div
       className="flex w-fit max-w-full animate-[proofIn_.5s_ease-out] items-center gap-3 rounded-full border border-emerald-100 bg-gradient-to-r from-white via-white to-emerald-50/70 py-1.5 pl-1.5 pr-4 text-xs text-ink-500 shadow-[0_2px_14px_-4px_rgba(16,120,80,0.18)] sm:pr-5 sm:text-[13px]"
-      title="Dummy placeholder - visible in local dev preview only"
     >
       {/* Overlap is per-avatar (-ml on all but the first) so nothing depends on sibling order or hidden items. */}
       <div className="flex shrink-0 items-center">
