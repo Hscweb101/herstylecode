@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import logo from '@/assets/logo.png'
 import { useStoreSettings } from '@/hooks/useStoreSettings'
 import { supabase } from '@/lib/supabase'
-import type { BlogPost } from '@/types'
+import type { BlogPost, FooterLink } from '@/types'
 
 function InstagramIcon() {
   return (
@@ -43,28 +43,6 @@ function PinterestIcon() {
   )
 }
 
-const shopLinks = [
-  { label: 'Shop All', to: '/shop' },
-  { label: 'New Arrivals', to: '/collections/new-arrivals' },
-  { label: 'Best Sellers', to: '/collections/best-sellers' },
-  { label: 'Sale', to: '/collections/sale' },
-]
-
-const supportLinks = [
-  { label: 'Contact Us', to: '/contact' },
-  { label: 'FAQ', to: '/faq' },
-  { label: 'Track Order', to: '/track-order' },
-  { label: 'About Us', to: '/page/about-us' },
-]
-
-const policyLinks = [
-  { label: 'Shipping Policy', to: '/page/shipping-policy' },
-  { label: 'Returns & Refund', to: '/page/returns-refund-policy' },
-  { label: 'Privacy Policy', to: '/page/privacy-policy' },
-  { label: 'Terms & Conditions', to: '/page/terms-conditions' },
-  { label: 'Cancellation Policy', to: '/page/cancellation-policy' },
-]
-
 const paymentLogos = [
   { file: 'upi.svg', name: 'UPI' },
   { file: 'googlepay.svg', name: 'Google Pay' },
@@ -75,16 +53,24 @@ const paymentLogos = [
   { file: 'rupay.svg', name: 'RuPay' },
 ]
 
-function LinkGroup({ title, links }: { title: string; links: { label: string; to: string }[] }) {
+function LinkGroup({ title, links }: { title: string; links: FooterLink[] }) {
+  links = links.filter((l) => l.label && l.to)
+  if (links.length === 0) return null
   return (
     <div>
       <h4 className="mb-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-ink-900">{title}</h4>
       <ul className="space-y-1.5">
         {links.map((l) => (
-          <li key={l.to}>
-            <Link to={l.to} className="text-[13px] text-ink-500 transition-colors hover:text-brand-600">
-              {l.label}
-            </Link>
+          <li key={`${l.label}-${l.to}`}>
+            {/^https?:\/\//.test(l.to) ? (
+              <a href={l.to} target="_blank" rel="noreferrer" className="text-[13px] text-ink-500 transition-colors hover:text-brand-600">
+                {l.label}
+              </a>
+            ) : (
+              <Link to={l.to} className="text-[13px] text-ink-500 transition-colors hover:text-brand-600">
+                {l.label}
+              </Link>
+            )}
           </li>
         ))}
       </ul>
@@ -186,9 +172,9 @@ export function Footer() {
             )}
           </div>
 
-          <LinkGroup title="Shop" links={shopLinks} />
-          <LinkGroup title="Support" links={supportLinks} />
-          <LinkGroup title="Policies" links={policyLinks} />
+          <LinkGroup title="Shop" links={settings.footer_links.shop} />
+          <LinkGroup title="Support" links={settings.footer_links.support} />
+          <LinkGroup title="Policies" links={settings.footer_links.policies} />
 
           {/* contact */}
           <div className="col-span-2 md:col-span-1">
