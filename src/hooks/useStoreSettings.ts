@@ -48,9 +48,9 @@ export function useStoreSettings() {
             ...(row.value as object),
           }
         }
-        // Official brand links always win over whatever is stored; other links must be real URLs.
+        // Admin-saved links win; the defaults only fill in when a link is empty or not a real URL.
         const links = merged.social_links as Record<string, string>
-        for (const [k, v] of Object.entries(DEFAULTS.social_links)) if (v || !/^https?:\/\//.test(links[k] ?? '')) links[k] = v
+        for (const [k, v] of Object.entries(DEFAULTS.social_links)) if (!/^https?:\/\//.test(links[k] ?? '')) links[k] = v
         cache = merged
         setSettings(merged)
         setLoading(false)
