@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import { supabase } from '@/lib/supabase'
-import { invalidateStoreSettingsCache } from '@/hooks/useStoreSettings'
+import { invalidateStoreSettingsCache, DEFAULT_SOCIAL_LINKS } from '@/hooks/useStoreSettings'
 import { PageHeader, Card } from '@/components/admin/AdminUI'
 import { Input, Textarea, FieldLabel } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
@@ -10,7 +10,7 @@ import type { StoreSettingsMap } from '@/types'
 
 const DEFAULTS: StoreSettingsMap = {
   store_info: { name: 'HerStyleCode', tagline: 'Your Style. Your Rules.', support_email: '', support_phone: '', whatsapp_number: '', address: '' },
-  social_links: { instagram: '', facebook: '', pinterest: '', youtube: '' },
+  social_links: DEFAULT_SOCIAL_LINKS,
   shipping: { free_shipping_threshold: 999, standard_shipping_fee: 59, cod_available: true, cod_fee: 0 },
   tax: { gst_percentage: 0, prices_include_tax: true },
   announcement_bar: {
@@ -32,6 +32,9 @@ export default function SettingsAdmin() {
       for (const row of data ?? []) {
         ;(merged as Record<string, unknown>)[row.key] = { ...(DEFAULTS as unknown as Record<string, object>)[row.key], ...(row.value as object) }
       }
+      // Show what the storefront actually uses: junk (non-URL) saved values are replaced by the real defaults.
+      const links = merged.social_links as Record<string, string>
+      for (const [k, v] of Object.entries(DEFAULT_SOCIAL_LINKS)) if (v && !/^https?:\/\//.test(links[k])) links[k] = v
       setSettings(merged)
       setLoading(false)
     })

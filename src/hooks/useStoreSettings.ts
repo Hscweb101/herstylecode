@@ -2,6 +2,13 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import type { StoreSettingsMap } from '@/types'
 
+export const DEFAULT_SOCIAL_LINKS = {
+  instagram: 'https://www.instagram.com/herstylecode.in',
+  facebook: '',
+  pinterest: 'https://pin.it/6RSayP9fW',
+  youtube: 'https://www.youtube.com/@HerStyleCode',
+}
+
 const DEFAULTS: StoreSettingsMap = {
   store_info: {
     name: 'HerStyleCode',
@@ -11,12 +18,7 @@ const DEFAULTS: StoreSettingsMap = {
     whatsapp_number: '+91 90000 00000',
     address: '',
   },
-  social_links: {
-    instagram: 'https://www.instagram.com/herstylecode.in',
-    facebook: '',
-    pinterest: 'https://pin.it/6RSayP9fW',
-    youtube: 'https://www.youtube.com/@HerStyleCode',
-  },
+  social_links: DEFAULT_SOCIAL_LINKS,
   shipping: { free_shipping_threshold: 999, standard_shipping_fee: 59, cod_available: true, cod_fee: 0 },
   tax: { gst_percentage: 0, prices_include_tax: true },
   announcement_bar: {
