@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import { supabase } from '@/lib/supabase'
-import { invalidateStoreSettingsCache, DEFAULT_FOOTER_LINKS } from '@/hooks/useStoreSettings'
+import { invalidateStoreSettingsCache } from '@/hooks/useStoreSettings'
 import { PageHeader, Card } from '@/components/admin/AdminUI'
 import { Input, Textarea, FieldLabel } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { FullPageSpinner } from '@/components/ui/Misc'
-import type { StoreSettingsMap, FooterLink } from '@/types'
+import type { StoreSettingsMap } from '@/types'
 
 const DEFAULTS: StoreSettingsMap = {
   store_info: { name: 'HerStyleCode', tagline: 'Your Style. Your Rules.', support_email: '', support_phone: '', whatsapp_number: '', address: '' },
@@ -19,41 +19,6 @@ const DEFAULTS: StoreSettingsMap = {
     items: ['Free shipping on prepaid orders above ₹999', 'Cash on Delivery available', 'Easy 7-day returns'],
   },
   analytics: { ga4_id: '', meta_pixel_id: '', gsc_verification: '' },
-  footer_links: DEFAULT_FOOTER_LINKS,
-}
-
-const FOOTER_GROUPS: { key: keyof StoreSettingsMap['footer_links']; title: string }[] = [
-  { key: 'shop', title: 'Shop column' },
-  { key: 'support', title: 'Support column' },
-  { key: 'policies', title: 'Policies column' },
-]
-
-function FooterLinksEditor({ title, links, onChange }: { title: string; links: FooterLink[]; onChange: (links: FooterLink[]) => void }) {
-  const patch = (i: number, p: Partial<FooterLink>) => onChange(links.map((l, idx) => (idx === i ? { ...l, ...p } : l)))
-  const move = (i: number, dir: -1 | 1) => {
-    const j = i + dir
-    if (j < 0 || j >= links.length) return
-    const next = [...links]
-    ;[next[i], next[j]] = [next[j], next[i]]
-    onChange(next)
-  }
-  return (
-    <div>
-      <FieldLabel>{title}</FieldLabel>
-      <div className="space-y-2">
-        {links.map((l, i) => (
-          <div key={i} className="flex gap-2">
-            <Input placeholder="Label" value={l.label} onChange={(e) => patch(i, { label: e.target.value })} />
-            <Input placeholder="/page/slug or https://…" value={l.to} onChange={(e) => patch(i, { to: e.target.value })} />
-            <button type="button" onClick={() => move(i, -1)} disabled={i === 0} title="Move up" className="rounded-xl px-2 text-ink-500 hover:bg-blush-50 disabled:opacity-30">↑</button>
-            <button type="button" onClick={() => move(i, 1)} disabled={i === links.length - 1} title="Move down" className="rounded-xl px-2 text-ink-500 hover:bg-blush-50 disabled:opacity-30">↓</button>
-            <button type="button" onClick={() => onChange(links.filter((_, idx) => idx !== i))} className="rounded-xl px-3 text-sm text-red-600 hover:bg-red-50">Remove</button>
-          </div>
-        ))}
-      </div>
-      <Button type="button" variant="ghost" className="mt-2" onClick={() => onChange([...links, { label: '', to: '' }])}>+ Add Link</Button>
-    </div>
-  )
 }
 
 export default function SettingsAdmin() {
@@ -112,21 +77,6 @@ export default function SettingsAdmin() {
             <Input label="Facebook URL" value={settings.social_links.facebook} onChange={(e) => update('social_links', { facebook: e.target.value })} />
             <Input label="Pinterest URL" value={settings.social_links.pinterest} onChange={(e) => update('social_links', { pinterest: e.target.value })} />
             <Input label="YouTube URL" value={settings.social_links.youtube} onChange={(e) => update('social_links', { youtube: e.target.value })} />
-          </div>
-        </Card>
-
-        <Card className="lg:col-span-2">
-          <h3 className="mb-1 font-serif text-lg">Footer Links</h3>
-          <p className="mb-4 text-xs text-ink-500">Links shown in the footer columns. Use a site path like /shop or /page/privacy-policy, or a full https:// URL for an external site. Rows with an empty label or link are ignored.</p>
-          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-            {FOOTER_GROUPS.map((g) => (
-              <FooterLinksEditor
-                key={g.key}
-                title={g.title}
-                links={settings.footer_links[g.key]}
-                onChange={(links) => update('footer_links', { [g.key]: links })}
-              />
-            ))}
           </div>
         </Card>
 

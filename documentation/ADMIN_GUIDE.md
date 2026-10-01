@@ -30,7 +30,7 @@ There's no dedicated "create admin" screen yet (it's a P2 nice-to-have, not requ
 - **Banners** — upload the homepage hero image, an offer/sale banner, or category banners; set the link it points to and the button text.
 - **Pages** — edit the content of every legal/info page (About, Shipping Policy, Returns & Refund, Cancellation, Privacy, Terms, Jewellery Care Guide, Contact) as HTML, and manage the FAQ list.
 - **Inventory** — see current stock for every product, apply manual +/- adjustments (e.g. after a physical stock count), and view a running history of every stock change (order placed, cancelled, manual adjustment).
-- **Settings** — store name/tagline/contact details, social links, editable footer link columns (Shop / Support / Policies: label, path or https:// URL, reorder with arrows, add/remove), free-shipping threshold & standard shipping fee, Cash-on-Delivery toggle, GST percentage, homepage announcement bar text, and Analytics IDs (GA4, Meta Pixel, Search Console verification — see note below).
+- **Settings** — store name/tagline/contact details, social links, free-shipping threshold & standard shipping fee, Cash-on-Delivery toggle, GST percentage, homepage announcement bar text, and Analytics IDs (GA4, Meta Pixel, Search Console verification — see note below).
 
 ## Analytics setup (GA4 / Meta Pixel)
 

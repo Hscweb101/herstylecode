@@ -2,28 +2,6 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import type { StoreSettingsMap } from '@/types'
 
-export const DEFAULT_FOOTER_LINKS: StoreSettingsMap['footer_links'] = {
-  shop: [
-    { label: 'Shop All', to: '/shop' },
-    { label: 'New Arrivals', to: '/collections/new-arrivals' },
-    { label: 'Best Sellers', to: '/collections/best-sellers' },
-    { label: 'Sale', to: '/collections/sale' },
-  ],
-  support: [
-    { label: 'Contact Us', to: '/contact' },
-    { label: 'FAQ', to: '/faq' },
-    { label: 'Track Order', to: '/track-order' },
-    { label: 'About Us', to: '/page/about-us' },
-  ],
-  policies: [
-    { label: 'Shipping Policy', to: '/page/shipping-policy' },
-    { label: 'Returns & Refund', to: '/page/returns-refund-policy' },
-    { label: 'Privacy Policy', to: '/page/privacy-policy' },
-    { label: 'Terms & Conditions', to: '/page/terms-conditions' },
-    { label: 'Cancellation Policy', to: '/page/cancellation-policy' },
-  ],
-}
-
 const DEFAULTS: StoreSettingsMap = {
   store_info: {
     name: 'HerStyleCode',
@@ -47,7 +25,6 @@ const DEFAULTS: StoreSettingsMap = {
     items: ['Free shipping on prepaid orders above ₹999', 'Cash on Delivery available', 'Easy 7-day returns'],
   },
   analytics: { ga4_id: '', meta_pixel_id: '', gsc_verification: '' },
-  footer_links: DEFAULT_FOOTER_LINKS,
 }
 
 let cache: StoreSettingsMap | null = null
