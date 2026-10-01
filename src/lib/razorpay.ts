@@ -28,6 +28,7 @@ export interface RazorpayCheckoutOptions {
   theme?: { color?: string }
   handler: (response: { razorpay_payment_id: string; razorpay_order_id: string; razorpay_signature: string }) => void
   modal?: { ondismiss?: () => void }
+  config?: Record<string, unknown>
 }
 
 declare global {
@@ -36,8 +37,25 @@ declare global {
   }
 }
 
+/**
+ * Show every payment method (UPI, Cards, Net Banking, Wallets) up front instead of
+ * Razorpay's collapsed "Google Pay + More" view.
+ */
+const PAYMENT_METHOD_CONFIG = {
+  display: {
+    blocks: {
+      upi: { name: 'Pay via UPI', instruments: [{ method: 'upi' }] },
+      card: { name: 'Cards', instruments: [{ method: 'card' }] },
+      netbanking: { name: 'Net Banking', instruments: [{ method: 'netbanking' }] },
+      wallet: { name: 'Wallets', instruments: [{ method: 'wallet' }] },
+    },
+    sequence: ['block.upi', 'block.card', 'block.netbanking', 'block.wallet'],
+    preferences: { show_default_blocks: false },
+  },
+}
+
 export async function openRazorpayCheckout(options: RazorpayCheckoutOptions) {
   await loadRazorpayScript()
-  const rzp = new window.Razorpay(options)
+  const rzp = new window.Razorpay({ ...options, config: options.config ?? PAYMENT_METHOD_CONFIG })
   rzp.open()
 }
