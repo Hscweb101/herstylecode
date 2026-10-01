@@ -8,7 +8,7 @@ import type { BlogPost } from '@/types'
 
 function InstagramIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
       <rect x="2" y="2" width="20" height="20" rx="5" />
       <circle cx="12" cy="12" r="4" />
       <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none" />
@@ -18,15 +18,24 @@ function InstagramIcon() {
 
 function FacebookIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
       <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />
+    </svg>
+  )
+}
+
+function YoutubeIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M22.5 7.2a2.5 2.5 0 0 0-1.8-1.8C19.1 5 12 5 12 5s-7.1 0-8.7.4A2.5 2.5 0 0 0 1.5 7.2C1 8.8 1 12 1 12s0 3.2.5 4.8a2.5 2.5 0 0 0 1.8 1.8C4.9 19 12 19 12 19s7.1 0 8.7-.4a2.5 2.5 0 0 0 1.8-1.8c.5-1.6.5-4.8.5-4.8s0-3.2-.5-4.8z" />
+      <path d="m10 15 5-3-5-3z" fill="currentColor" />
     </svg>
   )
 }
 
 function PinterestIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
       <circle cx="12" cy="12" r="10" />
       <path d="M8.5 17c1-3 1.6-5.3 2.2-7.7a2.7 2.7 0 0 1 5.2.9c0 2-1.3 4-3.2 4-1 0-1.7-.5-2-1.2" />
       <path d="M11 9.3c-.3 1-1.1 4.3-1.4 5.6" />
@@ -143,7 +152,8 @@ export function Footer() {
     { href: settings.social_links.instagram, label: 'Instagram', icon: <InstagramIcon /> },
     { href: settings.social_links.facebook, label: 'Facebook', icon: <FacebookIcon /> },
     { href: settings.social_links.pinterest, label: 'Pinterest', icon: <PinterestIcon /> },
-    { href: whatsapp ? `https://wa.me/${whatsapp}` : '', label: 'WhatsApp', icon: <MessageCircle size={16} /> },
+    { href: settings.social_links.youtube, label: 'YouTube', icon: <YoutubeIcon /> },
+    { href: whatsapp ? `https://wa.me/${whatsapp}` : '', label: 'WhatsApp', icon: <MessageCircle size={20} /> },
   ].filter((s) => s.href)
 
   return (
@@ -155,11 +165,11 @@ export function Footer() {
           {/* brand */}
           <div className="col-span-2 md:col-span-1">
             <Link to="/" className="inline-block">
-              <img src={logo} alt="HerStyleCode" className="h-14 w-auto object-contain" />
+              <img src={logo} alt="HerStyleCode" className="h-20 w-auto object-contain" />
             </Link>
             <p className="mt-2 max-w-[16rem] text-xs leading-relaxed text-ink-500">{settings.store_info.tagline}</p>
             {socials.length > 0 && (
-              <div className="mt-3 flex gap-2">
+              <div className="mt-3 flex gap-2.5">
                 {socials.map((s) => (
                   <a
                     key={s.label}
@@ -167,7 +177,7 @@ export function Footer() {
                     target="_blank"
                     rel="noreferrer"
                     aria-label={s.label}
-                    className="flex h-8 w-8 items-center justify-center rounded-full border border-blush-200 bg-white text-ink-700 transition-colors hover:border-brand-500 hover:bg-brand-600 hover:text-white"
+                    className="flex h-10 w-10 items-center justify-center rounded-full border border-blush-200 bg-white text-ink-700 transition-colors hover:border-brand-500 hover:bg-brand-600 hover:text-white"
                   >
                     {s.icon}
                   </a>

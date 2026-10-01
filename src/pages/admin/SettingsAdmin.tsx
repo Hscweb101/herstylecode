@@ -10,7 +10,7 @@ import type { StoreSettingsMap } from '@/types'
 
 const DEFAULTS: StoreSettingsMap = {
   store_info: { name: 'HerStyleCode', tagline: 'Your Style. Your Rules.', support_email: '', support_phone: '', whatsapp_number: '', address: '' },
-  social_links: { instagram: '', facebook: '', pinterest: '' },
+  social_links: { instagram: '', facebook: '', pinterest: '', youtube: '' },
   shipping: { free_shipping_threshold: 999, standard_shipping_fee: 59, cod_available: true, cod_fee: 0 },
   tax: { gst_percentage: 0, prices_include_tax: true },
   announcement_bar: {
@@ -76,6 +76,7 @@ export default function SettingsAdmin() {
             <Input label="Instagram URL" value={settings.social_links.instagram} onChange={(e) => update('social_links', { instagram: e.target.value })} />
             <Input label="Facebook URL" value={settings.social_links.facebook} onChange={(e) => update('social_links', { facebook: e.target.value })} />
             <Input label="Pinterest URL" value={settings.social_links.pinterest} onChange={(e) => update('social_links', { pinterest: e.target.value })} />
+            <Input label="YouTube URL" value={settings.social_links.youtube} onChange={(e) => update('social_links', { youtube: e.target.value })} />
           </div>
         </Card>
 

@@ -11,7 +11,12 @@ const DEFAULTS: StoreSettingsMap = {
     whatsapp_number: '+91 90000 00000',
     address: '',
   },
-  social_links: { instagram: '', facebook: '', pinterest: '' },
+  social_links: {
+    instagram: 'https://www.instagram.com/herstylecode.in',
+    facebook: '',
+    pinterest: 'https://pin.it/6RSayP9fW',
+    youtube: 'https://www.youtube.com/@HerStyleCode',
+  },
   shipping: { free_shipping_threshold: 999, standard_shipping_fee: 59, cod_available: true, cod_fee: 0 },
   tax: { gst_percentage: 0, prices_include_tax: true },
   announcement_bar: {
@@ -43,6 +48,9 @@ export function useStoreSettings() {
             ...(row.value as object),
           }
         }
+        // Official brand links always win over whatever is stored; other links must be real URLs.
+        const links = merged.social_links as Record<string, string>
+        for (const [k, v] of Object.entries(DEFAULTS.social_links)) if (v || !/^https?:\/\//.test(links[k] ?? '')) links[k] = v
         cache = merged
         setSettings(merged)
         setLoading(false)

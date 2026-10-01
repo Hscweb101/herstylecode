@@ -24,6 +24,7 @@ import Contact from '@/pages/storefront/Contact'
 import Blog from '@/pages/storefront/Blog'
 import BlogPost from '@/pages/storefront/BlogPost'
 import Login from '@/pages/auth/Login'
+import ResetPassword from '@/pages/auth/ResetPassword'
 
 // Admin panel is code-split into its own bundle so shoppers never pay for it.
 const AdminLayout = lazy(() => import('@/layouts/AdminLayout'))
@@ -89,6 +90,7 @@ export default function App() {
           <Route path="/wishlist" element={<Wishlist />} />
           <Route path="/account/*" element={<Account />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/faq" element={<Faq />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/blog" element={<Blog />} />

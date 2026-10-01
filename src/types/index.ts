@@ -336,7 +336,7 @@ export interface StoreSettingsMap {
     whatsapp_number: string
     address: string
   }
-  social_links: { instagram: string; facebook: string; pinterest: string }
+  social_links: { instagram: string; facebook: string; pinterest: string; youtube: string }
   shipping: {
     free_shipping_threshold: number
     standard_shipping_fee: number
