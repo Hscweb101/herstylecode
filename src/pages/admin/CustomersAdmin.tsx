@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
+import { Trash2 } from 'lucide-react'
+import toast from 'react-hot-toast'
 import { supabase } from '@/lib/supabase'
 import { formatDate } from '@/lib/utils'
-import { PageHeader, Table, Th, Td } from '@/components/admin/AdminUI'
+import { PageHeader, Table, Th, Td, IconButton, ConfirmModal } from '@/components/admin/AdminUI'
 import { Input } from '@/components/ui/Input'
 import { FullPageSpinner } from '@/components/ui/Misc'
 
@@ -18,6 +20,7 @@ export default function CustomersAdmin() {
   const [customers, setCustomers] = useState<CustomerRow[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
+  const [deleteTarget, setDeleteTarget] = useState<CustomerRow | null>(null)
 
   useEffect(() => {
     async function load() {
@@ -36,6 +39,17 @@ export default function CustomersAdmin() {
     load()
   }, [])
 
+  const handleDelete = async () => {
+    if (!deleteTarget) return
+    const { error } = await supabase.rpc('admin_delete_customer', { target: deleteTarget.id })
+    if (error) toast.error('Could not delete customer')
+    else {
+      toast.success('Customer deleted')
+      setCustomers((prev) => prev.filter((c) => c.id !== deleteTarget.id))
+    }
+    setDeleteTarget(null)
+  }
+
   const filtered = customers.filter((c) => !search || c.full_name?.toLowerCase().includes(search.toLowerCase()) || c.phone?.includes(search))
 
   if (loading) return <FullPageSpinner />
@@ -45,7 +59,7 @@ export default function CustomersAdmin() {
       <PageHeader title="Customers" description={`${customers.length} registered customers`} />
       <Input placeholder="Search by name or phone..." value={search} onChange={(e) => setSearch(e.target.value)} className="mb-4 max-w-sm" />
       <Table>
-        <thead><tr><Th>Name</Th><Th>Phone</Th><Th>Orders</Th><Th>Joined</Th></tr></thead>
+        <thead><tr><Th>Name</Th><Th>Phone</Th><Th>Orders</Th><Th>Joined</Th><Th>Actions</Th></tr></thead>
         <tbody>
           {filtered.map((c) => (
             <tr key={c.id}>
@@ -53,10 +67,12 @@ export default function CustomersAdmin() {
               <Td>{c.phone ?? '—'}</Td>
               <Td>{c.order_count}</Td>
               <Td>{formatDate(c.created_at)}</Td>
+              <Td><IconButton title="Delete" onClick={() => setDeleteTarget(c)}><Trash2 size={15} /></IconButton></Td>
             </tr>
           ))}
         </tbody>
       </Table>
+      <ConfirmModal open={!!deleteTarget} title="Delete Customer" description={`Delete ${deleteTarget?.full_name ?? 'this customer'}? Their account, addresses, cart and wishlist are removed; past orders are kept.`} onConfirm={handleDelete} onCancel={() => setDeleteTarget(null)} />
     </div>
   )
 }

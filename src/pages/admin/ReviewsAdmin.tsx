@@ -3,7 +3,7 @@ import toast from 'react-hot-toast'
 import { Check, Trash2, Plus, Star, X, Upload } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { formatDate } from '@/lib/utils'
-import { PageHeader, Table, Th, Td, IconButton, Card } from '@/components/admin/AdminUI'
+import { PageHeader, Table, Th, Td, IconButton, Card, ConfirmModal } from '@/components/admin/AdminUI'
 import { Badge, StarRating, FullPageSpinner } from '@/components/ui/Misc'
 import { Select, Input, Textarea } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
@@ -91,9 +91,12 @@ export default function ReviewsAdmin() {
     load()
   }
 
-  const handleDelete = async (id: string) => {
-    await supabase.from('reviews').delete().eq('id', id)
+  const [deleteId, setDeleteId] = useState<string | null>(null)
+  const handleDelete = async () => {
+    if (!deleteId) return
+    await supabase.from('reviews').delete().eq('id', deleteId)
     toast.success('Review removed')
+    setDeleteId(null)
     load()
   }
 
@@ -137,7 +140,7 @@ export default function ReviewsAdmin() {
               <Td>
                 <div className="flex gap-1">
                   {!r.is_approved && <IconButton title="Approve" onClick={() => handleApprove(r.id)}><Check size={15} /></IconButton>}
-                  <IconButton title="Delete" onClick={() => handleDelete(r.id)}><Trash2 size={15} /></IconButton>
+                  <IconButton title="Delete" onClick={() => setDeleteId(r.id)}><Trash2 size={15} /></IconButton>
                 </div>
               </Td>
             </tr>
@@ -209,6 +212,7 @@ export default function ReviewsAdmin() {
           </Card>
         </div>
       )}
+      <ConfirmModal open={!!deleteId} title="Delete Review" description="This review will be permanently removed." onConfirm={handleDelete} onCancel={() => setDeleteId(null)} />
     </div>
   )
 }

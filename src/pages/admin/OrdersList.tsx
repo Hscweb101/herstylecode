@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Download } from 'lucide-react'
+import { Download, Trash2 } from 'lucide-react'
+import toast from 'react-hot-toast'
 import { supabase } from '@/lib/supabase'
 import { formatINR, formatDate } from '@/lib/utils'
-import { PageHeader, Table, Th, Td } from '@/components/admin/AdminUI'
+import { PageHeader, Table, Th, Td, IconButton, ConfirmModal } from '@/components/admin/AdminUI'
 import { Badge, FullPageSpinner } from '@/components/ui/Misc'
 import { Input, Select } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
@@ -28,6 +29,7 @@ export default function OrdersList() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
+  const [deleteTarget, setDeleteTarget] = useState<Order | null>(null)
 
   useEffect(() => {
     supabase.from('orders').select('*').order('created_at', { ascending: false }).then(({ data }) => {
@@ -41,6 +43,17 @@ export default function OrdersList() {
     const matchesStatus = !statusFilter || o.status === statusFilter
     return matchesSearch && matchesStatus
   })
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return
+    const { error } = await supabase.from('orders').delete().eq('id', deleteTarget.id)
+    if (error) toast.error('Could not delete order')
+    else {
+      toast.success('Order deleted')
+      setOrders((prev) => prev.filter((o) => o.id !== deleteTarget.id))
+    }
+    setDeleteTarget(null)
+  }
 
   const handleExport = () => {
     const csv = toCSV(filtered)
@@ -66,7 +79,7 @@ export default function OrdersList() {
         </Select>
       </div>
       <Table>
-        <thead><tr><Th>Order</Th><Th>Date</Th><Th>Customer</Th><Th>Payment</Th><Th>Status</Th><Th>Total</Th></tr></thead>
+        <thead><tr><Th>Order</Th><Th>Date</Th><Th>Customer</Th><Th>Payment</Th><Th>Status</Th><Th>Total</Th><Th>Actions</Th></tr></thead>
         <tbody>
           {filtered.map((o) => (
             <tr key={o.id}>
@@ -76,10 +89,12 @@ export default function OrdersList() {
               <Td><Badge tone={o.payment_status === 'paid' ? 'success' : o.payment_status === 'failed' ? 'danger' : 'neutral'}>{o.payment_status}</Badge></Td>
               <Td><Badge tone={['cancelled', 'returned', 'refunded'].includes(o.status) ? 'danger' : 'brand'}>{STATUS_LABELS[o.status]}</Badge></Td>
               <Td>{formatINR(o.total_amount)}</Td>
+              <Td><IconButton title="Delete" onClick={() => setDeleteTarget(o)}><Trash2 size={15} /></IconButton></Td>
             </tr>
           ))}
         </tbody>
       </Table>
+      <ConfirmModal open={!!deleteTarget} title="Delete Order" description={`Permanently delete order ${deleteTarget?.order_number}? This cannot be undone.`} onConfirm={handleDelete} onCancel={() => setDeleteTarget(null)} />
     </div>
   )
 }
