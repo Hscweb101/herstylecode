@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
-import { formatINR, formatDate } from '@/lib/utils'
+import { formatINR, formatDate, isUnpaidOnlineOrder } from '@/lib/utils'
 import { PageHeader, StatCard, Card, Table, Th, Td } from '@/components/admin/AdminUI'
 import { Badge, FullPageSpinner } from '@/components/ui/Misc'
 import type { Order } from '@/types'
@@ -14,11 +14,11 @@ export default function Dashboard() {
   useEffect(() => {
     async function load() {
       const [orders, products, customerProfiles, lowStock, recent] = await Promise.all([
-        supabase.from('orders').select('customer_id, total_amount, payment_status'),
+        supabase.from('orders').select('customer_id, total_amount, payment_status, payment_method'),
         supabase.from('products').select('id', { count: 'exact', head: true }),
         supabase.from('profiles').select('id, full_name, phone').eq('role', 'customer'),
         supabase.from('products').select('id', { count: 'exact', head: true }).lte('stock_quantity', 5).eq('track_inventory', true),
-        supabase.from('orders').select('*').order('created_at', { ascending: false }).limit(6),
+        supabase.from('orders').select('*').or('payment_method.eq.cod,payment_status.in.(paid,refunded,partially_refunded)').order('created_at', { ascending: false }).limit(6),
       ])
       const paidOrders = (orders.data ?? []).filter((o) => o.payment_status === 'paid')
       const orderedCustomerIds = new Set((orders.data ?? []).map((o) => o.customer_id).filter(Boolean))
@@ -28,7 +28,7 @@ export default function Dashboard() {
       ).length
       setStats({
         totalSales: paidOrders.reduce((sum, o) => sum + Number(o.total_amount), 0),
-        orderCount: orders.data?.length ?? 0,
+        orderCount: (orders.data ?? []).filter((o) => !isUnpaidOnlineOrder(o)).length,
         productCount: products.count ?? 0,
         customerCount: realCustomerCount,
         lowStock: lowStock.count ?? 0,

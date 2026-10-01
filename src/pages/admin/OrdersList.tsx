@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { Download, Trash2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { supabase } from '@/lib/supabase'
-import { formatINR, formatDate } from '@/lib/utils'
+import { formatINR, formatDate, isUnpaidOnlineOrder } from '@/lib/utils'
 import { PageHeader, Table, Th, Td, IconButton, ConfirmModal } from '@/components/admin/AdminUI'
 import { Badge, FullPageSpinner } from '@/components/ui/Misc'
 import { Input, Select } from '@/components/ui/Input'
@@ -15,6 +15,8 @@ const STATUS_LABELS: Record<OrderStatus, string> = {
   new: 'New', paid: 'Paid', processing: 'Processing', packed: 'Packed', shipped: 'Shipped',
   out_for_delivery: 'Out for Delivery', delivered: 'Delivered', cancelled: 'Cancelled', returned: 'Returned', refunded: 'Refunded',
 }
+
+const UNPAID = 'unpaid'
 
 function toCSV(orders: Order[]): string {
   const header = ['Order Number', 'Date', 'Status', 'Payment Status', 'Customer', 'Phone', 'Total']
@@ -40,7 +42,8 @@ export default function OrdersList() {
 
   const filtered = orders.filter((o) => {
     const matchesSearch = !search || o.order_number.toLowerCase().includes(search.toLowerCase()) || o.guest_phone?.includes(search) || o.guest_email?.toLowerCase().includes(search.toLowerCase())
-    const matchesStatus = !statusFilter || o.status === statusFilter
+    // Failed/abandoned online payments are hidden unless the "Failed / Unpaid" filter is chosen.
+    const matchesStatus = statusFilter === UNPAID ? isUnpaidOnlineOrder(o) : !isUnpaidOnlineOrder(o) && (!statusFilter || o.status === statusFilter)
     return matchesSearch && matchesStatus
   })
 
@@ -70,12 +73,13 @@ export default function OrdersList() {
 
   return (
     <div>
-      <PageHeader title="Orders" description={`${orders.length} total orders`} action={<Button variant="outline" onClick={handleExport}><Download size={15} /> Export CSV</Button>} />
+      <PageHeader title="Orders" description={`${orders.filter((o) => !isUnpaidOnlineOrder(o)).length} orders`} action={<Button variant="outline" onClick={handleExport}><Download size={15} /> Export CSV</Button>} />
       <div className="mb-4 flex flex-wrap gap-3">
         <Input placeholder="Search order #, phone, email..." value={search} onChange={(e) => setSearch(e.target.value)} className="max-w-xs" />
         <Select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="max-w-xs">
           <option value="">All Statuses</option>
           {STATUSES.map((s) => <option key={s} value={s}>{STATUS_LABELS[s]}</option>)}
+          <option value={UNPAID}>Failed / Unpaid (online)</option>
         </Select>
       </div>
       <Table>

@@ -65,3 +65,8 @@ export function getRecentlyViewed(): string[] {
     return []
   }
 }
+
+/** Online (Razorpay) order whose payment never completed: failed or abandoned at the payment window. */
+export function isUnpaidOnlineOrder(o: { payment_method: string; payment_status: string }): boolean {
+  return o.payment_method === 'razorpay' && (o.payment_status === 'pending' || o.payment_status === 'failed')
+}
