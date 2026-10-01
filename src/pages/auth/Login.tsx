@@ -15,6 +15,15 @@ export default function Login() {
   const [mode, setMode] = useState<'signin' | 'signup' | 'forgot'>(params.get('mode') === 'forgot' ? 'forgot' : 'signup')
   const [form, setForm] = useState({ name: '', email: '', phone: '', password: '' })
   const [loading, setLoading] = useState(false)
+  // Set when Supabase email confirmation is on: the account exists but the email link is not clicked yet.
+  const [pending, setPending] = useState<{ email: string; kind: 'signup' | 'email_change' } | null>(null)
+
+  const resend = async () => {
+    if (!pending) return
+    const { error } = await supabase.auth.resend({ type: pending.kind, email: pending.email, options: { emailRedirectTo: `${window.location.origin}/account` } })
+    if (error) toast.error(error.message)
+    else toast.success('Confirmation email sent again')
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -29,26 +38,30 @@ export default function Login() {
     }
 
     if (mode === 'signup') {
-      const { error } = isAnonymous
-        ? await supabase.auth.updateUser({
-            email: form.email,
-            password: form.password,
-            data: { full_name: form.name, phone: form.phone },
-          })
-        : await supabase.auth.signUp({
-            email: form.email,
-            password: form.password,
-            options: { data: { full_name: form.name, phone: form.phone } },
-          })
+      const redirect = `${window.location.origin}/account`
+      const meta = { full_name: form.name, phone: form.phone }
+      // A guest who already ordered keeps the same user, so their orders carry over to the new account.
+      const { data, error } = isAnonymous
+        ? await supabase.auth.updateUser({ email: form.email, password: form.password, data: meta }, { emailRedirectTo: redirect })
+        : await supabase.auth.signUp({ email: form.email, password: form.password, options: { data: meta, emailRedirectTo: redirect } })
 
       setLoading(false)
       if (error) {
         toast.error(error.message)
         return
       }
-      await supabase.from('profiles').update({ full_name: form.name, phone: form.phone }).eq('id', (await supabase.auth.getUser()).data.user?.id ?? '')
+      const session = (data as { session?: unknown }).session
+      const stillPending = isAnonymous ? true : !session
+      const userId = (await supabase.auth.getUser()).data.user?.id
+      if (userId) await supabase.from('profiles').update({ full_name: form.name, phone: form.phone }).eq('id', userId)
+
+      if (stillPending) {
+        // Email confirmation is required: the email is not usable for sign-in until the link is clicked.
+        setPending({ email: form.email, kind: isAnonymous ? 'email_change' : 'signup' })
+        return
+      }
       await refreshProfile()
-      toast.success('Account created! Check your email if confirmation is required.')
+      toast.success('Account created! You are signed in.')
       navigate('/account')
       return
     }
@@ -56,12 +69,32 @@ export default function Login() {
     const { error } = await supabase.auth.signInWithPassword({ email: form.email, password: form.password })
     setLoading(false)
     if (error) {
-      toast.error(error.message)
+      if (/not confirmed/i.test(error.message)) {
+        setPending({ email: form.email, kind: 'signup' })
+      } else if (/invalid login/i.test(error.message)) {
+        toast.error('Wrong email or password. If you just signed up, confirm your email first (check inbox and spam), or use "Forgot password?".')
+      } else {
+        toast.error(error.message)
+      }
       return
     }
     await refreshProfile()
     toast.success('Welcome back!')
     navigate('/account')
+  }
+
+  if (pending) {
+    return (
+      <div className="mx-auto max-w-md px-4 py-16 text-center">
+        <h1 className="mb-3 font-serif text-3xl">Confirm Your Email</h1>
+        <p className="text-sm text-ink-500">
+          We sent a confirmation link to <strong className="text-ink-900">{pending.email}</strong>. Open the email (check spam too) and tap the link — you will be signed in automatically and any order you placed as a guest will show in My Orders.
+        </p>
+        <p className="mt-3 text-xs text-ink-300">Please open the link in this same browser. You can sign in with your email and password only after confirming.</p>
+        <Button className="mt-6 w-full" variant="outline" onClick={resend}>Resend confirmation email</Button>
+        <button onClick={() => { setPending(null); setMode('signin') }} className="mt-4 text-sm text-brand-600 hover:underline">Already confirmed? Sign in</button>
+      </div>
+    )
   }
 
   return (
