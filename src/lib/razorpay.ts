@@ -44,7 +44,13 @@ declare global {
 const PAYMENT_METHOD_CONFIG = {
   display: {
     blocks: {
-      upi: { name: 'Pay via UPI', instruments: [{ method: 'upi' }] },
+      upi: {
+        name: 'Pay via UPI',
+        instruments: [
+          { method: 'upi', apps: ['google_pay', 'phonepe', 'paytm', 'cred', 'bhim'] },
+          { method: 'upi', flows: ['collect', 'qr'] },
+        ],
+      },
       card: { name: 'Cards', instruments: [{ method: 'card' }] },
       netbanking: { name: 'Net Banking', instruments: [{ method: 'netbanking' }] },
       wallet: { name: 'Wallets', instruments: [{ method: 'wallet' }] },
