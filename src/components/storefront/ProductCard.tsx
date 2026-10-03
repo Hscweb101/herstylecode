@@ -68,7 +68,7 @@ export function ProductCard({ product }: { product: Product }) {
           onClick={handleQuickAdd}
           disabled={outOfStock}
           className={cn(
-            'absolute inset-x-3 bottom-3 flex translate-y-2 items-center justify-center gap-2 rounded-full bg-ink-900/90 py-2.5 text-xs font-medium text-white opacity-0 backdrop-blur transition-all duration-200 group-hover:translate-y-0 group-hover:opacity-100 disabled:cursor-not-allowed disabled:bg-ink-300',
+            'pointer-events-none absolute inset-x-3 bottom-3 flex translate-y-2 items-center justify-center gap-2 rounded-full bg-ink-900/90 py-2.5 text-xs font-medium text-white opacity-0 backdrop-blur transition-all duration-200 group-hover:pointer-events-auto group-hover:translate-y-0 group-hover:opacity-100 disabled:cursor-not-allowed disabled:bg-ink-300',
           )}
         >
           <ShoppingBag size={14} /> {outOfStock ? 'Sold Out' : 'Quick Add'}

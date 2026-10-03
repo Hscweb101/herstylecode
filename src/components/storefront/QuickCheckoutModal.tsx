@@ -82,7 +82,7 @@ async function lookupPincode(pin: string): Promise<{ city?: string; state?: stri
 }
 
 // 16px on phones stops iOS from zooming into a field when it is focused.
-const fieldCls = 'min-w-0 w-full flex-1 bg-white px-2.5 py-2.5 text-base text-ink-900 outline-none placeholder:text-ink-300 sm:text-sm'
+const fieldCls = 'min-w-0 w-full flex-1 bg-white px-2.5 py-2 text-base text-ink-900 outline-none placeholder:text-ink-300 sm:text-sm'
 
 function Row({
   label, required, icon, error, hint, children,
@@ -96,7 +96,7 @@ function Row({
 }) {
   return (
     <div className="grid grid-cols-[84px_1fr] items-start gap-x-3 sm:grid-cols-[104px_1fr]">
-      <span className="pt-2.5 text-[12px] font-semibold leading-tight text-ink-900">
+      <span className="pt-2 text-[12px] font-semibold leading-tight text-ink-900">
         {label}
         {required && <span className="text-red-500">*</span>}
       </span>
@@ -316,7 +316,7 @@ export function QuickCheckoutModal({ product, variant, qty: initialQty, onClose 
   const bind = (k: keyof FormState) => ({ value: form[k], onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => set(k, e.target.value) })
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center px-[3px] sm:items-center sm:p-4" role="dialog" aria-modal="true" aria-label="Delivery address and checkout">
+    <div className="fixed inset-0 z-50 flex items-end justify-center px-1.5 sm:items-center sm:p-4" role="dialog" aria-modal="true" aria-label="Delivery address and checkout">
       <div className="absolute inset-0 animate-[fadeIn_.2s_ease-out] bg-black/55" onClick={() => !placing && onClose()} />
 
       <div className="animate-sheet-up relative flex max-h-[96dvh] w-full flex-col overflow-hidden rounded-t-2xl bg-white shadow-2xl sm:max-h-[94dvh] sm:max-w-[520px] sm:rounded-2xl">
@@ -334,7 +334,7 @@ export function QuickCheckoutModal({ product, variant, qty: initialQty, onClose 
           </button>
         </div>
 
-        <div ref={bodyRef} className="flex-1 overflow-y-auto overscroll-contain px-0.5 pb-5 pt-3 sm:px-5">
+        <div ref={bodyRef} className="flex-1 overflow-y-auto overscroll-contain px-1.5 pb-5 pt-3 sm:px-5">
           {/* Item row with quantity control */}
           <div className="flex items-center gap-3 pb-3">
             <div className="relative h-14 w-14 shrink-0">
@@ -392,7 +392,7 @@ export function QuickCheckoutModal({ product, variant, qty: initialQty, onClose 
           </div>
 
           {/* Delivery details */}
-          <div className="mt-4 space-y-2.5">
+          <div className="mt-3 space-y-2">
             {addresses.length > 0 && (
               <div className="space-y-2 pb-1">
                 {addresses.map((a) => (
@@ -443,7 +443,7 @@ export function QuickCheckoutModal({ product, variant, qty: initialQty, onClose 
                   <input inputMode="numeric" autoComplete="postal-code" placeholder="Enter 6 Digit Pincode" className={fieldCls} value={form.pincode} onChange={(e) => onPincode(e.target.value)} />
                 </Row>
                 {/* City + State share one row so the form looks shorter */}
-                <div className="grid grid-cols-2 gap-2.5">
+                <div className="grid grid-cols-2 gap-2">
                   {([
                     { key: 'city', label: 'City', icon: <MapPin size={15} /> },
                     { key: 'state', label: 'State', icon: <Flag size={15} /> },
