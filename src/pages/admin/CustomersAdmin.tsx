@@ -42,7 +42,7 @@ export default function CustomersAdmin() {
   const handleDelete = async () => {
     if (!deleteTarget) return
     const { error } = await supabase.rpc('admin_delete_customer', { target: deleteTarget.id })
-    if (error) toast.error('Could not delete customer')
+    if (error) toast.error(`Could not delete customer: ${error.message}`)
     else {
       toast.success('Customer deleted')
       setCustomers((prev) => prev.filter((c) => c.id !== deleteTarget.id))
