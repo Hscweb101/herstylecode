@@ -334,7 +334,7 @@ export function QuickCheckoutModal({ product, variant, qty: initialQty, onClose 
           </button>
         </div>
 
-        <div ref={bodyRef} className="flex-1 overflow-y-auto overscroll-contain px-4 pb-5 pt-3 sm:px-5">
+        <div ref={bodyRef} className="flex-1 overflow-y-auto overscroll-contain px-0.5 pb-5 pt-3 sm:px-5">
           {/* Item row with quantity control */}
           <div className="flex items-center gap-3 pb-3">
             <div className="relative h-14 w-14 shrink-0">
