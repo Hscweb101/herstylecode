@@ -316,7 +316,7 @@ export function QuickCheckoutModal({ product, variant, qty: initialQty, onClose 
   const bind = (k: keyof FormState) => ({ value: form[k], onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => set(k, e.target.value) })
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4" role="dialog" aria-modal="true" aria-label="Delivery address and checkout">
+    <div className="fixed inset-0 z-50 flex items-end justify-center px-[3px] sm:items-center sm:p-4" role="dialog" aria-modal="true" aria-label="Delivery address and checkout">
       <div className="absolute inset-0 animate-[fadeIn_.2s_ease-out] bg-black/55" onClick={() => !placing && onClose()} />
 
       <div className="animate-sheet-up relative flex max-h-[96dvh] w-full flex-col overflow-hidden rounded-t-2xl bg-white shadow-2xl sm:max-h-[94dvh] sm:max-w-[520px] sm:rounded-2xl">
