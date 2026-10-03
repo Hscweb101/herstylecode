@@ -489,7 +489,7 @@ export function QuickCheckoutModal({ product, variant, qty: initialQty, onClose 
                 type="button"
                 onClick={() => placeOrder('razorpay')}
                 disabled={!!placing}
-                className="flex min-h-12 flex-col items-center justify-center rounded-lg bg-brand-600 px-2 py-2 text-white shadow-[0_3px_0_0_#ab275e] transition hover:bg-brand-700 active:translate-y-[2px] active:shadow-[0_1px_0_0_#ab275e] disabled:cursor-not-allowed disabled:opacity-60"
+                className="btn-nudge flex min-h-12 flex-col items-center justify-center rounded-lg bg-brand-600 px-2 py-2 text-white shadow-[0_3px_0_0_#ab275e] transition hover:bg-brand-700 active:translate-y-[2px] active:shadow-[0_1px_0_0_#ab275e] disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <span className="flex items-center gap-1.5 text-[14px] font-bold leading-tight sm:text-[15px]">
                   {placing === 'razorpay' ? <Spinner className="h-4 w-4 border-white/40 border-t-white" /> : <CreditCard size={16} />}
