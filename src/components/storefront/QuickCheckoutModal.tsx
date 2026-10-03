@@ -441,17 +441,40 @@ export function QuickCheckoutModal({ product, variant, qty: initialQty, onClose 
                 <Row label="Pincode" required icon={<Hash size={15} />} error={shownErrors.pincode} hint={pincodeLoading ? 'Finding your city and state...' : 'City and state fill in automatically'}>
                   <input inputMode="numeric" autoComplete="postal-code" placeholder="Enter 6 Digit Pincode" className={fieldCls} value={form.pincode} onChange={(e) => onPincode(e.target.value)} />
                 </Row>
-                <Row label="City" required icon={<MapPin size={15} />} error={shownErrors.city}>
-                  <input autoComplete="address-level2" placeholder="City / District" className={fieldCls} {...bind('city')} />
-                </Row>
-                <Row label="State" required icon={<Flag size={15} />} error={shownErrors.state}>
-                  <select autoComplete="address-level1" className={cn(fieldCls, !form.state && 'text-ink-300')} {...bind('state')}>
-                    <option value="">Select State</option>
-                    {(!form.state || INDIAN_STATES.includes(form.state) ? INDIAN_STATES : [form.state, ...INDIAN_STATES]).map((s) => (
-                      <option key={s} value={s}>{s}</option>
-                    ))}
-                  </select>
-                </Row>
+                {/* City + State share one row so the form looks shorter */}
+                <div className="grid grid-cols-2 gap-2.5">
+                  {([
+                    { key: 'city', label: 'City', icon: <MapPin size={15} /> },
+                    { key: 'state', label: 'State', icon: <Flag size={15} /> },
+                  ] as const).map((f) => (
+                    <div key={f.key} className="min-w-0">
+                      <span className="mb-1 block text-[12px] font-semibold text-ink-900">
+                        {f.label}<span className="text-red-500">*</span>
+                      </span>
+                      <div
+                        className={cn(
+                          'flex overflow-hidden rounded-lg border transition-colors focus-within:ring-2',
+                          shownErrors[f.key] ? 'border-red-400 focus-within:ring-red-200' : 'border-blush-200 focus-within:border-brand-400 focus-within:ring-brand-100',
+                        )}
+                      >
+                        <span className={cn('flex w-9 shrink-0 items-center justify-center border-r', shownErrors[f.key] ? 'border-red-300 bg-red-50 text-red-600' : 'border-blush-200 bg-blush-50 text-brand-600')}>
+                          {f.icon}
+                        </span>
+                        {f.key === 'city' ? (
+                          <input autoComplete="address-level2" placeholder="City / District" className={fieldCls} {...bind('city')} />
+                        ) : (
+                          <select autoComplete="address-level1" className={cn(fieldCls, !form.state && 'text-ink-300')} {...bind('state')}>
+                            <option value="">Select State</option>
+                            {(!form.state || INDIAN_STATES.includes(form.state) ? INDIAN_STATES : [form.state, ...INDIAN_STATES]).map((s) => (
+                              <option key={s} value={s}>{s}</option>
+                            ))}
+                          </select>
+                        )}
+                      </div>
+                      {shownErrors[f.key] && <p className="mt-1 text-[11px] leading-tight text-red-600">{shownErrors[f.key]}</p>}
+                    </div>
+                  ))}
+                </div>
               </>
             )}
             <Row label="Email" required icon={<Mail size={15} />} error={shownErrors.email}>
@@ -461,26 +484,34 @@ export function QuickCheckoutModal({ product, variant, qty: initialQty, onClose 
 
           {/* Pay buttons */}
           <div className="mt-5 space-y-2.5">
-            <button
-              type="button"
-              onClick={() => placeOrder('razorpay')}
-              disabled={!!placing}
-              className="flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-brand-600 text-[15px] font-bold text-white shadow-[0_3px_0_0_#ab275e] transition hover:bg-brand-700 active:translate-y-[2px] active:shadow-[0_1px_0_0_#ab275e] disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {placing === 'razorpay' ? <Spinner className="border-white/40 border-t-white" /> : <CreditCard size={18} />}
-              {placing === 'razorpay' ? 'Opening secure payment...' : `Pay now - ${formatINR(total)}`}
-            </button>
-            {codAvailable && (
+            <div className={cn('grid gap-2.5', codAvailable ? 'grid-cols-2' : 'grid-cols-1')}>
               <button
                 type="button"
-                onClick={() => placeOrder('cod')}
+                onClick={() => placeOrder('razorpay')}
                 disabled={!!placing}
-                className="flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-ink-900 text-[15px] font-bold text-white shadow-[0_3px_0_0_#000] transition hover:bg-ink-700 active:translate-y-[2px] active:shadow-[0_1px_0_0_#000] disabled:cursor-not-allowed disabled:opacity-60"
+                className="flex min-h-14 flex-col items-center justify-center rounded-lg bg-brand-600 px-2 py-2 text-white shadow-[0_3px_0_0_#ab275e] transition hover:bg-brand-700 active:translate-y-[2px] active:shadow-[0_1px_0_0_#ab275e] disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {placing === 'cod' ? <Spinner className="border-white/40 border-t-white" /> : <Banknote size={18} />}
-                {placing === 'cod' ? 'Placing your order...' : `Cash On Delivery - ${formatINR(total)}`}
+                <span className="flex items-center gap-1.5 text-[14px] font-bold leading-tight sm:text-[15px]">
+                  {placing === 'razorpay' ? <Spinner className="h-4 w-4 border-white/40 border-t-white" /> : <CreditCard size={16} />}
+                  {placing === 'razorpay' ? 'Opening...' : 'Pay Now'}
+                </span>
+                <span className="text-[11px] font-medium text-white/85">{formatINR(total)} · UPI / Cards</span>
               </button>
-            )}
+              {codAvailable && (
+                <button
+                  type="button"
+                  onClick={() => placeOrder('cod')}
+                  disabled={!!placing}
+                  className="flex min-h-14 flex-col items-center justify-center rounded-lg bg-ink-900 px-2 py-2 text-white shadow-[0_3px_0_0_#000] transition hover:bg-ink-700 active:translate-y-[2px] active:shadow-[0_1px_0_0_#000] disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <span className="flex items-center gap-1.5 text-[14px] font-bold leading-tight sm:text-[15px]">
+                    {placing === 'cod' ? <Spinner className="h-4 w-4 border-white/40 border-t-white" /> : <Banknote size={16} />}
+                    {placing === 'cod' ? 'Placing...' : 'Cash on Delivery'}
+                  </span>
+                  <span className="text-[11px] font-medium text-white/85">{formatINR(total)} · Pay at door</span>
+                </button>
+              )}
+            </div>
 
             <div className="pt-1">
               <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5">
