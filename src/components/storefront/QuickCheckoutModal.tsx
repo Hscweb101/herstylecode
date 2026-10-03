@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { Banknote, CreditCard, Flag, Hash, Home, Mail, MapPin, Minus, Phone, Plus, ShieldCheck, User, X } from 'lucide-react'
+import { Banknote, CreditCard, Flag, Hash, Home, Mail, MapPin, Minus, Phone, Plus, ShieldCheck, Trash2, User, X } from 'lucide-react'
 import { FunctionsHttpError } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/store/authStore'
+import { useCartStore } from '@/store/cartStore'
 import { useStoreSettings } from '@/hooks/useStoreSettings'
 import { cn, formatINR } from '@/lib/utils'
 import { openRazorpayCheckout } from '@/lib/razorpay'
@@ -142,6 +143,23 @@ export function QuickCheckoutModal({ product, variant, qty: initialQty, onClose 
   const [attempted, setAttempted] = useState(false)
   const [placing, setPlacing] = useState<null | 'razorpay' | 'cod'>(null)
   const [quantity, setQuantity] = useState(Math.max(1, initialQty))
+
+  // Everything already in the shopper's cart is part of this order too. Qty 0 = taken out of this order.
+  const cartItems = useCartStore((s) => s.items)
+  const [cartQty, setCartQty] = useState<Record<string, number>>({})
+  const extras = cartItems
+    .filter((i) => i.product && !(i.product_id === product.id && (i.variant_id ?? null) === (variant?.id ?? null)))
+    .map((i) => ({
+      id: i.id,
+      productId: i.product_id,
+      variantId: i.variant_id,
+      name: i.product!.name,
+      variantName: i.variant?.variant_name ?? null,
+      price: i.variant?.price ?? i.product!.price,
+      image: i.variant?.image_url ?? [...(i.product!.images ?? [])].sort((a, b) => Number(b.is_primary) - Number(a.is_primary) || a.sort_order - b.sort_order)[0]?.url,
+      qty: cartQty[i.id] ?? i.quantity,
+    }))
+    .filter((e) => e.qty > 0)
   const [pincodeLoading, setPincodeLoading] = useState(false)
   const [addresses, setAddresses] = useState<Address[]>([])
   const [selectedAddressId, setSelectedAddressId] = useState<string>('new')
@@ -192,7 +210,8 @@ export function QuickCheckoutModal({ product, variant, qty: initialQty, onClose 
   const image = variant?.image_url ?? product.images?.find((i) => i.is_primary)?.url ?? product.images?.[0]?.url
   const stock = variant ? variant.stock_quantity : product.stock_quantity
   const maxQty = product.track_inventory !== false ? Math.max(1, stock) : 20
-  const subtotal = price * quantity
+  const extrasTotal = extras.reduce((sum, e) => sum + e.price * e.qty, 0)
+  const subtotal = price * quantity + extrasTotal
   const shipping = subtotal >= settings.shipping.free_shipping_threshold ? 0 : settings.shipping.standard_shipping_fee
   const total = subtotal + shipping
   const codAvailable = settings.shipping.cod_available && product.cod_available !== false
@@ -240,7 +259,10 @@ export function QuickCheckoutModal({ product, variant, qty: initialQty, onClose 
     }
 
     const payload = {
-      items: [{ productId: product.id, variantId: variant?.id ?? null, quantity }],
+      items: [
+        { productId: product.id, variantId: variant?.id ?? null, quantity },
+        ...extras.map((e) => ({ productId: e.productId, variantId: e.variantId, quantity: e.qty })),
+      ],
       shippingAddress,
       guestName: effective.full_name.trim(),
       guestEmail: effective.email.trim(),
@@ -268,6 +290,7 @@ export function QuickCheckoutModal({ product, variant, qty: initialQty, onClose 
 
     if (paymentMethod === 'cod') {
       toast.success('Order placed successfully!')
+      void useCartStore.getState().refresh()
       onClose()
       navigate(`/order-confirmation/${data.orderId}`)
       return
@@ -297,6 +320,7 @@ export function QuickCheckoutModal({ product, variant, qty: initialQty, onClose 
             return
           }
           toast.success('Payment successful!')
+          void useCartStore.getState().refresh()
           onClose()
           navigate(`/order-confirmation/${data.orderId}`)
         },
@@ -373,9 +397,32 @@ export function QuickCheckoutModal({ product, variant, qty: initialQty, onClose 
                   <Plus size={15} />
                 </button>
               </div>
-              <span className="text-sm font-bold text-ink-900">{formatINR(subtotal)}</span>
+              <span className="text-sm font-bold text-ink-900">{formatINR(price * quantity)}</span>
             </div>
           </div>
+
+          {/* Other items from the cart */}
+          {extras.map((e) => (
+            <div key={e.id} className="flex items-center gap-3 border-t border-blush-100 py-2.5">
+              {e.image ? <img src={e.image} alt="" className="h-14 w-14 shrink-0 rounded-lg border border-blush-100 object-cover" /> : <div className="h-14 w-14 shrink-0 rounded-lg bg-blush-100" />}
+              <div className="min-w-0 flex-1">
+                <p className="line-clamp-2 text-sm font-semibold leading-snug text-ink-900">{e.name}</p>
+                {e.variantName && <p className="text-xs text-ink-500">{e.variantName}</p>}
+                <p className="mt-0.5 text-xs text-ink-500">{formatINR(e.price)} each</p>
+              </div>
+              <div className="flex shrink-0 flex-col items-end gap-1">
+                <div className="flex items-center overflow-hidden rounded-lg border border-brand-300 bg-white">
+                  <button type="button" aria-label="Decrease quantity" className="flex h-8 w-8 items-center justify-center text-brand-700 hover:bg-blush-50 disabled:opacity-30" disabled={e.qty <= 1 || !!placing} onClick={() => setCartQty((m) => ({ ...m, [e.id]: e.qty - 1 }))}><Minus size={14} /></button>
+                  <span className="w-7 text-center text-sm font-semibold text-ink-900">{e.qty}</span>
+                  <button type="button" aria-label="Increase quantity" className="flex h-8 w-8 items-center justify-center text-brand-700 hover:bg-blush-50 disabled:opacity-30" disabled={e.qty >= 10 || !!placing} onClick={() => setCartQty((m) => ({ ...m, [e.id]: e.qty + 1 }))}><Plus size={14} /></button>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button type="button" aria-label="Remove from this order" disabled={!!placing} onClick={() => setCartQty((m) => ({ ...m, [e.id]: 0 }))} className="text-ink-300 hover:text-red-500"><Trash2 size={14} /></button>
+                  <span className="text-sm font-bold text-ink-900">{formatINR(e.price * e.qty)}</span>
+                </div>
+              </div>
+            </div>
+          ))}
 
           {/* Totals box */}
           <div className="rounded-lg border border-blush-100 bg-blush-50/70 px-3 py-2.5">
