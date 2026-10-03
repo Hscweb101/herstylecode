@@ -345,3 +345,10 @@
 .admin-ui .text-ink-500 { color: #6b7280; }
 .admin-ui .text-ink-300 { color: #9ca3af; }
 .admin-ui .hover\:bg-blush-50:hover { background-color: #f3f4f6; }
+
+/* Checkout popup: slides up from the bottom on phones */
+@keyframes sheetUp {
+  from { transform: translateY(40px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+.animate-sheet-up { animation: sheetUp .28s ease-out; }

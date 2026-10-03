@@ -1,21 +1,25 @@
 import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { ArrowLeft, PackageSearch } from 'lucide-react'
+import { ArrowLeft, Check, ExternalLink, PackageSearch } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useSeo } from '@/hooks/useSeo'
 import { supabase } from '@/lib/supabase'
-import { formatINR, formatDate } from '@/lib/utils'
+import { formatINR, formatDate, cn } from '@/lib/utils'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Badge } from '@/components/ui/Misc'
-import type { Order, OrderStatus } from '@/types'
+import type { Order } from '@/types'
 
-const STATUS_STEPS: OrderStatus[] = ['new', 'paid', 'processing', 'packed', 'shipped', 'out_for_delivery', 'delivered']
+// Seven internal statuses are shown to shoppers as five easy steps.
+const STEPS = ['Order placed', 'Packed', 'Shipped', 'Out for delivery', 'Delivered']
+const STEP_OF: Record<string, number> = { new: 0, paid: 0, processing: 1, packed: 1, shipped: 2, out_for_delivery: 3, delivered: 4 }
 const STATUS_LABELS: Record<string, string> = {
   new: 'Order Placed', paid: 'Payment Confirmed', processing: 'Processing', packed: 'Packed',
   shipped: 'Shipped', out_for_delivery: 'Out for Delivery', delivered: 'Delivered',
   cancelled: 'Cancelled', returned: 'Returned', refunded: 'Refunded',
 }
+
+const fmtDay = (iso: string) => new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })
 
 /** "1001", "hsc1001", "# HSC-1001" -> "HSC1001". Empty stays empty. */
 function normalizeOrderNumber(raw: string) {
@@ -23,57 +27,91 @@ function normalizeOrderNumber(raw: string) {
   return /^[0-9]+$/.test(cleaned) ? `HSC${cleaned}` : cleaned
 }
 
-// The server returns { items } for the full view and a trimmed copy for single-field lookups.
-type TrackedOrder = Order & { items?: Order['items'] }
+type TrackedOrder = Order & { history?: { status: string; created_at: string }[] }
 
 function OrderCard({ order }: { order: TrackedOrder }) {
-  const currentStepIndex = STATUS_STEPS.indexOf(order.status)
-  const isTerminalNegative = ['cancelled', 'returned', 'refunded'].includes(order.status)
+  const ended = ['cancelled', 'returned', 'refunded'].includes(order.status)
+  const idx = STEP_OF[order.status] ?? 0
+  const history = order.history ?? []
+  const when = (step: number) => history.find((h) => STEP_OF[h.status] === step)?.created_at
 
   return (
-    <div className="rounded-2xl bg-white p-6 shadow-luxe-sm">
-      <div className="mb-4 flex items-center justify-between gap-3">
+    <div className="overflow-hidden rounded-2xl border border-blush-100 bg-white shadow-luxe-sm">
+      <div className="flex flex-wrap items-start justify-between gap-3 bg-blush-50 px-5 py-4 sm:px-6">
         <div>
-          <p className="font-serif text-lg">{order.order_number}</p>
-          <p className="text-xs text-ink-300">Placed on {formatDate(order.placed_at)}</p>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-brand-600">Order ID</p>
+          <p className="font-mono text-xl font-bold text-ink-900">{order.order_number}</p>
+          <p className="text-xs text-ink-500">Placed on {formatDate(order.placed_at)}</p>
         </div>
-        <Badge tone={isTerminalNegative ? 'danger' : 'brand'}>{STATUS_LABELS[order.status] ?? order.status}</Badge>
+        <Badge tone={ended ? 'danger' : order.status === 'delivered' ? 'success' : 'brand'}>{STATUS_LABELS[order.status] ?? order.status}</Badge>
       </div>
 
-      {!isTerminalNegative && (
-        <div className="mb-6 flex items-center overflow-x-auto py-2">
-          {STATUS_STEPS.map((step, idx) => (
-            <div key={step} className="flex min-w-[90px] flex-1 flex-col items-center text-center">
-              <div className={`h-2.5 w-2.5 rounded-full ${idx <= currentStepIndex ? 'bg-brand-600' : 'bg-blush-200'}`} />
-              <p className={`mt-2 text-[10px] ${idx <= currentStepIndex ? 'text-ink-900' : 'text-ink-300'}`}>{STATUS_LABELS[step]}</p>
-              {idx < STATUS_STEPS.length - 1 && <div className={`h-0.5 w-full ${idx < currentStepIndex ? 'bg-brand-600' : 'bg-blush-200'}`} />}
+      <div className="px-5 py-5 sm:px-6">
+        {ended ? (
+          <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">
+            This order was {(STATUS_LABELS[order.status] ?? order.status).toLowerCase()}. For help, please contact us with your Order ID.
+          </p>
+        ) : (
+          <ol className="grid grid-cols-5">
+            {STEPS.map((label, i) => {
+              const done = i <= idx
+              const date = when(i)
+              return (
+                <li key={label} className="flex flex-col items-center text-center">
+                  <div className="flex w-full items-center">
+                    <span className={cn('h-0.5 flex-1', i === 0 ? 'bg-transparent' : i <= idx ? 'bg-brand-500' : 'bg-blush-200')} />
+                    <span
+                      className={cn(
+                        'flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold',
+                        done ? 'bg-brand-600 text-white' : 'bg-blush-100 text-ink-300',
+                        i === idx && 'ring-4 ring-brand-100',
+                      )}
+                    >
+                      {done ? <Check size={14} strokeWidth={3} /> : i + 1}
+                    </span>
+                    <span className={cn('h-0.5 flex-1', i === STEPS.length - 1 ? 'bg-transparent' : i < idx ? 'bg-brand-500' : 'bg-blush-200')} />
+                  </div>
+                  <span className={cn('mt-2 px-0.5 text-[11px] font-medium leading-tight', done ? 'text-ink-900' : 'text-ink-300')}>{label}</span>
+                  {date && done && <span className="mt-0.5 text-[10px] text-ink-500">{fmtDay(date)}</span>}
+                </li>
+              )
+            })}
+          </ol>
+        )}
+
+        {order.tracking_number && (
+          <div className="mt-5 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-dashed border-brand-300 bg-blush-50 px-4 py-3 text-sm">
+            <span className="text-ink-700">
+              {order.shipping_provider ? `${order.shipping_provider} · ` : ''}Tracking no. <strong className="font-mono">{order.tracking_number}</strong>
+            </span>
+            {order.tracking_url && (
+              <a href={order.tracking_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 font-semibold text-brand-600 hover:underline">
+                Track with courier <ExternalLink size={13} />
+              </a>
+            )}
+          </div>
+        )}
+
+        <div className="mt-5 divide-y divide-blush-100 border-t border-blush-100">
+          {order.items?.map((item) => (
+            <div key={item.id} className="flex items-center gap-3 py-3 text-sm">
+              {item.image_url ? (
+                <img src={item.image_url} alt="" className="h-14 w-14 shrink-0 rounded-lg border border-blush-100 object-cover" />
+              ) : (
+                <div className="h-14 w-14 shrink-0 rounded-lg bg-blush-100" />
+              )}
+              <div className="min-w-0 flex-1">
+                <p className="line-clamp-2 font-medium text-ink-900">{item.product_name}</p>
+                <p className="text-xs text-ink-500">Qty {item.quantity}</p>
+              </div>
+              <span className="shrink-0 font-semibold text-ink-900">{formatINR(item.line_total)}</span>
             </div>
           ))}
         </div>
-      )}
-
-      {order.tracking_number && (
-        <p className="mb-4 text-sm text-ink-700">
-          Tracking Number: <strong>{order.tracking_number}</strong>
-          {order.tracking_url && (
-            <a href={order.tracking_url} target="_blank" rel="noreferrer" className="ml-2 text-brand-600 underline">
-              Track with courier
-            </a>
-          )}
-        </p>
-      )}
-
-      <div className="space-y-3 border-t border-blush-100 pt-4">
-        {order.items?.map((item) => (
-          <div key={item.id} className="flex items-center gap-3 text-sm">
-            <img src={item.image_url ?? undefined} alt="" className="h-12 w-12 rounded-lg object-cover" />
-            <div className="flex-1">
-              <p>{item.product_name}</p>
-              <p className="text-xs text-ink-300">Qty {item.quantity}</p>
-            </div>
-            <span className="font-medium">{formatINR(item.line_total)}</span>
-          </div>
-        ))}
+        <div className="flex items-center justify-between border-t border-blush-100 pt-4 text-base font-semibold text-ink-900">
+          <span>Order total</span>
+          <span>{formatINR(order.total_amount)}</span>
+        </div>
       </div>
     </div>
   )
@@ -116,14 +154,19 @@ export default function TrackOrder() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-14">
-      <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-blush-50 text-brand-600">
-        <PackageSearch size={26} />
+    <div className="mx-auto max-w-2xl px-4 py-10 sm:py-14">
+      <div className="text-center">
+        <span className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-blush-50 text-brand-600 ring-8 ring-blush-50/60">
+          <PackageSearch size={26} />
+        </span>
+        <p className="text-xs font-semibold uppercase tracking-[0.3em] text-brand-600">Where is my order?</p>
+        <h1 className="mt-2 font-serif text-3xl sm:text-4xl">Track Your Order</h1>
+        <p className="mx-auto mt-3 max-w-md text-sm text-ink-500">
+          Enter your <strong className="text-ink-900">Order ID</strong> or the <strong className="text-ink-900">email</strong> you used at checkout. Either one works, or use both.
+        </p>
       </div>
-      <h1 className="mb-2 text-center font-serif text-3xl">Track Your Order</h1>
-      <p className="mb-8 text-center text-sm text-ink-500">Enter your Order ID <strong>or</strong> the email you used at checkout. No account needed.</p>
 
-      <form onSubmit={handleSearch} className="space-y-4 rounded-2xl bg-white p-6 shadow-luxe-sm">
+      <form onSubmit={handleSearch} className="mt-8 space-y-4 rounded-2xl border border-blush-100 bg-white p-5 shadow-luxe-sm sm:p-6">
         <Input
           label="Order ID"
           placeholder="e.g. HSC1001"
@@ -142,7 +185,6 @@ export default function TrackOrder() {
           value={contact}
           onChange={(e) => setContact(e.target.value)}
         />
-        <p className="text-xs text-ink-300">Fill in either one. Using both shows the full order details.</p>
         <Button type="submit" size="lg" className="w-full" loading={loading}>Track Order</Button>
       </form>
 
@@ -153,11 +195,11 @@ export default function TrackOrder() {
             <button
               key={o.id}
               onClick={() => setSelected(o)}
-              className="flex w-full items-center justify-between gap-3 rounded-2xl bg-white p-4 text-left shadow-luxe-sm hover:ring-1 hover:ring-brand-300"
+              className="flex w-full items-center justify-between gap-3 rounded-2xl border border-blush-100 bg-white p-4 text-left shadow-luxe-sm hover:border-brand-300"
             >
               <span>
-                <span className="block font-medium">{o.order_number}</span>
-                <span className="text-xs text-ink-300">{formatDate(o.placed_at)} · {formatINR(o.total_amount)}</span>
+                <span className="block font-mono font-semibold">{o.order_number}</span>
+                <span className="text-xs text-ink-500">{formatDate(o.placed_at)} · {formatINR(o.total_amount)}</span>
               </span>
               <Badge tone={['cancelled', 'returned', 'refunded'].includes(o.status) ? 'danger' : 'brand'}>{STATUS_LABELS[o.status] ?? o.status}</Badge>
             </button>
