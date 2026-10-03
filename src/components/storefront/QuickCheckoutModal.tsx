@@ -8,6 +8,7 @@ import { useAuthStore } from '@/store/authStore'
 import { useStoreSettings } from '@/hooks/useStoreSettings'
 import { cn, formatINR } from '@/lib/utils'
 import { openRazorpayCheckout } from '@/lib/razorpay'
+import { invokeCreateOrder } from '@/lib/checkoutApi'
 import { Spinner } from '@/components/ui/Misc'
 import type { Address, Product, ProductVariant } from '@/types'
 
@@ -248,7 +249,7 @@ export function QuickCheckoutModal({ product, variant, qty: initialQty, onClose 
       paymentMethod,
     }
 
-    const { data, error } = await supabase.functions.invoke('checkout-create-order', { body: payload })
+    const { data, error } = await invokeCreateOrder(payload)
 
     if (error || data?.error) {
       let message = data?.error ?? 'Could not place order. Please try again.'

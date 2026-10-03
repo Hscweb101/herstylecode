@@ -13,6 +13,8 @@ interface AuthState {
   init: () => Promise<void>
   refreshProfile: () => Promise<void>
   signOut: () => Promise<void>
+  /** Drops a dead login (user deleted / token invalid) and starts a fresh guest session. */
+  recoverSession: () => Promise<void>
 }
 
 /** Re-assigns guest orders placed with the signed-in customer's (confirmed) e-mail to their account. */
@@ -34,6 +36,16 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   init: async () => {
     const { data: sessionData } = await supabase.auth.getSession()
     let session = sessionData.session
+
+    // A saved login can outlive its account (e.g. the customer was deleted in the admin panel). The server
+    // rejects it with 401 on every call, so verify it once up front and fall back to a fresh guest session.
+    if (session) {
+      const { error: userError } = await supabase.auth.getUser()
+      if (userError && (userError.status === 401 || userError.status === 403 || userError.status === 404)) {
+        await supabase.auth.signOut({ scope: 'local' })
+        session = null
+      }
+    }
 
     if (!session) {
       const { data, error } = await supabase.auth.signInAnonymously()
@@ -71,6 +83,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
     const { data } = await supabase.from('profiles').select('*').eq('id', userId).maybeSingle()
     set({ profile: (data as Profile) ?? null, isAdmin: data?.role === 'admin' || data?.role === 'staff' })
+  },
+
+  recoverSession: async () => {
+    await supabase.auth.signOut({ scope: 'local' })
+    useCartStore.getState().reset()
+    useWishlistStore.getState().reset()
+    const { data } = await supabase.auth.signInAnonymously()
+    set({ userId: data?.session?.user.id ?? null, isAnonymous: true, profile: null, isAdmin: false })
   },
 
   signOut: async () => {

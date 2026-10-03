@@ -5,6 +5,7 @@ import { Minus, Plus, Trash2 } from 'lucide-react'
 import { FunctionsHttpError } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
 import { useSeo } from '@/hooks/useSeo'
+import { invokeCreateOrder } from '@/lib/checkoutApi'
 import { useCartStore } from '@/store/cartStore'
 import { useAuthStore } from '@/store/authStore'
 import { useStoreSettings } from '@/hooks/useStoreSettings'
@@ -116,7 +117,7 @@ export default function Checkout() {
       paymentMethod,
     }
 
-    const { data, error } = await supabase.functions.invoke('checkout-create-order', { body: payload })
+    const { data, error } = await invokeCreateOrder(payload)
 
     if (error || data?.error) {
       let message = data?.error ?? 'Could not place order. Please try again.'
