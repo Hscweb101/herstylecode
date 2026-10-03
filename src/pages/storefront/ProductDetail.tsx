@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { Heart, Minus, Plus, Truck, Share2, Star, ChevronLeft, ChevronRight, ChevronDown, Lock, Banknote } from 'lucide-react'
+import { Heart, Minus, Plus, Truck, Share2, Star, ChevronLeft, ChevronRight, ChevronDown, Lock, Banknote, PenLine, X } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { fetchProductBySlug, fetchProducts } from '@/lib/queries'
 import type { Product, ProductVariant, Review } from '@/types'
@@ -19,7 +19,51 @@ import { useAuthStore } from '@/store/authStore'
 import { useSeo } from '@/hooks/useSeo'
 import { SITE_URL, BRAND_NAME, absoluteUrl, trimDescription } from '@/lib/seo'
 
+/** Full-screen preview for review photos: tap outside / X / Esc to close, arrows or swipe buttons to browse. */
+function ImageLightbox({ images, index, onClose }: { images: string[]; index: number; onClose: () => void }) {
+  const [i, setI] = useState(index)
+  const many = images.length > 1
+  const prev = () => setI((n) => (n - 1 + images.length) % images.length)
+  const next = () => setI((n) => (n + 1) % images.length)
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+      if (e.key === 'ArrowLeft' && images.length > 1) setI((n) => (n - 1 + images.length) % images.length)
+      if (e.key === 'ArrowRight' && images.length > 1) setI((n) => (n + 1) % images.length)
+    }
+    document.body.style.overflow = 'hidden'
+    window.addEventListener('keydown', onKey)
+    return () => {
+      document.body.style.overflow = ''
+      window.removeEventListener('keydown', onKey)
+    }
+  }, [images.length, onClose])
+
+  return (
+    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/85 p-4" role="dialog" aria-modal="true" aria-label="Review photo" onClick={onClose}>
+      <button type="button" aria-label="Close preview" onClick={onClose} className="absolute right-3 top-3 flex h-10 w-10 items-center justify-center rounded-full bg-white/15 text-white hover:bg-white/25">
+        <X size={22} />
+      </button>
+      {many && (
+        <button type="button" aria-label="Previous photo" onClick={(e) => { e.stopPropagation(); prev() }} className="absolute left-2 flex h-10 w-10 items-center justify-center rounded-full bg-white/15 text-white hover:bg-white/25 sm:left-6">
+          <ChevronLeft size={24} />
+        </button>
+      )}
+      <img src={images[i]} alt="" onClick={(e) => e.stopPropagation()} className="max-h-[88vh] max-w-full rounded-lg object-contain shadow-2xl" />
+      {many && (
+        <button type="button" aria-label="Next photo" onClick={(e) => { e.stopPropagation(); next() }} className="absolute right-2 flex h-10 w-10 items-center justify-center rounded-full bg-white/15 text-white hover:bg-white/25 sm:right-6">
+          <ChevronRight size={24} />
+        </button>
+      )}
+      {many && <span className="absolute bottom-4 rounded-full bg-black/50 px-3 py-1 text-xs text-white">{i + 1} / {images.length}</span>}
+    </div>
+  )
+}
+
 function ReviewForm({ productId, onSubmitted }: { productId: string; onSubmitted: () => void }) {
+  const [open, setOpen] = useState(false)
+  const profile = useAuthStore((s) => s.profile)
   const [rating, setRating] = useState(5)
   const [name, setName] = useState('')
   const [title, setTitle] = useState('')
@@ -52,12 +96,33 @@ function ReviewForm({ productId, onSubmitted }: { productId: string; onSubmitted
     setName('')
     setTitle('')
     setBody('')
+    setOpen(false)
     onSubmitted()
+  }
+
+  if (!open) {
+    return (
+      <button
+        type="button"
+        onClick={() => {
+          setName((n) => n || profile?.full_name || '')
+          setOpen(true)
+        }}
+        className="flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-brand-300 bg-blush-50 px-4 py-4 text-sm font-semibold text-brand-700 transition-colors hover:bg-blush-100"
+      >
+        <PenLine size={16} /> Write a Review
+      </button>
+    )
   }
 
   return (
     <form onSubmit={submit} className="space-y-4 rounded-2xl bg-blush-50 p-5">
-      <h4 className="font-serif text-lg">Write a Review</h4>
+      <div className="flex items-center justify-between">
+        <h4 className="font-serif text-lg">Write a Review</h4>
+        <button type="button" onClick={() => setOpen(false)} aria-label="Close review form" className="rounded-full p-1 text-ink-500 hover:bg-blush-100">
+          <X size={18} />
+        </button>
+      </div>
       <div className="flex items-center gap-1">
         {[1, 2, 3, 4, 5].map((n) => (
           <button type="button" key={n} onClick={() => setRating(n)}>
@@ -65,7 +130,7 @@ function ReviewForm({ productId, onSubmitted }: { productId: string; onSubmitted
           </button>
         ))}
       </div>
-      <Input label="Your Name" value={name} onChange={(e) => setName(e.target.value)} required />
+      <Input label="Your Name" autoFocus value={name} onChange={(e) => setName(e.target.value)} required />
       <Input label="Review Title (optional)" value={title} onChange={(e) => setTitle(e.target.value)} />
       <Textarea label="Your Review" value={body} onChange={(e) => setBody(e.target.value)} required />
       <Button type="submit" loading={submitting}>
@@ -255,6 +320,7 @@ export default function ProductDetail() {
   const [related, setRelated] = useState<Product[]>([])
   const [recentlyViewed, setRecentlyViewed] = useState<Product[]>([])
   const [canReview, setCanReview] = useState(false)
+  const [lightbox, setLightbox] = useState<{ images: string[]; index: number } | null>(null)
   const [quickCheckoutOpen, setQuickCheckoutOpen] = useState(false)
   const [showStickyBar, setShowStickyBar] = useState(false)
   const actionsRef = useRef<HTMLDivElement>(null)
@@ -661,9 +727,17 @@ export default function ProductDetail() {
                   {r.title && <p className="mt-1 text-sm font-medium text-ink-900">{r.title}</p>}
                   <p className="mt-1 text-sm text-ink-500">{r.body}</p>
                   {r.images && r.images.length > 0 && (
-                    <div className="mt-2 flex gap-2">
+                    <div className="mt-2 flex flex-wrap gap-2">
                       {r.images.map((url, idx) => (
-                        <img key={idx} src={url} alt="" loading="lazy" className="h-14 w-14 rounded-lg object-cover" />
+                        <button
+                          key={idx}
+                          type="button"
+                          aria-label={`View review photo ${idx + 1}`}
+                          onClick={() => setLightbox({ images: r.images, index: idx })}
+                          className="overflow-hidden rounded-lg ring-1 ring-blush-200 transition hover:ring-brand-400"
+                        >
+                          <img src={url} alt="" loading="lazy" className="h-16 w-16 cursor-zoom-in object-cover" />
+                        </button>
                       ))}
                     </div>
                   )}
@@ -682,6 +756,8 @@ export default function ProductDetail() {
           </div>
         </div>
       </div>
+
+      {lightbox && <ImageLightbox images={lightbox.images} index={lightbox.index} onClose={() => setLightbox(null)} />}
 
       {related.length > 0 && (
         <div className="mt-16">
