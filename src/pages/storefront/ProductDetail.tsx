@@ -45,17 +45,20 @@ function ImageLightbox({ images, index, onClose }: { images: string[]; index: nu
       <button type="button" aria-label="Close preview" onClick={onClose} className="absolute right-3 top-3 flex h-10 w-10 items-center justify-center rounded-full bg-white/15 text-white hover:bg-white/25">
         <X size={22} />
       </button>
-      {many && (
-        <button type="button" aria-label="Previous photo" onClick={(e) => { e.stopPropagation(); prev() }} className="absolute left-2 flex h-10 w-10 items-center justify-center rounded-full bg-white/15 text-white hover:bg-white/25 sm:left-6">
-          <ChevronLeft size={24} />
-        </button>
-      )}
-      <img src={images[i]} alt="" onClick={(e) => e.stopPropagation()} className="max-h-[88vh] max-w-full rounded-lg object-contain shadow-2xl" />
-      {many && (
-        <button type="button" aria-label="Next photo" onClick={(e) => { e.stopPropagation(); next() }} className="absolute right-2 flex h-10 w-10 items-center justify-center rounded-full bg-white/15 text-white hover:bg-white/25 sm:right-6">
-          <ChevronRight size={24} />
-        </button>
-      )}
+      {/* Image frame: capped size on big screens; arrows sit outside it on desktop, over it on phones */}
+      <div className="relative" onClick={(e) => e.stopPropagation()}>
+        <img src={images[i]} alt="" className="max-h-[72vh] max-w-[min(92vw,640px)] rounded-xl object-contain shadow-2xl" />
+        {many && (
+          <button type="button" aria-label="Previous photo" onClick={prev} className="absolute left-2 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/40 text-white hover:bg-black/60 sm:-left-14 sm:bg-white/15 sm:hover:bg-white/25">
+            <ChevronLeft size={24} />
+          </button>
+        )}
+        {many && (
+          <button type="button" aria-label="Next photo" onClick={next} className="absolute right-2 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/40 text-white hover:bg-black/60 sm:-right-14 sm:bg-white/15 sm:hover:bg-white/25">
+            <ChevronRight size={24} />
+          </button>
+        )}
+      </div>
       {many && <span className="absolute bottom-4 rounded-full bg-black/50 px-3 py-1 text-xs text-white">{i + 1} / {images.length}</span>}
     </div>
   )
