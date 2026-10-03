@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import {
-  LayoutDashboard, Package, FolderTree, ShoppingCart, Users, Ticket, Star, Image, Film, Sparkles, Newspaper, FileText, Settings, LogOut, ExternalLink, Menu, X, Link2, Boxes,
+  LayoutDashboard, Package, FolderTree, ShoppingCart, Users, Ticket, Star, Layers, Settings, LogOut, ExternalLink, Menu, X, Link2, Boxes,
 } from 'lucide-react'
 import logo from '@/assets/logo.png'
 import { useAuthStore } from '@/store/authStore'
@@ -32,13 +32,7 @@ const navGroups: { label: string; items: { to: string; label: string; icon: type
   },
   {
     label: 'Content',
-    items: [
-      { to: '/admin/banners', label: 'Banners', icon: Image },
-      { to: '/admin/reels', label: 'Reels', icon: Film },
-      { to: '/admin/moments', label: 'Every Moment', icon: Sparkles },
-      { to: '/admin/blog', label: 'Blog', icon: Newspaper },
-      { to: '/admin/pages', label: 'Pages', icon: FileText },
-    ],
+    items: [{ to: '/admin/content', label: 'Content', icon: Layers }],
   },
   {
     label: 'System',

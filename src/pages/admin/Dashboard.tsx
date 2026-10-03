@@ -8,10 +8,9 @@ import { supabase } from '@/lib/supabase'
 import { formatINR, formatDate, isUnpaidOnlineOrder, cn } from '@/lib/utils'
 import { PageHeader, StatCard, Card, Table, Th, Td } from '@/components/admin/AdminUI'
 import { Badge, FullPageSpinner } from '@/components/ui/Misc'
+import { DateRangeFilter, defaultRange, inRange, resolveRange, type DateRangeValue } from '@/components/admin/DateRangeFilter'
 import type { Order } from '@/types'
 
-const HISTORY_DAYS = 90
-const RANGES = [7, 14, 30, 90] as const
 
 const STATUS_LABELS: Record<string, string> = {
   new: 'Placed', paid: 'Paid', processing: 'Processing', packed: 'Packed', shipped: 'Shipped',
@@ -32,12 +31,8 @@ const startOfDay = (d: Date) => {
   x.setHours(0, 0, 0, 0)
   return x
 }
-const daysAgo = (n: number) => {
-  const d = startOfDay(new Date())
-  d.setDate(d.getDate() - n)
-  return d
-}
 const dayKey = (d: Date) => `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`
+const monthKey = (d: Date) => `${d.getFullYear()}-${d.getMonth() + 1}`
 const shortDay = (d: Date) => d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })
 const compact = (v: number) => (v >= 100000 ? `${(v / 100000).toFixed(1)}L` : v >= 1000 ? `${Math.round(v / 1000)}k` : `${v}`)
 const isLost = (s: string) => ['cancelled', 'returned', 'refunded'].includes(s)
@@ -49,11 +44,11 @@ export default function Dashboard() {
   const [topItems, setTopItems] = useState<{ order_id: string; product_name: string; quantity: number; line_total: number }[]>([])
   const [lowStock, setLowStock] = useState<ProductRow[]>([])
   const [totals, setTotals] = useState({ allTimeSales: 0, orderCount: 0, productCount: 0, customerCount: 0 })
-  const [range, setRange] = useState<(typeof RANGES)[number]>(30)
+  const [dateRange, setDateRange] = useState<DateRangeValue>(defaultRange('30d'))
+  const range = useMemo(() => resolveRange(dateRange), [dateRange])
 
   useEffect(() => {
     async function load() {
-      const since = daysAgo(HISTORY_DAYS).toISOString()
       const [allOrders, products, customerProfiles, stock, recent] = await Promise.all([
         supabase.from('orders').select('id, customer_id, total_amount, status, payment_status, payment_method, placed_at'),
         supabase.from('products').select('id', { count: 'exact', head: true }),
@@ -72,38 +67,64 @@ export default function Dashboard() {
         productCount: products.count ?? 0,
         customerCount: realCustomers,
       })
-      const windowed = all.filter((o) => new Date(o.placed_at) >= new Date(since))
-      setOrders(windowed)
+      setOrders(all)
       setLowStock(((stock.data as ProductRow[]) ?? []).filter((p) => p.stock_quantity <= p.low_stock_threshold).sort((a, b) => a.stock_quantity - b.stock_quantity))
       setRecentOrders((recent.data as Order[]) ?? [])
 
-      if (windowed.length > 0) {
-        const { data: items } = await supabase
-          .from('order_items')
-          .select('order_id, product_name, quantity, line_total')
-          .in('order_id', windowed.map((o) => o.id))
-        setTopItems((items as typeof topItems) ?? [])
-      }
       setLoading(false)
     }
     load()
   }, [])
 
-  const view = useMemo(() => {
-    const live = orders.filter((o) => !isLost(o.status))
-    const sum = (list: OrderRow[]) => list.reduce((s, o) => s + Number(o.total_amount), 0)
-    const todayStart = startOfDay(new Date())
-    const weekStart = daysAgo(7)
+  // Line items only for the orders inside the selected range (powers "Top products").
+  useEffect(() => {
+    let active = true
+    async function loadItems() {
+      const ids = orders.filter((o) => !isLost(o.status) && inRange(o.placed_at, range)).map((o) => o.id)
+      const rows: typeof topItems = []
+      for (let i = 0; i < ids.length; i += 150) {
+        const { data } = await supabase.from('order_items').select('order_id, product_name, quantity, line_total').in('order_id', ids.slice(i, i + 150))
+        rows.push(...((data as typeof topItems) ?? []))
+      }
+      if (active) setTopItems(rows)
+    }
+    if (orders.length) loadItems()
+    return () => {
+      active = false
+    }
+  }, [orders, range])
 
-    const inRange = orders.filter((o) => new Date(o.placed_at) >= daysAgo(range - 1))
-    const liveInRange = inRange.filter((o) => !isLost(o.status))
+  const view = useMemo(() => {
+    const sum = (list: OrderRow[]) => list.reduce((acc, o) => acc + Number(o.total_amount), 0)
+    const inRangeOrders = orders.filter((o) => inRange(o.placed_at, range))
+    const liveInRange = inRangeOrders.filter((o) => !isLost(o.status))
+
+    // Chart granularity: hourly for a single day, daily up to ~3 months, monthly beyond that.
+    const earliest = orders.length ? new Date(Math.min(...orders.map((o) => new Date(o.placed_at).getTime()))) : new Date()
+    const start = startOfDay(range.start ?? earliest)
+    const end = range.end ?? new Date(startOfDay(new Date()).getTime() + 86400000)
+    const spanDays = Math.max(1, Math.round((end.getTime() - start.getTime()) / 86400000))
+    const mode: 'hour' | 'day' | 'month' = spanDays <= 1 ? 'hour' : spanDays <= 92 ? 'day' : 'month'
+
     const buckets = new Map<string, { label: string; revenue: number; orders: number }>()
-    for (let i = range - 1; i >= 0; i--) {
-      const d = daysAgo(i)
-      buckets.set(dayKey(d), { label: shortDay(d), revenue: 0, orders: 0 })
+    if (mode === 'hour') {
+      for (let h = 0; h < 24; h++) buckets.set(String(h), { label: `${h % 12 || 12}${h < 12 ? 'am' : 'pm'}`, revenue: 0, orders: 0 })
+    } else if (mode === 'day') {
+      for (let i = 0; i < spanDays; i++) {
+        const d = new Date(start)
+        d.setDate(d.getDate() + i)
+        buckets.set(dayKey(d), { label: shortDay(d), revenue: 0, orders: 0 })
+      }
+    } else {
+      const cur = new Date(start.getFullYear(), start.getMonth(), 1)
+      while (cur < end) {
+        buckets.set(monthKey(cur), { label: cur.toLocaleDateString('en-IN', { month: 'short', year: '2-digit' }), revenue: 0, orders: 0 })
+        cur.setMonth(cur.getMonth() + 1)
+      }
     }
     for (const o of liveInRange) {
-      const b = buckets.get(dayKey(new Date(o.placed_at)))
+      const d = new Date(o.placed_at)
+      const b = buckets.get(mode === 'hour' ? String(d.getHours()) : mode === 'day' ? dayKey(d) : monthKey(d))
       if (b) {
         b.revenue += Number(o.total_amount)
         b.orders += 1
@@ -111,7 +132,7 @@ export default function Dashboard() {
     }
 
     const statusCounts = new Map<string, number>()
-    for (const o of inRange) statusCounts.set(o.status, (statusCounts.get(o.status) ?? 0) + 1)
+    for (const o of inRangeOrders) statusCounts.set(o.status, (statusCounts.get(o.status) ?? 0) + 1)
 
     const rangeIds = new Set(liveInRange.map((o) => o.id))
     const byProduct = new Map<string, { revenue: number; qty: number }>()
@@ -125,8 +146,6 @@ export default function Dashboard() {
 
     const rangeRevenue = sum(liveInRange)
     return {
-      todayOrders: live.filter((o) => new Date(o.placed_at) >= todayStart).length,
-      weekRevenue: sum(live.filter((o) => new Date(o.placed_at) >= weekStart)),
       rangeRevenue,
       rangeOrders: liveInRange.length,
       avgOrder: liveInRange.length ? rangeRevenue / liveInRange.length : 0,
@@ -140,12 +159,13 @@ export default function Dashboard() {
         .slice(0, 6),
     }
   }, [orders, topItems, range])
+  const rangeLabel = range.label
 
   if (loading) return <FullPageSpinner />
 
   return (
     <div>
-      <PageHeader title="Dashboard" description="Overview of your store performance" />
+      <PageHeader title="Dashboard" description="Overview of your store performance" action={<DateRangeFilter value={dateRange} onChange={setDateRange} />} />
 
       <div className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 sm:gap-4 xl:grid-cols-4">
         <StatCard label="Total Sales (paid)" value={formatINR(totals.allTimeSales)} icon={IndianRupee} tone="brand" />
@@ -155,9 +175,9 @@ export default function Dashboard() {
       </div>
 
       <div className="mt-3 grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 sm:mt-4 sm:gap-4 xl:grid-cols-4">
-        <StatCard label="Today's Orders" value={view.todayOrders} icon={CalendarDays} tone="blue" />
-        <StatCard label="Revenue (7 days)" value={formatINR(view.weekRevenue)} icon={TrendingUp} tone="green" />
-        <StatCard label={`Revenue (${range} days)`} value={formatINR(view.rangeRevenue)} sub={`${view.rangeOrders} orders · avg ${formatINR(view.avgOrder)}`} icon={IndianRupee} tone="brand" />
+        <StatCard label={`Revenue · ${rangeLabel}`} value={formatINR(view.rangeRevenue)} icon={IndianRupee} tone="brand" />
+        <StatCard label={`Orders · ${rangeLabel}`} value={view.rangeOrders} icon={CalendarDays} tone="blue" />
+        <StatCard label="Avg. order value" value={formatINR(view.avgOrder)} icon={TrendingUp} tone="green" />
         <StatCard label="Low Stock Alerts" value={lowStock.length} icon={AlertTriangle} tone={lowStock.length ? 'red' : 'green'} sub={lowStock.length ? 'Needs attention' : 'All stocked'} subTone={lowStock.length ? 'warn' : 'good'} />
       </div>
 
@@ -167,17 +187,6 @@ export default function Dashboard() {
             <div>
               <h2 className="font-medium text-gray-900">Revenue</h2>
               <p className="text-xs text-gray-400">Excludes cancelled, returned and unpaid online orders</p>
-            </div>
-            <div className="flex rounded-lg bg-gray-100 p-0.5">
-              {RANGES.map((r) => (
-                <button
-                  key={r}
-                  onClick={() => setRange(r)}
-                  className={cn('rounded-md px-2.5 py-1 text-xs font-medium', range === r ? 'bg-white text-brand-700 shadow-sm' : 'text-gray-500 hover:text-gray-800')}
-                >
-                  {r}d
-                </button>
-              ))}
             </div>
           </div>
           <div className="mt-4 h-64">
@@ -201,7 +210,7 @@ export default function Dashboard() {
 
         <Card>
           <h2 className="font-medium text-gray-900">Orders by status</h2>
-          <p className="text-xs text-gray-400">Last {range} days</p>
+          <p className="text-xs text-gray-400">{rangeLabel}</p>
           {view.statusBreakdown.length > 0 ? (
             <div className="mt-2 h-64">
               <ResponsiveContainer width="100%" height="100%">
@@ -225,7 +234,7 @@ export default function Dashboard() {
       <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-3">
         <Card>
           <h2 className="font-medium text-gray-900">Orders per day</h2>
-          <p className="text-xs text-gray-400">Last {range} days</p>
+          <p className="text-xs text-gray-400">{rangeLabel}</p>
           <div className="mt-4 h-56">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={view.trend} margin={{ left: 0, right: 4, top: 4, bottom: 0 }}>
@@ -241,7 +250,7 @@ export default function Dashboard() {
 
         <Card className="lg:col-span-2">
           <h2 className="font-medium text-gray-900">Top products by revenue</h2>
-          <p className="text-xs text-gray-400">Last {range} days</p>
+          <p className="text-xs text-gray-400">{rangeLabel}</p>
           {view.topProducts.length > 0 ? (
             <div className="mt-4 h-56">
               <ResponsiveContainer width="100%" height="100%">

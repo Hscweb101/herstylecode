@@ -40,11 +40,7 @@ const OrderDetailAdmin = lazy(() => import('@/pages/admin/OrderDetailAdmin'))
 const CustomersAdmin = lazy(() => import('@/pages/admin/CustomersAdmin'))
 const CouponsAdmin = lazy(() => import('@/pages/admin/CouponsAdmin'))
 const ReviewsAdmin = lazy(() => import('@/pages/admin/ReviewsAdmin'))
-const BannersAdmin = lazy(() => import('@/pages/admin/BannersAdmin'))
-const ReelsAdmin = lazy(() => import('@/pages/admin/ReelsAdmin'))
-const MomentsAdmin = lazy(() => import('@/pages/admin/MomentsAdmin'))
-const BlogAdmin = lazy(() => import('@/pages/admin/BlogAdmin'))
-const PagesAdmin = lazy(() => import('@/pages/admin/PagesAdmin'))
+const ContentAdmin = lazy(() => import('@/pages/admin/ContentAdmin'))
 const SettingsAdmin = lazy(() => import('@/pages/admin/SettingsAdmin'))
 const InventoryAdmin = lazy(() => import('@/pages/admin/InventoryAdmin'))
 
@@ -119,11 +115,12 @@ export default function App() {
           <Route path="customers" element={<CustomersAdmin />} />
           <Route path="coupons" element={<CouponsAdmin />} />
           <Route path="reviews" element={<ReviewsAdmin />} />
-          <Route path="banners" element={<BannersAdmin />} />
-          <Route path="reels" element={<ReelsAdmin />} />
-          <Route path="moments" element={<MomentsAdmin />} />
-          <Route path="blog" element={<BlogAdmin />} />
-          <Route path="pages" element={<PagesAdmin />} />
+          <Route path="content" element={<Navigate to="/admin/content/banners" replace />} />
+          <Route path="content/:tab" element={<ContentAdmin />} />
+          {/* old bookmarks */}
+          {['banners', 'reels', 'moments', 'blog', 'pages'].map((t) => (
+            <Route key={t} path={t} element={<Navigate to={`/admin/content/${t}`} replace />} />
+          ))}
           <Route path="settings" element={<SettingsAdmin />} />
           <Route path="inventory" element={<InventoryAdmin />} />
         </Route>

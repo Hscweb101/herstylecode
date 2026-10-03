@@ -8,6 +8,7 @@ import { PageHeader, Table, Th, Td, IconButton, ConfirmModal } from '@/component
 import { Badge, FullPageSpinner } from '@/components/ui/Misc'
 import { Input, Select } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
+import { DateRangeFilter, defaultRange, inRange, resolveRange, type DateRangeValue } from '@/components/admin/DateRangeFilter'
 import type { Order, OrderStatus } from '@/types'
 
 const STATUSES: OrderStatus[] = ['new', 'paid', 'processing', 'packed', 'shipped', 'out_for_delivery', 'delivered', 'cancelled', 'returned', 'refunded']
@@ -31,6 +32,7 @@ export default function OrdersList() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
+  const [dateRange, setDateRange] = useState<DateRangeValue>(defaultRange('all'))
   const [deleteTarget, setDeleteTarget] = useState<Order | null>(null)
 
   useEffect(() => {
@@ -40,7 +42,9 @@ export default function OrdersList() {
     })
   }, [])
 
+  const range = resolveRange(dateRange)
   const filtered = orders.filter((o) => {
+    if (!inRange(o.placed_at, range)) return false
     const matchesSearch = !search || o.order_number.toLowerCase().includes(search.toLowerCase()) || o.guest_phone?.includes(search) || o.guest_email?.toLowerCase().includes(search.toLowerCase())
     // Failed/abandoned online payments are hidden unless the "Failed / Unpaid" filter is chosen.
     const matchesStatus = statusFilter === UNPAID ? isUnpaidOnlineOrder(o) : !isUnpaidOnlineOrder(o) && (!statusFilter || o.status === statusFilter)
@@ -73,8 +77,9 @@ export default function OrdersList() {
 
   return (
     <div>
-      <PageHeader title="Orders" description={`${orders.filter((o) => !isUnpaidOnlineOrder(o)).length} orders`} action={<Button variant="outline" onClick={handleExport}><Download size={15} /> Export CSV</Button>} />
-      <div className="mb-4 flex flex-wrap gap-3">
+      <PageHeader title="Orders" description={`${filtered.length} orders${dateRange.preset === 'all' ? '' : ` · ${range.label}`}`} action={<Button variant="outline" onClick={handleExport}><Download size={15} /> Export CSV</Button>} />
+      <div className="mb-4 flex flex-wrap items-center gap-3">
+        <DateRangeFilter value={dateRange} onChange={setDateRange} />
         <Input placeholder="Search order #, phone, email..." value={search} onChange={(e) => setSearch(e.target.value)} className="max-w-xs" />
         <Select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="max-w-xs">
           <option value="">All Statuses</option>

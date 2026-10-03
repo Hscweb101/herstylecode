@@ -1,5 +1,5 @@
 import { Link, NavLink } from 'react-router-dom'
-import { Search, Heart, ShoppingBag, User, Menu, X, ChevronDown, PackageSearch } from 'lucide-react'
+import { Search, Heart, ShoppingBag, User, Menu, X, ChevronDown } from 'lucide-react'
 import logo from '@/assets/logo.png'
 import { useUIStore } from '@/store/uiStore'
 import { useCartStore } from '@/store/cartStore'
@@ -125,29 +125,18 @@ export function Header() {
 
       {mobileMenuOpen && (
         <div className="border-t border-blush-100 bg-white px-4 py-4 md:hidden">
-          <nav className="flex flex-col gap-3">
-            {primaryLinks.map((l) => (
-              <Link key={l.to} to={l.to} onClick={() => setMobileMenuOpen(false)} className="text-sm font-medium text-ink-700">
+          <nav className="flex flex-col divide-y divide-blush-100">
+            {[
+              ...primaryLinks,
+              { label: 'Categories', to: '/shop' },
+              { label: 'Track Order', to: '/track-order' },
+              ...infoLinks,
+              { label: isAnonymous ? 'Sign In / Register' : 'My Account', to: '/account' },
+            ].map((l) => (
+              <Link key={l.label} to={l.to} onClick={() => setMobileMenuOpen(false)} className="py-3 text-sm font-medium text-ink-700 hover:text-brand-600">
                 {l.label}
               </Link>
             ))}
-            <div className="my-1 h-px bg-blush-100" />
-            <Link to="/shop" onClick={() => setMobileMenuOpen(false)} className="text-sm font-medium text-ink-700">
-              Categories
-            </Link>
-            <div className="my-1 h-px bg-blush-100" />
-            <Link to="/track-order" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-2 text-sm font-medium text-ink-700">
-              <PackageSearch size={16} className="text-brand-500" /> Track Order
-            </Link>
-            {infoLinks.map((l) => (
-              <Link key={l.to} to={l.to} onClick={() => setMobileMenuOpen(false)} className="text-sm font-medium text-ink-700">
-                {l.label}
-              </Link>
-            ))}
-            <div className="my-1 h-px bg-blush-100" />
-            <Link to="/account" onClick={() => setMobileMenuOpen(false)} className="text-sm font-medium text-brand-600">
-              {isAnonymous ? 'Sign In / Register' : 'My Account'}
-            </Link>
           </nav>
         </div>
       )}
