@@ -62,7 +62,7 @@ Deno.serve(async (req) => {
       let query = admin.from('orders').select(SELECT).order('placed_at', { ascending: false }).limit(50)
       if (isEmail) {
         // ilike with the wildcard characters escaped, then re-checked exactly below.
-        query = query.ilike('guest_email', contact.replace(/[\%_]/g, (c) => `\${c}`))
+        query = query.ilike('guest_email', contact.replace(/[\\%_]/g, (c) => '\\' + c))
       } else {
         query = query.ilike('guest_phone', `%${phone.slice(-10)}`)
       }
