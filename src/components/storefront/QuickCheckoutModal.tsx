@@ -47,7 +47,7 @@ function validate(f: FormState): Errors {
   const e: Errors = {}
   if (f.full_name.trim().length < 2) e.full_name = 'Enter your full name'
   if (!/^[6-9]\d{9}$/.test(normalizePhone(f.phone))) e.phone = 'Enter a valid 10-digit mobile number'
-  if (f.address.trim().length < 4) e.address = 'Enter your house / building / street'
+  if (!f.address.trim()) e.address = 'Enter your address'
   if (!/^\d{6}$/.test(f.pincode.trim())) e.pincode = 'Enter a 6-digit pincode'
   if (!f.city.trim()) e.city = 'Enter your city'
   if (!f.state.trim()) e.state = 'Select your state'
@@ -434,7 +434,7 @@ export function QuickCheckoutModal({ product, variant, qty: initialQty, onClose 
                   <input type="tel" inputMode="numeric" autoComplete="tel-national" placeholder="10-digit mobile number" className={fieldCls} {...bind('phone')} />
                 </Row>
                 <Row label="Complete Address" required icon={<Home size={15} />} error={shownErrors.address}>
-                  <input autoComplete="address-line1" placeholder="House No., Building, Street" className={fieldCls} {...bind('address')} />
+                  <input autoComplete="address-line1" placeholder="House / Building / Street / Area" className={fieldCls} {...bind('address')} />
                 </Row>
                 <Row label="Landmark" icon={<MapPin size={15} />}>
                   <input autoComplete="address-line2" placeholder="Nearby School, Hospital, Shop ..." className={fieldCls} {...bind('landmark')} />
