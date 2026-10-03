@@ -1,10 +1,11 @@
 import { Link, NavLink } from 'react-router-dom'
-import { Search, Heart, ShoppingBag, User, Menu, X, ChevronDown } from 'lucide-react'
+import { Search, Heart, ShoppingBag, User, Menu, X, ChevronDown, PackageSearch } from 'lucide-react'
 import logo from '@/assets/logo.png'
 import { useUIStore } from '@/store/uiStore'
 import { useCartStore } from '@/store/cartStore'
 import { useWishlistStore } from '@/store/wishlistStore'
 import { useStoreSettings } from '@/hooks/useStoreSettings'
+import { useAuthStore } from '@/store/authStore'
 import { Marquee } from '@/components/ui/Marquee'
 import { MegaShell, ShopMegaMenu } from '@/components/storefront/MegaMenu'
 import { useHoverMenu } from '@/hooks/useHoverMenu'
@@ -44,6 +45,7 @@ export function Header() {
   const { setCartOpen, setSearchOpen, mobileMenuOpen, setMobileMenuOpen } = useUIStore()
   const { categories } = useCategories()
   const shopMenu = useHoverMenu<boolean>()
+  const isAnonymous = useAuthStore((s) => s.isAnonymous)
 
   return (
     <header className="relative z-40 border-b border-blush-100 bg-cream/95">
@@ -134,8 +136,17 @@ export function Header() {
               Categories
             </Link>
             <div className="my-1 h-px bg-blush-100" />
+            <Link to="/track-order" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-2 text-sm font-medium text-ink-700">
+              <PackageSearch size={16} className="text-brand-500" /> Track Order
+            </Link>
+            {infoLinks.map((l) => (
+              <Link key={l.to} to={l.to} onClick={() => setMobileMenuOpen(false)} className="text-sm font-medium text-ink-700">
+                {l.label}
+              </Link>
+            ))}
+            <div className="my-1 h-px bg-blush-100" />
             <Link to="/account" onClick={() => setMobileMenuOpen(false)} className="text-sm font-medium text-brand-600">
-              My Account
+              {isAnonymous ? 'Sign In / Register' : 'My Account'}
             </Link>
           </nav>
         </div>

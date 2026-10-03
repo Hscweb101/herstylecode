@@ -11,8 +11,10 @@ export default function Blog() {
   const [loading, setLoading] = useState(true)
 
   useSeo({
-    title: 'Blog',
-    description: 'Styling tips, jewellery care guides and the latest trends from HerStyleCode.',
+    title: 'Jewellery Style Guides, Care Tips & Trends - HerStyleCode Journal',
+    absoluteTitle: true,
+    description: 'Styling tips, jewellery care guides and the latest fashion jewellery trends from HerStyleCode (Her Style Code).',
+    path: '/blog',
   })
 
   useEffect(() => {

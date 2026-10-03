@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { Heart, Clock, Award, Gift, Sparkles } from 'lucide-react'
 import { useInView } from '@/hooks/useInView'
 import { cn } from '@/lib/utils'
+import { useSeo } from '@/hooks/useSeo'
 import { BrandStoryText, Emphasis, Lines, Para, ScriptLine } from '@/components/storefront/BrandCopy'
 import heroImg from '@/assets/about/aboutbg.webp'
 import storyImg from '@/assets/about/aboutimg1.webp'
@@ -54,6 +55,11 @@ const philosophyItems = [
 ]
 
 export default function AboutUs() {
+  useSeo({
+    title: 'About HerStyleCode (Her Style Code) - Our Story & Jewellery Philosophy',
+    description: 'HerStyleCode is a modern Indian fashion jewellery brand - "Your Style. Your Rules." Learn our story and why we design jewellery for every mood and moment.',
+    path: '/page/about-us',
+  })
   return (
     <div className="overflow-x-clip">
       {/* Hero */}

@@ -63,6 +63,9 @@ export default function BlogPost() {
     title: post?.seo_title || post?.title || 'Blog',
     description: post?.seo_description ?? post?.excerpt ?? undefined,
     image: post?.cover_image_url ?? undefined,
+    path: post ? `/blog/${post.slug}` : undefined,
+    type: 'article',
+    noindex: !loading && !post,
     jsonLd,
   })
 

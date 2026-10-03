@@ -2,49 +2,72 @@ import { cn } from '@/lib/utils'
 
 export function PageHeader({ title, description, action }: { title: string; description?: string; action?: React.ReactNode }) {
   return (
-    <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+    <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
       <div>
-        <h1 className="font-serif text-2xl text-ink-900">{title}</h1>
-        {description && <p className="text-sm text-ink-500">{description}</p>}
+        <h1 className="text-xl font-semibold text-gray-900 sm:text-2xl">{title}</h1>
+        {description && <p className="text-sm text-gray-500">{description}</p>}
       </div>
       {action}
     </div>
   )
 }
 
-export function StatCard({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
+export function StatCard({
+  label, value, sub, icon: Icon, tone = 'brand', subTone = 'good',
+}: {
+  label: string
+  value: string | number
+  sub?: string
+  icon?: React.ComponentType<{ size?: number }>
+  tone?: 'brand' | 'blue' | 'green' | 'amber' | 'red'
+  subTone?: 'good' | 'warn'
+}) {
+  const tones = {
+    brand: 'bg-brand-50 text-brand-600',
+    blue: 'bg-blue-50 text-blue-600',
+    green: 'bg-emerald-50 text-emerald-600',
+    amber: 'bg-amber-50 text-amber-600',
+    red: 'bg-red-50 text-red-600',
+  }
   return (
-    <div className="rounded-2xl bg-white p-5 shadow-luxe-sm">
-      <p className="text-xs font-medium uppercase tracking-wide text-ink-300">{label}</p>
-      <p className="mt-2 font-serif text-2xl text-ink-900">{value}</p>
-      {sub && <p className="mt-1 text-xs text-emerald-600">{sub}</p>}
+    <div className="flex items-start justify-between gap-3 rounded-xl border border-gray-200 bg-white p-4 sm:p-5">
+      <div className="min-w-0">
+        <p className="text-sm text-gray-500">{label}</p>
+        <p className="mt-1 truncate text-2xl font-semibold tabular-nums text-gray-900">{value}</p>
+        {sub && <p className={cn('mt-1 text-xs', subTone === 'warn' ? 'text-red-600' : 'text-emerald-600')}>{sub}</p>}
+      </div>
+      {Icon && (
+        <span className={cn('flex h-10 w-10 shrink-0 items-center justify-center rounded-lg', tones[tone])}>
+          <Icon size={19} />
+        </span>
+      )}
     </div>
   )
 }
 
 export function Card({ className, children }: { className?: string; children: React.ReactNode }) {
-  return <div className={cn('rounded-2xl bg-white p-5 shadow-luxe-sm', className)}>{children}</div>
+  return <div className={cn('rounded-xl border border-gray-200 bg-white p-4 sm:p-5', className)}>{children}</div>
 }
 
 export function Table({ children }: { children: React.ReactNode }) {
   return (
-    <div className="overflow-x-auto rounded-2xl bg-white shadow-luxe-sm">
+    <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white">
       <table className="w-full min-w-[640px] text-left text-sm">{children}</table>
     </div>
   )
 }
 
 export function Th({ children }: { children: React.ReactNode }) {
-  return <th className="border-b border-blush-100 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-ink-500">{children}</th>
+  return <th className="border-b border-gray-200 bg-gray-50 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">{children}</th>
 }
 
 export function Td({ children, className }: { children: React.ReactNode; className?: string }) {
-  return <td className={cn('border-b border-blush-50 px-4 py-3 align-middle', className)}>{children}</td>
+  return <td className={cn('border-b border-gray-100 px-4 py-3 align-middle', className)}>{children}</td>
 }
 
 export function IconButton({ onClick, children, className, title }: { onClick?: () => void; children: React.ReactNode; className?: string; title?: string }) {
   return (
-    <button onClick={onClick} title={title} className={cn('rounded-lg p-2 text-ink-500 hover:bg-blush-50 hover:text-brand-600', className)}>
+    <button onClick={onClick} title={title} className={cn('rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-brand-600', className)}>
       {children}
     </button>
   )
@@ -62,13 +85,13 @@ export function ConfirmModal({
 }) {
   if (!open) return null
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink-900/40 px-4">
-      <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl">
-        <h3 className="font-serif text-lg text-ink-900">{title}</h3>
-        {description && <p className="mt-2 text-sm text-ink-500">{description}</p>}
+    <div className="admin-ui fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+      <div className="w-full max-w-sm rounded-xl bg-white p-6 shadow-2xl">
+        <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+        {description && <p className="mt-2 text-sm text-gray-500">{description}</p>}
         <div className="mt-6 flex justify-end gap-2">
-          <button onClick={onCancel} className="rounded-full px-4 py-2 text-sm text-ink-700 hover:bg-blush-50">Cancel</button>
-          <button onClick={onConfirm} className="rounded-full bg-red-600 px-4 py-2 text-sm text-white hover:bg-red-700">{confirmLabel}</button>
+          <button onClick={onCancel} className="rounded-lg px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Cancel</button>
+          <button onClick={onConfirm} className="rounded-lg bg-red-600 px-4 py-2 text-sm text-white hover:bg-red-700">{confirmLabel}</button>
         </div>
       </div>
     </div>

@@ -10,6 +10,7 @@ import { Pagination } from '@/components/ui/Pagination'
 import { Select } from '@/components/ui/Input'
 import { useCategories } from '@/hooks/useCategories'
 import { cn, discountPercent, formatINR } from '@/lib/utils'
+import { useSeo } from '@/hooks/useSeo'
 
 const TITLES: Record<string, string> = {
   'new-arrivals': 'New Arrivals',
@@ -138,6 +139,18 @@ export default function Shop({ mode }: { mode: 'all' | 'collection' | 'category'
         : mode === 'collection'
           ? TITLES[slug ?? ''] ?? slug
           : slug?.replace(/-/g, ' ')
+
+  const seoName = (pageTitle ?? '').toString().replace(/\b\w/g, (c) => c.toUpperCase())
+  const filtered = Boolean(search || colourParam || maxPriceParam || minPriceParam || page > 1 || (searchParams.get('sort') && searchParams.get('sort') !== 'newest'))
+  useSeo({
+    title: mode === 'all' ? 'Shop Fashion Jewellery Online - Earrings, Necklaces, Rings & Bangles' : `${seoName} - Buy Online in India`,
+    description:
+      mode === 'all'
+        ? 'Shop all HerStyleCode (Her Style Code) fashion & artificial jewellery online in India - earrings, necklaces, rings, bangles and sets. Free shipping above ₹999, COD available.'
+        : `Shop ${seoName} at HerStyleCode (Her Style Code) - trendy fashion jewellery with free shipping above ₹999 and Cash on Delivery across India.`,
+    path: mode === 'all' ? '/shop' : mode === 'collection' ? `/collections/${slug}` : `/category/${slug}`,
+    noindex: filtered,
+  })
 
   // Overall price range of the store, so the slider always spans the same scale.
   useEffect(() => {

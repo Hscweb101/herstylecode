@@ -1,4 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
+import { PackageSearch } from 'lucide-react'
+import { useSeo } from '@/hooks/useSeo'
 import toast from 'react-hot-toast'
 import { supabase } from '@/lib/supabase'
 import { formatINR, formatDate } from '@/lib/utils'
@@ -14,20 +17,43 @@ const STATUS_LABELS: Record<string, string> = {
   cancelled: 'Cancelled', returned: 'Returned', refunded: 'Refunded',
 }
 
+/** "1001", "hsc1001", "# HSC-1001" -> "HSC1001" */
+function normalizeOrderNumber(raw: string) {
+  const cleaned = raw.toUpperCase().replace(/[^A-Z0-9]/g, '')
+  return /^d+$/.test(cleaned) ? `HSC${cleaned}` : cleaned
+}
+
 export default function TrackOrder() {
-  const [orderNumber, setOrderNumber] = useState('')
-  const [contact, setContact] = useState('')
+  useSeo({ title: 'Track Your Order', noindex: true })
+  const [params] = useSearchParams()
+  const [orderNumber, setOrderNumber] = useState(params.get('order') ?? '')
+  const [contact, setContact] = useState(params.get('email') ?? '')
   const [loading, setLoading] = useState(false)
+
+  // Signed-in customers get their account email pre-filled.
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      const u = data.user
+      if (u && !u.is_anonymous && u.email) setContact((c) => c || u.email!)
+    })
+  }, [])
   const [order, setOrder] = useState<Order | null>(null)
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setOrder(null)
-    const { data, error } = await supabase.functions.invoke('track-order', { body: { orderNumber, contact } })
+    const { data, error } = await supabase.functions.invoke('track-order', {
+      body: { orderNumber: normalizeOrderNumber(orderNumber), contact: contact.trim() },
+    })
     setLoading(false)
     if (error || data?.error) {
-      toast.error(data?.error ?? 'Order not found')
+      // supabase-js hides the JSON body of non-2xx replies inside error.context
+      let message: string | undefined = data?.error
+      if (!message && error && 'context' in error && error.context instanceof Response) {
+        message = await error.context.json().then((b: { error?: string }) => b?.error).catch(() => undefined)
+      }
+      toast.error(message ?? 'Order not found. Check your Order ID and email.')
       return
     }
     setOrder(data.order)
@@ -38,13 +64,35 @@ export default function TrackOrder() {
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-14">
+      <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-blush-50 text-brand-600">
+        <PackageSearch size={26} />
+      </div>
       <h1 className="mb-2 text-center font-serif text-3xl">Track Your Order</h1>
-      <p className="mb-8 text-center text-sm text-ink-500">Enter your order number and the phone/email used at checkout.</p>
+      <p className="mb-8 text-center text-sm text-ink-500">Enter your Order ID and the email address you used at checkout. No account needed.</p>
 
-      <form onSubmit={handleSearch} className="flex flex-col gap-3 rounded-2xl bg-white p-6 shadow-luxe-sm sm:flex-row">
-        <Input placeholder="Order Number (e.g. HSC1001)" required value={orderNumber} onChange={(e) => setOrderNumber(e.target.value)} className="flex-1" />
-        <Input placeholder="Phone or Email" required value={contact} onChange={(e) => setContact(e.target.value)} className="flex-1" />
-        <Button type="submit" loading={loading}>Track</Button>
+      <form onSubmit={handleSearch} className="space-y-4 rounded-2xl bg-white p-6 shadow-luxe-sm">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Input
+            label="Order ID"
+            placeholder="e.g. HSC1001"
+            required
+            autoCapitalize="characters"
+            hint="Find it in your confirmation / receipt"
+            value={orderNumber}
+            onChange={(e) => setOrderNumber(e.target.value)}
+          />
+          <Input
+            label="Email"
+            type="email"
+            placeholder="you@example.com"
+            required
+            autoComplete="email"
+            hint="The email used while placing the order"
+            value={contact}
+            onChange={(e) => setContact(e.target.value)}
+          />
+        </div>
+        <Button type="submit" size="lg" className="w-full" loading={loading}>Track Order</Button>
       </form>
 
       {order && (

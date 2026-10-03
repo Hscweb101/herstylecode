@@ -15,6 +15,15 @@ interface AuthState {
   signOut: () => Promise<void>
 }
 
+/** Re-assigns guest orders placed with the signed-in customer's (confirmed) e-mail to their account. */
+async function claimGuestOrders() {
+  const { data } = await supabase.auth.getSession()
+  const user = data.session?.user
+  if (!user || user.is_anonymous) return
+  const { error } = await supabase.rpc('claim_my_orders')
+  if (error) console.warn('claim_my_orders failed', error.message)
+}
+
 export const useAuthStore = create<AuthState>((set, get) => ({
   userId: null,
   isAnonymous: true,
@@ -41,6 +50,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     await get().refreshProfile()
     set({ ready: true })
+    void claimGuestOrders()
 
     supabase.auth.onAuthStateChange(async (_event, newSession) => {
       set({
@@ -48,6 +58,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         isAnonymous: newSession?.user.is_anonymous ?? true,
       })
       await get().refreshProfile()
+      // Deferred: supabase-js must not be re-entered from inside its own auth callback.
+      if (newSession && !newSession.user.is_anonymous) window.setTimeout(() => void claimGuestOrders(), 0)
     })
   },
 

@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { Minus, Plus, Trash2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { supabase } from '@/lib/supabase'
+import { useSeo } from '@/hooks/useSeo'
 import { useCartStore } from '@/store/cartStore'
 import { useAuthStore } from '@/store/authStore'
 import { useStoreSettings } from '@/hooks/useStoreSettings'
@@ -12,6 +13,7 @@ import { Input } from '@/components/ui/Input'
 import { EmptyState } from '@/components/ui/Misc'
 
 export default function CartPage() {
+  useSeo({ title: 'Your Cart', noindex: true })
   const { items, updateQty, removeItem, subtotal } = useCartStore()
   const { settings } = useStoreSettings()
   const userId = useAuthStore((s) => s.userId)

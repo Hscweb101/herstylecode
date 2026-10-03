@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { CheckCircle2, Copy, Download } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { useSeo } from '@/hooks/useSeo'
 import { supabase } from '@/lib/supabase'
 import { downloadReceipt } from '@/lib/receipt'
 import { useStoreSettings } from '@/hooks/useStoreSettings'
@@ -11,6 +12,7 @@ import { Button } from '@/components/ui/Button'
 import { FullPageSpinner, EmptyState } from '@/components/ui/Misc'
 
 export default function OrderConfirmation() {
+  useSeo({ title: 'Order Confirmation', noindex: true })
   const { orderId } = useParams()
   const [order, setOrder] = useState<Order | null>(null)
   const [loading, setLoading] = useState(true)

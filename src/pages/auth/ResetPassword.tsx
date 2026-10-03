@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
+import { useSeo } from '@/hooks/useSeo'
 import { supabase } from '@/lib/supabase'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 
 /** Landing page for the link in the "reset your password" email. */
 export default function ResetPassword() {
+  useSeo({ title: 'Reset Password', noindex: true })
   const navigate = useNavigate()
   const [state, setState] = useState<'checking' | 'ready' | 'invalid'>('checking')
   const [password, setPassword] = useState('')

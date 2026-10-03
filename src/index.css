@@ -21,6 +21,9 @@
   --color-blush-100: #fce7ef;
   --color-blush-200: #f8d0e0;
   --color-blush-300: #f3aec8;
+  --color-brand-50: #fef1f6;
+  --color-brand-100: #fde4ee;
+  --color-brand-200: #fbc9dc;
   --color-brand-300: #f193b5;
   --color-brand-400: #ec6d9c;
   --color-brand-500: #e34c86;
@@ -313,3 +316,32 @@
   background: linear-gradient(180deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0.12) 16%, rgba(255,255,255,0) 34%);
   pointer-events: none;
 }
+
+/* Admin panel skin (clean, bordered, neutral - like the Kranti Natural admin).
+   Scoped to .admin-ui so the storefront is untouched. Restyles the shared
+   Button/Input/Badge/card classes used by every admin page without changing
+   any markup, data or tables. */
+.admin-ui { font-family: var(--font-sans); color: #111827; background: #f9fafb; }
+.admin-ui h1, .admin-ui h2, .admin-ui h3, .admin-ui h4 { font-family: var(--font-sans); letter-spacing: 0; font-weight: 600; }
+.admin-ui .font-serif { font-family: var(--font-sans); font-weight: 600; }
+.admin-ui .shadow-luxe-sm, .admin-ui .shadow-luxe { box-shadow: none; border: 1px solid #e5e7eb; }
+.admin-ui .rounded-3xl { border-radius: 1rem; }
+.admin-ui .rounded-2xl { border-radius: 0.75rem; }
+.admin-ui .rounded-xl { border-radius: 0.5rem; }
+.admin-ui button.rounded-full:not(.keep-round), .admin-ui a.rounded-full:not(.keep-round) { border-radius: 0.5rem; }
+.admin-ui input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+.admin-ui select, .admin-ui textarea { border-radius: 0.5rem; border-color: #d1d5db; }
+.admin-ui input:focus, .admin-ui select:focus, .admin-ui textarea:focus {
+  border-color: var(--color-brand-500);
+  box-shadow: 0 0 0 2px rgba(227, 76, 134, 0.18);
+}
+.admin-ui table thead th { background: #f9fafb; color: #6b7280; }
+.admin-ui table tbody tr:hover { background: #fafafa; }
+.admin-ui .bg-blush-50 { background-color: #f9fafb; }
+.admin-ui .bg-blush-100 { background-color: #f3f4f6; }
+.admin-ui .border-blush-100, .admin-ui .border-blush-200, .admin-ui .border-blush-50 { border-color: #e5e7eb; }
+.admin-ui .text-ink-900 { color: #111827; }
+.admin-ui .text-ink-700 { color: #374151; }
+.admin-ui .text-ink-500 { color: #6b7280; }
+.admin-ui .text-ink-300 { color: #9ca3af; }
+.admin-ui .hover\:bg-blush-50:hover { background-color: #f3f4f6; }

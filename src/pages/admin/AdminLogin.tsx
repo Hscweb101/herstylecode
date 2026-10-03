@@ -36,10 +36,10 @@ export default function AdminLogin() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-blush-50 px-4">
-      <div className="w-full max-w-sm rounded-3xl bg-white p-8 shadow-luxe">
+    <div className="admin-ui flex min-h-screen items-center justify-center bg-gray-50 px-4">
+      <div className="w-full max-w-sm rounded-xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8">
         <img src={logo} alt="HerStyleCode" className="mx-auto mb-4 h-16 w-auto object-contain" />
-        <h1 className="mb-1 text-center font-serif text-2xl">Admin Panel</h1>
+        <h1 className="mb-1 text-center text-xl font-semibold">Admin Panel</h1>
         <p className="mb-6 text-center text-sm text-ink-300">Sign in to manage HerStyleCode</p>
         <form onSubmit={handleSubmit} className="space-y-4">
           <Input label="Email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />

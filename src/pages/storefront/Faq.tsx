@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import type { Faq as FaqType } from '@/types'
 import { FullPageSpinner } from '@/components/ui/Misc'
+import { useSeo } from '@/hooks/useSeo'
 
 function FaqItem({ faq }: { faq: FaqType }) {
   const [open, setOpen] = useState(false)
@@ -31,6 +32,19 @@ export default function Faq() {
         setLoading(false)
       })
   }, [])
+
+  useSeo({
+    title: 'FAQ - Shipping, Returns, COD & Jewellery Care',
+    description: 'Answers about HerStyleCode orders, shipping, Cash on Delivery, returns and jewellery care.',
+    path: '/faq',
+    jsonLd: faqs.length
+      ? {
+          '@context': 'https://schema.org',
+          '@type': 'FAQPage',
+          mainEntity: faqs.map((f) => ({ '@type': 'Question', name: f.question, acceptedAnswer: { '@type': 'Answer', text: f.answer } })),
+        }
+      : undefined,
+  })
 
   if (loading) return <FullPageSpinner />
 

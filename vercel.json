@@ -6,10 +6,20 @@
       "schedule": "0 6 */4 * *"
     }
   ],
+  "functions": {
+    "api/seo.js": { "includeFiles": "dist/index.html" }
+  },
   "rewrites": [
-    {
-      "source": "/((?!api/).*)",
-      "destination": "/index.html"
-    }
+    { "source": "/sitemap.xml", "destination": "/api/sitemap" },
+    { "source": "/product/:slug", "destination": "/api/seo?type=product&slug=:slug" },
+    { "source": "/category/:slug", "destination": "/api/seo?type=category&slug=:slug" },
+    { "source": "/collections/:slug", "destination": "/api/seo?type=collection&slug=:slug" },
+    { "source": "/blog/:slug", "destination": "/api/seo?type=blogpost&slug=:slug" },
+    { "source": "/page/:slug", "destination": "/api/seo?type=page&slug=:slug" },
+    { "source": "/shop", "destination": "/api/seo?type=shop" },
+    { "source": "/blog", "destination": "/api/seo?type=blog" },
+    { "source": "/faq", "destination": "/api/seo?type=faq" },
+    { "source": "/contact", "destination": "/api/seo?type=contact" },
+    { "source": "/((?!api/).*)", "destination": "/index.html" }
   ]
 }

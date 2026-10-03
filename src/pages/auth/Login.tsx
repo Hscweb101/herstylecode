@@ -1,18 +1,21 @@
 import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
+import { useSeo } from '@/hooks/useSeo'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/store/authStore'
+import { useCartStore } from '@/store/cartStore'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/utils'
 
 export default function Login() {
+  useSeo({ title: 'Sign In', noindex: true })
   const navigate = useNavigate()
   const isAnonymous = useAuthStore((s) => s.isAnonymous)
   const refreshProfile = useAuthStore((s) => s.refreshProfile)
   const [params] = useSearchParams()
-  const [mode, setMode] = useState<'signin' | 'signup' | 'forgot'>(params.get('mode') === 'forgot' ? 'forgot' : 'signup')
+  const [mode, setMode] = useState<'signin' | 'signup' | 'forgot'>(params.get('mode') === 'forgot' ? 'forgot' : params.get('mode') === 'signin' ? 'signin' : 'signup')
   const [form, setForm] = useState({ name: '', email: '', phone: '', password: '' })
   const [loading, setLoading] = useState(false)
   // Set when Supabase email confirmation is on: the account exists but the email link is not clicked yet.
@@ -47,7 +50,18 @@ export default function Login() {
 
       setLoading(false)
       if (error) {
-        toast.error(error.message)
+        if (/already (been )?registered|already exists/i.test(error.message)) {
+          toast.error('This email already has an account. Please sign in - any orders placed with it will show up in My Orders.')
+          setMode('signin')
+        } else {
+          toast.error(error.message)
+        }
+        return
+      }
+      // Supabase hides "email already registered" by returning a user with no identities.
+      if (!isAnonymous && (data.user?.identities?.length ?? 1) === 0) {
+        toast.error('This email already has an account. Please sign in instead (or use "Forgot password?").')
+        setMode('signin')
         return
       }
       const session = (data as { session?: unknown }).session
@@ -66,7 +80,8 @@ export default function Login() {
       return
     }
 
-    const { error } = await supabase.auth.signInWithPassword({ email: form.email, password: form.password })
+    const guestItems = isAnonymous ? useCartStore.getState().items.map((i) => ({ productId: i.product_id, variantId: i.variant_id, qty: i.quantity })) : []
+    const { data: signedIn, error } = await supabase.auth.signInWithPassword({ email: form.email, password: form.password })
     setLoading(false)
     if (error) {
       if (/not confirmed/i.test(error.message)) {
@@ -79,8 +94,15 @@ export default function Login() {
       return
     }
     await refreshProfile()
+    if (guestItems.length > 0 && signedIn.user) {
+      // The guest cart belonged to the anonymous session; move its items into the customer's own cart.
+      const cart = useCartStore.getState()
+      cart.reset()
+      await cart.init(signedIn.user.id)
+      for (const it of guestItems) await useCartStore.getState().addItem(it.productId, it.variantId, it.qty)
+    }
     toast.success('Welcome back!')
-    navigate('/account')
+    navigate(guestItems.length > 0 ? '/cart' : '/account')
   }
 
   if (pending) {

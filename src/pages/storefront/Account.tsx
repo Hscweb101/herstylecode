@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { Package, MapPin, User as UserIcon, LogOut, Trash2 } from 'lucide-react'
+import { useSeo } from '@/hooks/useSeo'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/store/authStore'
 import { formatINR, formatDate, cn } from '@/lib/utils'
@@ -22,15 +23,23 @@ function OrdersTab({ userId }: { userId: string }) {
   const [expanded, setExpanded] = useState<string | null>(null)
 
   useEffect(() => {
-    supabase
-      .from('orders')
-      .select('*, items:order_items(*)')
-      .eq('customer_id', userId)
-      .order('created_at', { ascending: false })
-      .then(({ data }) => {
-        setOrders((data as unknown as Order[]) ?? [])
-        setLoading(false)
-      })
+    let active = true
+    async function load() {
+      // Pull in any guest orders placed with this account's e-mail (e.g. on another device) first.
+      await supabase.rpc('claim_my_orders')
+      const { data } = await supabase
+        .from('orders')
+        .select('*, items:order_items(*)')
+        .eq('customer_id', userId)
+        .order('created_at', { ascending: false })
+      if (!active) return
+      setOrders((data as unknown as Order[]) ?? [])
+      setLoading(false)
+    }
+    load()
+    return () => {
+      active = false
+    }
   }, [userId])
 
   if (loading) return <FullPageSpinner />
@@ -165,12 +174,13 @@ function ProfileTab({ userId }: { userId: string }) {
 }
 
 export default function Account() {
+  useSeo({ title: 'My Account', noindex: true })
   const navigate = useNavigate()
   const { userId, isAnonymous, signOut } = useAuthStore()
   const [tab, setTab] = useState<'orders' | 'addresses' | 'profile'>('orders')
 
   if (isAnonymous) {
-    return <Navigate to="/login" replace />
+    return <Navigate to="/login?mode=signin" replace />
   }
   if (!userId) return <FullPageSpinner />
 

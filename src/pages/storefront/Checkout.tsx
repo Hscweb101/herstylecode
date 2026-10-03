@@ -4,6 +4,7 @@ import toast from 'react-hot-toast'
 import { Minus, Plus, Trash2 } from 'lucide-react'
 import { FunctionsHttpError } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
+import { useSeo } from '@/hooks/useSeo'
 import { useCartStore } from '@/store/cartStore'
 import { useAuthStore } from '@/store/authStore'
 import { useStoreSettings } from '@/hooks/useStoreSettings'
@@ -33,6 +34,7 @@ interface FormState {
 }
 
 export default function Checkout() {
+  useSeo({ title: 'Checkout', noindex: true })
   const navigate = useNavigate()
   const { items, subtotal, updateQty, removeItem } = useCartStore()
   const { userId, isAnonymous, profile } = useAuthStore()

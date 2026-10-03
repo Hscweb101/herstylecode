@@ -16,6 +16,7 @@ import { useCategories } from '@/hooks/useCategories'
 import { useStoreSettings } from '@/hooks/useStoreSettings'
 import { useInView } from '@/hooks/useInView'
 import { cn } from '@/lib/utils'
+import { useSeo } from '@/hooks/useSeo'
 import storyImg from '@/assets/about/aboutimg1.webp'
 
 function ProductRail({ title, eyebrow, products, viewAllHref }: { title: string; eyebrow: string; products: Product[]; viewAllHref: string }) {
@@ -407,6 +408,14 @@ export default function Home() {
   const [moments, setMoments] = useState<Moment[]>([])
   const [faqs, setFaqs] = useState<Faq[]>([])
   const { categories } = useCategories()
+
+  useSeo({
+    title: 'Her Style Code | Fashion & Artificial Jewellery Online India - HerStyleCode',
+    absoluteTitle: true,
+    description:
+      'HerStyleCode (Her Style Code) - shop trendy artificial & fashion jewellery online in India: earrings, necklaces, rings, bangles and sets. Free shipping above ₹999, Cash on Delivery, easy returns.',
+    path: '/',
+  })
 
   useEffect(() => {
     async function load() {

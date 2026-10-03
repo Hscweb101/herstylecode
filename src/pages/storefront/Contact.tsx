@@ -5,8 +5,14 @@ import { supabase } from '@/lib/supabase'
 import { useStoreSettings } from '@/hooks/useStoreSettings'
 import { Input, Textarea } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
+import { useSeo } from '@/hooks/useSeo'
 
 export default function Contact() {
+  useSeo({
+    title: 'Contact HerStyleCode (Her Style Code) - Customer Support',
+    description: 'Get in touch with the HerStyleCode team for order help, product questions or collaborations. We reply fast on email and WhatsApp.',
+    path: '/contact',
+  })
   const { settings } = useStoreSettings()
   const [form, setForm] = useState({ name: '', email: '', phone: '', message: '' })
   const [submitting, setSubmitting] = useState(false)

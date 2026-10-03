@@ -4,6 +4,8 @@ import { supabase } from '@/lib/supabase'
 import { useStoreSettings } from '@/hooks/useStoreSettings'
 import type { StaticPage as StaticPageType } from '@/types'
 import { FullPageSpinner, EmptyState } from '@/components/ui/Misc'
+import { useSeo } from '@/hooks/useSeo'
+import { trimDescription } from '@/lib/seo'
 
 const CONTACT_BLOCK_SLUGS = new Set([
   'terms-conditions',
@@ -31,6 +33,13 @@ export default function StaticPage() {
         setLoading(false)
       })
   }, [slug])
+
+  useSeo({
+    title: page?.seo_title || page?.title || 'Page',
+    description: page?.seo_description || trimDescription(page?.content),
+    path: slug ? `/page/${slug}` : undefined,
+    noindex: !loading && !page,
+  })
 
   if (loading) return <FullPageSpinner />
   if (!page) return <EmptyState title="Page not found" />

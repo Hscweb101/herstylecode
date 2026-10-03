@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { useSeo } from '@/hooks/useSeo'
 import { useWishlistStore } from '@/store/wishlistStore'
 import { ProductCard } from '@/components/storefront/ProductCard'
 import { EmptyState } from '@/components/ui/Misc'
@@ -6,6 +7,7 @@ import { Button } from '@/components/ui/Button'
 import type { Product } from '@/types'
 
 export default function Wishlist() {
+  useSeo({ title: 'Wishlist', noindex: true })
   const items = useWishlistStore((s) => s.items)
 
   if (items.length === 0) {

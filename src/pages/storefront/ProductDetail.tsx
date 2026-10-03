@@ -16,6 +16,8 @@ import { SmartImage } from '@/components/ui/SmartImage'
 import { useCartStore } from '@/store/cartStore'
 import { useWishlistStore } from '@/store/wishlistStore'
 import { useAuthStore } from '@/store/authStore'
+import { useSeo } from '@/hooks/useSeo'
+import { SITE_URL, BRAND_NAME, absoluteUrl, trimDescription } from '@/lib/seo'
 
 function ReviewForm({ productId, onSubmitted }: { productId: string; onSubmitted: () => void }) {
   const [rating, setRating] = useState(5)
@@ -330,6 +332,58 @@ export default function ProductDetail() {
     document.body.classList.toggle('has-sticky-bar', showStickyBar)
     return () => document.body.classList.remove('has-sticky-bar')
   }, [showStickyBar])
+
+  const productImages = (product?.images ?? []).slice().sort((a, b) => Number(b.is_primary) - Number(a.is_primary) || a.sort_order - b.sort_order)
+  const inStock = product ? !product.track_inventory || product.stock_quantity > 0 : true
+  useSeo({
+    title: product ? product.seo_title || `${product.name} - Buy Online in India` : 'Product',
+    description: product
+      ? product.seo_description ||
+        trimDescription(`Buy ${product.name} online at HerStyleCode (Her Style Code) for ${formatINR(product.price)}. ${product.short_description ?? product.description ?? ''} Free shipping above ₹999, COD available.`)
+      : undefined,
+    image: productImages[0]?.url,
+    path: product ? `/product/${product.slug}` : undefined,
+    type: 'product',
+    noindex: !loading && !product,
+    jsonLd: product
+      ? [
+          {
+            '@context': 'https://schema.org',
+            '@type': 'Product',
+            name: product.name,
+            description: trimDescription(product.short_description ?? product.description ?? product.name, 500),
+            sku: product.sku,
+            image: productImages.map((i) => absoluteUrl(i.url)),
+            brand: { '@type': 'Brand', name: BRAND_NAME },
+            ...(product.material ? { material: product.material } : {}),
+            ...(product.colour ? { color: product.colour } : {}),
+            ...(product.category ? { category: product.category.name } : {}),
+            offers: {
+              '@type': 'Offer',
+              url: `${SITE_URL}/product/${product.slug}`,
+              priceCurrency: 'INR',
+              price: String(product.price),
+              itemCondition: 'https://schema.org/NewCondition',
+              availability: inStock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+              seller: { '@type': 'Organization', name: BRAND_NAME },
+            },
+            ...(product.rating_count > 0
+              ? { aggregateRating: { '@type': 'AggregateRating', ratingValue: String(product.rating_avg), reviewCount: String(product.rating_count) } }
+              : {}),
+          },
+          {
+            '@context': 'https://schema.org',
+            '@type': 'BreadcrumbList',
+            itemListElement: [
+              { '@type': 'ListItem', position: 1, name: 'Home', item: SITE_URL },
+              { '@type': 'ListItem', position: 2, name: 'Shop', item: `${SITE_URL}/shop` },
+              ...(product.category ? [{ '@type': 'ListItem', position: 3, name: product.category.name, item: `${SITE_URL}/category/${product.category.slug}` }] : []),
+              { '@type': 'ListItem', position: product.category ? 4 : 3, name: product.name, item: `${SITE_URL}/product/${product.slug}` },
+            ],
+          },
+        ]
+      : undefined,
+  })
 
   if (loading) return <FullPageSpinner />
   if (!product) return <EmptyState title="Product not found" description="This item may have been removed." />
