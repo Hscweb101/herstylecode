@@ -10,6 +10,7 @@ import { useStoreSettings } from '@/hooks/useStoreSettings'
 import { cn, formatINR } from '@/lib/utils'
 import { openRazorpayCheckout } from '@/lib/razorpay'
 import { invokeCreateOrder } from '@/lib/checkoutApi'
+import { codAdvanceFor, onlineDiscountFor } from '@/lib/offers'
 import { Spinner } from '@/components/ui/Misc'
 import type { Address, Product, ProductVariant } from '@/types'
 
@@ -153,6 +154,7 @@ export function QuickCheckoutModal({ product, variant, qty: initialQty, onClose 
       id: i.id,
       productId: i.product_id,
       variantId: i.variant_id,
+      product: i.product!,
       name: i.product!.name,
       variantName: i.variant?.variant_name ?? null,
       price: i.variant?.price ?? i.product!.price,
@@ -215,6 +217,17 @@ export function QuickCheckoutModal({ product, variant, qty: initialQty, onClose 
   const shipping = subtotal >= settings.shipping.free_shipping_threshold ? 0 : settings.shipping.standard_shipping_fee
   const total = subtotal + shipping
   const codAvailable = settings.shipping.cod_available && product.cod_available !== false
+
+  // Per-product offers from the admin panel: money off for paying online, and an advance payment for COD.
+  const onlineDiscount = Math.min(
+    subtotal,
+    onlineDiscountFor(product, price, quantity) + extras.reduce((sum, e) => sum + onlineDiscountFor(e.product, e.price, e.qty), 0),
+  )
+  const onlineTotal = total - onlineDiscount
+  const codAdvance = Math.min(
+    codAdvanceFor(product, price, quantity) + extras.reduce((sum, e) => sum + codAdvanceFor(e.product, e.price, e.qty), 0),
+    Math.max(0, total - 1),
+  )
 
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) => setForm((f) => ({ ...f, [key]: value }))
 
@@ -288,7 +301,7 @@ export function QuickCheckoutModal({ product, variant, qty: initialQty, onClose 
       return
     }
 
-    if (paymentMethod === 'cod') {
+    if (paymentMethod === 'cod' && data.codConfirmed) {
       toast.success('Order placed successfully!')
       void useCartStore.getState().refresh()
       onClose()
@@ -302,10 +315,10 @@ export function QuickCheckoutModal({ product, variant, qty: initialQty, onClose 
         amount: data.amount,
         currency: data.currency,
         name: 'HerStyleCode',
-        description: `Order ${data.orderNumber}`,
+        description: paymentMethod === 'cod' ? `Advance for order ${data.orderNumber}` : `Order ${data.orderNumber}`,
         order_id: data.razorpayOrderId,
         prefill: { name: effective.full_name, email: effective.email, contact: phone },
-        theme: { color: '#e34c86' },
+        theme: { color: '#722F37' },
         handler: async (response) => {
           const { data: verifyData, error: verifyError } = await supabase.functions.invoke('verify-razorpay-payment', {
             body: {
@@ -319,7 +332,7 @@ export function QuickCheckoutModal({ product, variant, qty: initialQty, onClose 
             toast.error('Payment verification failed. Please contact support.')
             return
           }
-          toast.success('Payment successful!')
+          toast.success(paymentMethod === 'cod' ? `Advance paid! Pay ${formatINR(data.balanceDue)} on delivery.` : 'Payment successful!')
           void useCartStore.getState().refresh()
           onClose()
           navigate(`/order-confirmation/${data.orderId}`)
@@ -431,6 +444,11 @@ export function QuickCheckoutModal({ product, variant, qty: initialQty, onClose 
               <Stat label="Shipping" value={shipping === 0 ? 'Free' : formatINR(shipping)} green={shipping === 0} />
               <Stat label="Total" value={formatINR(total)} bold />
             </div>
+            {onlineDiscount > 0 && (
+              <p className="mt-1.5 border-t border-dashed border-blush-200 pt-1.5 text-center text-[11px] font-semibold text-emerald-700">
+                Pay online and save {formatINR(onlineDiscount)}: total {formatINR(onlineTotal)}
+              </p>
+            )}
             {shipping > 0 && (
               <p className="mt-1.5 border-t border-dashed border-blush-200 pt-1.5 text-center text-[11px] text-ink-500">
                 Add {formatINR(settings.shipping.free_shipping_threshold - subtotal)} more for free shipping
@@ -537,12 +555,18 @@ export function QuickCheckoutModal({ product, variant, qty: initialQty, onClose 
                 type="button"
                 onClick={() => placeOrder('razorpay')}
                 disabled={!!placing}
-                className="btn-nudge flex min-h-12 flex-col items-center justify-center rounded-lg bg-brand-600 px-2 py-2 text-white shadow-[0_3px_0_0_#ab275e] transition hover:bg-brand-700 active:translate-y-[2px] active:shadow-[0_1px_0_0_#ab275e] disabled:cursor-not-allowed disabled:opacity-60"
+                className="btn-nudge relative flex min-h-12 flex-col items-center justify-center rounded-lg bg-brand-600 px-2 py-2 text-white shadow-[0_3px_0_0_#4a1d23] transition hover:bg-brand-700 active:translate-y-[2px] active:shadow-[0_1px_0_0_#4a1d23] disabled:cursor-not-allowed disabled:opacity-60"
               >
+                {onlineDiscount > 0 && (
+                  <span className="absolute -top-2.5 right-1.5 rounded-full bg-gold-500 px-2 py-0.5 text-[10px] font-bold uppercase leading-none tracking-wide text-ink-900 shadow-sm">
+                    {formatINR(onlineDiscount)} off
+                  </span>
+                )}
                 <span className="flex items-center gap-1.5 text-[14px] font-bold leading-tight sm:text-[15px]">
                   {placing === 'razorpay' ? <Spinner className="h-4 w-4 border-white/40 border-t-white" /> : <CreditCard size={16} />}
                   {placing === 'razorpay' ? 'Opening...' : 'Pay Now'}
                 </span>
+                {onlineDiscount > 0 && placing !== 'razorpay' && <span className="text-[11px] font-medium leading-tight text-white/85">Pay {formatINR(onlineTotal)}</span>}
               </button>
               {codAvailable && (
                 <button
@@ -553,11 +577,19 @@ export function QuickCheckoutModal({ product, variant, qty: initialQty, onClose 
                 >
                   <span className="flex items-center gap-1.5 text-[14px] font-bold leading-tight sm:text-[15px]">
                     {placing === 'cod' ? <Spinner className="h-4 w-4 border-white/40 border-t-white" /> : <Banknote size={16} />}
-                    {placing === 'cod' ? 'Placing...' : 'Cash on Delivery'}
+                    {placing === 'cod' ? (codAdvance > 0 ? 'Opening...' : 'Placing...') : 'Cash on Delivery'}
                   </span>
+                  {codAdvance > 0 && placing !== 'cod' && <span className="text-[11px] font-medium leading-tight text-white/85">Pay {formatINR(codAdvance)} now</span>}
                 </button>
               )}
             </div>
+
+            {codAvailable && codAdvance > 0 && (
+              <p className="rounded-lg bg-blush-50 px-3 py-2 text-center text-[11px] leading-snug text-ink-700">
+                For Cash on Delivery, pay <strong>{formatINR(codAdvance)}</strong> online now to confirm your order. The remaining{' '}
+                <strong>{formatINR(total - codAdvance)}</strong> is paid in cash on delivery.
+              </p>
+            )}
 
             <div className="pt-1">
               <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5">

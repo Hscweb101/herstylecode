@@ -66,7 +66,11 @@ export function getRecentlyViewed(): string[] {
   }
 }
 
-/** Online (Razorpay) order whose payment never completed: failed or abandoned at the payment window. */
-export function isUnpaidOnlineOrder(o: { payment_method: string; payment_status: string }): boolean {
+/**
+ * Order whose online payment never completed: failed or abandoned at the payment window.
+ * Covers full online orders and Cash on Delivery orders whose advance was never paid.
+ */
+export function isUnpaidOnlineOrder(o: { payment_method: string; payment_status: string; advance_amount?: number; advance_paid?: boolean }): boolean {
+  if (o.payment_method === 'cod') return Number(o.advance_amount ?? 0) > 0 && !o.advance_paid && o.payment_status !== 'paid'
   return o.payment_method === 'razorpay' && (o.payment_status === 'pending' || o.payment_status === 'failed')
 }

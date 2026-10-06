@@ -16,8 +16,8 @@ export function downloadReceipt(order: Order, supportEmail?: string) {
   const html = `<!doctype html><html><head><meta charset="utf-8"><title>Receipt ${esc(order.order_number)}</title>
 <style>
 body{font-family:Arial,Helvetica,sans-serif;color:#222;max-width:720px;margin:24px auto;padding:0 16px;font-size:14px}
-h1{margin:0;font-size:22px;color:#c2185b}.top{display:flex;justify-content:space-between;border-bottom:2px solid #e34c86;padding-bottom:12px;margin-bottom:16px}
-table{width:100%;border-collapse:collapse;margin-top:12px}th,td{padding:8px;border-bottom:1px solid #eee;text-align:left}th{background:#fdf2f6;font-size:12px;text-transform:uppercase}
+h1{margin:0;font-size:22px;color:#722F37}.top{display:flex;justify-content:space-between;border-bottom:2px solid #722F37;padding-bottom:12px;margin-bottom:16px}
+table{width:100%;border-collapse:collapse;margin-top:12px}th,td{padding:8px;border-bottom:1px solid #eee;text-align:left}th{background:#f1ebd8;font-size:12px;text-transform:uppercase}
 .r{text-align:right}small{color:#777}.tot td{font-weight:bold;font-size:15px;border-top:2px solid #222}.foot{margin-top:24px;font-size:12px;color:#666;text-align:center}
 @media print{button{display:none}}
 </style></head><body>
@@ -26,7 +26,8 @@ table{width:100%;border-collapse:collapse;margin-top:12px}th,td{padding:8px;bord
 <div><strong>Ship to</strong><br>${esc(a?.full_name ?? order.guest_name)}<br>${esc(a?.line1)}${a?.line2 ? ', ' + esc(a.line2) : ''}<br>${esc(a?.city)}, ${esc(a?.state)} - ${esc(a?.pincode)}<br>Phone: ${esc(a?.phone ?? order.guest_phone)}</div>
 <table><thead><tr><th>Item</th><th class="r">Qty</th><th class="r">Price</th><th class="r">Total</th></tr></thead><tbody>${rows}
 ${line('Subtotal', order.subtotal)}${line('Discount', order.discount_amount, true)}${line('Shipping', order.shipping_amount)}${line('Tax', order.tax_amount)}
-<tr class="tot"><td colspan="3" class="r">Total</td><td class="r">${formatINR(order.total_amount)}</td></tr></tbody></table>
+<tr class="tot"><td colspan="3" class="r">Total</td><td class="r">${formatINR(order.total_amount)}</td></tr>
+${order.payment_method === 'cod' && order.advance_paid && Number(order.advance_amount) > 0 ? `<tr><td colspan="3" class="r">Advance paid online</td><td class="r">-${formatINR(order.advance_amount)}</td></tr><tr class="tot"><td colspan="3" class="r">Pay on delivery</td><td class="r">${formatINR(order.total_amount - order.advance_amount)}</td></tr>` : ''}</tbody></table>
 <p class="foot">Keep your order number <strong>${esc(order.order_number)}</strong> to track your order at herstylecode.in/track-order.${supportEmail ? `<br>Questions? ${esc(supportEmail)}` : ''}<br>Thank you for shopping with HerStyleCode!</p>
 <script>window.onload=function(){setTimeout(function(){window.print()},300)}</script>
 </body></html>`

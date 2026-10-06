@@ -54,6 +54,7 @@ const supportLinks = [
   { label: 'Contact Us', to: '/contact' },
   { label: 'FAQ', to: '/faq' },
   { label: 'Track Order', to: '/track-order' },
+  { label: 'Care Instructions', to: '/care-instructions' },
   { label: 'About Us', to: '/page/about-us' },
 ]
 

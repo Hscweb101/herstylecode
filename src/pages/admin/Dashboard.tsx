@@ -20,10 +20,10 @@ const STATUS_COLORS: Record<string, string> = {
   new: '#d97706', paid: '#2563eb', processing: '#7c3aed', packed: '#0891b2', shipped: '#0d9488',
   out_for_delivery: '#65a30d', delivered: '#16a34a', cancelled: '#6b7280', returned: '#ea580c', refunded: '#dc2626',
 }
-const BRAND = '#e34c86'
+const BRAND = '#722F37'
 const TOOLTIP_STYLE = { borderRadius: 8, borderColor: '#e5e7eb', fontSize: 13 }
 
-type OrderRow = Pick<Order, 'id' | 'customer_id' | 'total_amount' | 'status' | 'payment_status' | 'payment_method' | 'placed_at'>
+type OrderRow = Pick<Order, 'id' | 'customer_id' | 'total_amount' | 'status' | 'payment_status' | 'payment_method' | 'placed_at' | 'advance_amount' | 'advance_paid'>
 type ProductRow = { id: string; name: string; stock_quantity: number; low_stock_threshold: number }
 
 const startOfDay = (d: Date) => {
@@ -50,7 +50,7 @@ export default function Dashboard() {
   useEffect(() => {
     async function load() {
       const [allOrders, products, customerProfiles, stock, recent] = await Promise.all([
-        supabase.from('orders').select('id, customer_id, total_amount, status, payment_status, payment_method, placed_at'),
+        supabase.from('orders').select('id, customer_id, total_amount, status, payment_status, payment_method, placed_at, advance_amount, advance_paid'),
         supabase.from('products').select('id', { count: 'exact', head: true }),
         supabase.from('profiles').select('id, full_name, phone').eq('role', 'customer'),
         supabase.from('products').select('id, name, stock_quantity, low_stock_threshold').eq('track_inventory', true).eq('is_active', true),
@@ -242,7 +242,7 @@ export default function Dashboard() {
                 <XAxis dataKey="label" tick={{ fontSize: 10, fill: '#6b7280' }} axisLine={{ stroke: '#e5e7eb' }} tickLine={false} interval="preserveStartEnd" minTickGap={28} />
                 <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: '#6b7280' }} axisLine={false} tickLine={false} width={28} />
                 <Tooltip contentStyle={TOOLTIP_STYLE} cursor={{ fill: '#f3f4f6' }} />
-                <Bar dataKey="orders" name="Orders" fill="#f193b5" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="orders" name="Orders" fill="#c98d95" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>

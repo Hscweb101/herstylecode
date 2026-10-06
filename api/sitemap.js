@@ -12,6 +12,7 @@ const STATIC_PAGES = [
   { path: '/page/about-us', priority: '0.6', changefreq: 'monthly' },
   { path: '/contact', priority: '0.5', changefreq: 'yearly' },
   { path: '/faq', priority: '0.5', changefreq: 'monthly' },
+  { path: '/care-instructions', priority: '0.4', changefreq: 'yearly' },
 ]
 
 const day = (iso) => (iso ? new Date(iso).toISOString().slice(0, 10) : undefined)

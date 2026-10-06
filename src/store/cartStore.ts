@@ -19,7 +19,7 @@ interface CartState {
 
 const CART_SELECT = `
   id, cart_id, product_id, variant_id, quantity,
-  product:products(id, name, slug, price, compare_at_price, stock_quantity, track_inventory, is_active, cod_available,
+  product:products(id, name, slug, price, compare_at_price, stock_quantity, track_inventory, is_active, cod_available, online_discount_type, online_discount_value, cod_advance_type, cod_advance_value,
     images:product_images(url, is_primary, sort_order)),
   variant:product_variants(id, variant_name, price, compare_at_price, stock_quantity, image_url, is_active)
 `

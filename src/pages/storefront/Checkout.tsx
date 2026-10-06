@@ -11,6 +11,7 @@ import { useAuthStore } from '@/store/authStore'
 import { useStoreSettings } from '@/hooks/useStoreSettings'
 import { formatINR } from '@/lib/utils'
 import { openRazorpayCheckout } from '@/lib/razorpay'
+import { codAdvanceFor, onlineDiscountFor } from '@/lib/offers'
 import { Button } from '@/components/ui/Button'
 import { Input, Select } from '@/components/ui/Input'
 import { EmptyState, Spinner } from '@/components/ui/Misc'
@@ -72,6 +73,12 @@ export default function Checkout() {
   const shipping = sub >= settings.shipping.free_shipping_threshold ? 0 : settings.shipping.standard_shipping_fee
   const discount = coupon?.discount ?? 0
   const total = Math.max(0, sub + shipping - discount)
+
+  // Per-product offers from the admin panel (the server re-calculates these when the order is created).
+  const lineOf = (i: (typeof items)[number]) => i.variant?.price ?? i.product?.price ?? 0
+  const onlineDiscount = paymentMethod === 'razorpay' ? Math.min(sub, items.reduce((n, i) => n + onlineDiscountFor(i.product, lineOf(i), i.quantity), 0)) : 0
+  const codAdvance = paymentMethod === 'cod' ? Math.min(items.reduce((n, i) => n + codAdvanceFor(i.product, lineOf(i), i.quantity), 0), Math.max(0, total - 1)) : 0
+  const payable = total - onlineDiscount
 
   const codBlockedBy = items.find((i) => i.product?.cod_available === false)?.product?.name ?? null
   const codAvailable = settings.shipping.cod_available && !codBlockedBy
@@ -138,7 +145,7 @@ export default function Checkout() {
       await supabase.from('addresses').insert({ customer_id: userId, ...shippingAddress })
     }
 
-    if (paymentMethod === 'cod') {
+    if (paymentMethod === 'cod' && data.codConfirmed) {
       sessionStorage.removeItem('hsc_coupon')
       toast.success('Order placed successfully!')
       navigate(`/order-confirmation/${data.orderId}`)
@@ -154,7 +161,7 @@ export default function Checkout() {
         description: `Order ${data.orderNumber}`,
         order_id: data.razorpayOrderId,
         prefill: { name: form.full_name, email: form.email, contact: form.phone },
-        theme: { color: '#e34c86' },
+        theme: { color: '#722F37' },
         handler: async (response) => {
           const { data: verifyData, error: verifyError } = await supabase.functions.invoke('verify-razorpay-payment', {
             body: {
@@ -169,7 +176,7 @@ export default function Checkout() {
             return
           }
           sessionStorage.removeItem('hsc_coupon')
-          toast.success('Payment successful!')
+          toast.success(paymentMethod === 'cod' ? `Advance paid! Pay ${formatINR(data.balanceDue)} on delivery.` : 'Payment successful!')
           navigate(`/order-confirmation/${data.orderId}`)
         },
         modal: {
@@ -293,11 +300,18 @@ export default function Checkout() {
             <div className="flex justify-between text-ink-500"><span>Subtotal</span><span>{formatINR(sub)}</span></div>
             {coupon && <div className="flex justify-between text-emerald-600"><span>Coupon</span><span>-{formatINR(discount)}</span></div>}
             <div className="flex justify-between text-ink-500"><span>Shipping</span><span>{shipping === 0 ? 'Free' : formatINR(shipping)}</span></div>
+            {onlineDiscount > 0 && <div className="flex justify-between text-emerald-600"><span>Pay Now discount</span><span>-{formatINR(onlineDiscount)}</span></div>}
             <div className="my-2 h-px bg-blush-100" />
-            <div className="flex justify-between text-base font-semibold"><span>Total</span><span>{formatINR(total)}</span></div>
+            <div className="flex justify-between text-base font-semibold"><span>Total</span><span>{formatINR(payable)}</span></div>
+            {codAdvance > 0 && (
+              <p className="rounded-lg bg-blush-50 px-3 py-2 text-xs text-ink-700">
+                Pay <strong>{formatINR(codAdvance)}</strong> online now to confirm this Cash on Delivery order. The remaining{' '}
+                <strong>{formatINR(total - codAdvance)}</strong> is paid on delivery.
+              </p>
+            )}
           </div>
           <Button type="submit" size="lg" className="mt-5 w-full" loading={placing}>
-            {placing ? 'Processing...' : `Place Order — ${formatINR(total)}`}
+            {placing ? 'Processing...' : codAdvance > 0 ? `Pay ${formatINR(codAdvance)} Now & Place Order` : `Place Order — ${formatINR(payable)}`}
           </Button>
           <p className="mt-3 text-center text-xs text-ink-300">100% secure checkout. Your data is encrypted.</p>
         </div>

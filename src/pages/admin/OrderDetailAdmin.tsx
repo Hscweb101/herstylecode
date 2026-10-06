@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { Printer, Check, ChevronDown } from 'lucide-react'
+import { Check, ChevronDown, FileDown } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { downloadPackingSlip } from '@/lib/packingSlip'
+import { useStoreSettings } from '@/hooks/useStoreSettings'
 import { formatINR, formatDate, cn } from '@/lib/utils'
 import { PageHeader, Card } from '@/components/admin/AdminUI'
 import { Input, Textarea } from '@/components/ui/Input'
@@ -85,6 +87,8 @@ export default function OrderDetailAdmin() {
   const [tracking, setTracking] = useState({ number: '', provider: '', url: '' })
   const [notes, setNotes] = useState('')
   const [saving, setSaving] = useState(false)
+  const [slipLoading, setSlipLoading] = useState(false)
+  const { settings } = useStoreSettings()
 
   const load = async () => {
     const [{ data: o }, { data: h }] = await Promise.all([
@@ -142,6 +146,18 @@ export default function OrderDetailAdmin() {
     load()
   }
 
+  const handlePackingSlip = async () => {
+    if (!order) return
+    setSlipLoading(true)
+    try {
+      await downloadPackingSlip(order, settings.store_info.support_email)
+    } catch (err) {
+      console.error(err)
+      toast.error('Could not create the packing slip')
+    }
+    setSlipLoading(false)
+  }
+
   if (loading) return <FullPageSpinner />
   if (!order) return null
 
@@ -154,7 +170,7 @@ export default function OrderDetailAdmin() {
         description={formatDate(order.placed_at)}
         action={
           <div className="flex gap-2 print:hidden">
-            <Button variant="outline" onClick={() => window.print()}><Printer size={15} /> Print Invoice</Button>
+            <Button onClick={handlePackingSlip} loading={slipLoading}><FileDown size={15} /> Packing Slip</Button>
             <Button variant="ghost" onClick={() => navigate('/admin/orders')}>Back</Button>
           </div>
         }
@@ -230,7 +246,19 @@ export default function OrderDetailAdmin() {
           <Card>
             <h3 className="mb-3 font-serif text-lg">Payment</h3>
             <p className="text-sm">Method: <Badge tone="neutral">{order.payment_method.toUpperCase()}</Badge></p>
-            <p className="mt-2 text-sm">Status: <Badge tone={order.payment_status === 'paid' ? 'success' : 'danger'}>{order.payment_status}</Badge></p>
+            <p className="mt-2 text-sm">Status: <Badge tone={order.payment_status === 'paid' ? 'success' : order.payment_status === 'partially_paid' ? 'gold' : 'danger'}>{order.payment_status.replace('_', ' ')}</Badge></p>
+            {order.payment_method === 'cod' && (
+              <div className="mt-3 space-y-1 rounded-lg bg-blush-50 p-3 text-sm">
+                {Number(order.advance_amount) > 0 ? (
+                  <>
+                    <div className="flex justify-between"><span className="text-ink-500">Advance {order.advance_paid ? 'paid online' : '(not paid yet)'}</span><span className="font-medium">{formatINR(order.advance_amount)}</span></div>
+                    <div className="flex justify-between font-semibold"><span>Collect on delivery</span><span>{formatINR(order.total_amount - order.advance_amount)}</span></div>
+                  </>
+                ) : (
+                  <div className="flex justify-between font-semibold"><span>Collect on delivery</span><span>{formatINR(order.total_amount)}</span></div>
+                )}
+              </div>
+            )}
           </Card>
         </div>
       </div>

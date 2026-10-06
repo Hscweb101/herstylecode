@@ -71,6 +71,7 @@ Deno.serve(async (req) => {
         .filter((o: any) => (isEmail ? String(o.guest_email ?? '').toLowerCase() === contact.toLowerCase() : digits(o.guest_phone).endsWith(phone.slice(-10))))
         // Failed / abandoned online payments are not real orders.
         .filter((o: any) => !(o.payment_method === 'razorpay' && ['pending', 'failed'].includes(o.payment_status)))
+        .filter((o: any) => !(o.payment_method === 'cod' && Number(o.advance_amount) > 0 && !o.advance_paid))
         .slice(0, 10)
       if (matches.length === 0) return notFound('No orders found for that email. Check the spelling or try your Order ID.')
       return jsonResponse({ orders: matches.map(limited), limited: true })

@@ -20,6 +20,7 @@ import Account from '@/pages/storefront/Account'
 import StaticPage from '@/pages/storefront/StaticPage'
 import AboutUs from '@/pages/storefront/AboutUs'
 import Faq from '@/pages/storefront/Faq'
+import CareInstructions from '@/pages/storefront/CareInstructions'
 import Contact from '@/pages/storefront/Contact'
 import Blog from '@/pages/storefront/Blog'
 import BlogPost from '@/pages/storefront/BlogPost'
@@ -88,6 +89,7 @@ export default function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/faq" element={<Faq />} />
+          <Route path="/care-instructions" element={<CareInstructions />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/blog" element={<Blog />} />
           <Route path="/blog/:slug" element={<BlogPost />} />

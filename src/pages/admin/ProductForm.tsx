@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { Trash2, Plus, Star } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
-import { slugify } from '@/lib/utils'
+import { cn, formatINR, slugify } from '@/lib/utils'
 import { resizeImage } from '@/lib/image'
 import { PageHeader, Card } from '@/components/admin/AdminUI'
 import { Input, Textarea, Select } from '@/components/ui/Input'
@@ -17,6 +17,8 @@ interface FormState {
   stock_quantity: string; low_stock_threshold: string; material: string; colour: string; size: string;
   weight_grams: string; care_instructions: string; whats_included: string; delivery_info: string;
   return_eligible: boolean; cod_available: boolean; tags: string; video_url: string;
+  show_purchase_proof: boolean; online_discount_type: 'amount' | 'percent'; online_discount_value: string;
+  cod_advance_type: 'none' | 'amount' | 'percent'; cod_advance_value: string;
   is_active: boolean; is_featured: boolean; is_new_arrival: boolean; is_bestseller: boolean; is_trending: boolean; is_on_sale: boolean;
   seo_title: string; seo_description: string;
 }
@@ -25,6 +27,7 @@ const EMPTY_FORM: FormState = {
   name: '', slug: '', sku: '', category_id: '', short_description: '', description: '', price: '', compare_at_price: '',
   stock_quantity: '0', low_stock_threshold: '5', material: '', colour: '', size: '', weight_grams: '', care_instructions: '',
   whats_included: '', delivery_info: '', return_eligible: true, cod_available: true, tags: '', video_url: '',
+  show_purchase_proof: true, online_discount_type: 'amount', online_discount_value: '', cod_advance_type: 'none', cod_advance_value: '',
   is_active: true, is_featured: false, is_new_arrival: false, is_bestseller: false, is_trending: false, is_on_sale: false,
   seo_title: '', seo_description: '',
 }
@@ -68,6 +71,11 @@ export default function ProductForm() {
           weight_grams: product.weight_grams ? String(product.weight_grams) : '', care_instructions: product.care_instructions ?? '',
           whats_included: product.whats_included ?? '', delivery_info: product.delivery_info ?? '',
           return_eligible: product.return_eligible, cod_available: product.cod_available, tags: (product.tags ?? []).join(', '), video_url: product.video_url ?? '',
+          show_purchase_proof: product.show_purchase_proof ?? true,
+          online_discount_type: product.online_discount_type ?? 'amount',
+          online_discount_value: product.online_discount_value ? String(product.online_discount_value) : '',
+          cod_advance_type: product.cod_advance_type ?? 'none',
+          cod_advance_value: product.cod_advance_value ? String(product.cod_advance_value) : '',
           is_active: product.is_active, is_featured: product.is_featured, is_new_arrival: product.is_new_arrival,
           is_bestseller: product.is_bestseller, is_trending: product.is_trending, is_on_sale: product.is_on_sale,
           seo_title: product.seo_title ?? '', seo_description: product.seo_description ?? '',
@@ -153,6 +161,20 @@ export default function ProductForm() {
       toast.error('Name, SKU and Price are required')
       return
     }
+    const discountValue = Number(form.online_discount_value) || 0
+    const advanceValue = Number(form.cod_advance_value) || 0
+    if (form.online_discount_type === 'percent' && discountValue > 100) {
+      toast.error('Pay Now discount cannot be more than 100%')
+      return
+    }
+    if (form.cod_advance_type === 'percent' && advanceValue > 100) {
+      toast.error('COD advance cannot be more than 100%')
+      return
+    }
+    if (form.online_discount_type === 'amount' && discountValue >= Number(form.price)) {
+      toast.error('Pay Now discount must be less than the price')
+      return
+    }
     setSaving(true)
 
     const payload = {
@@ -175,6 +197,11 @@ export default function ProductForm() {
       delivery_info: form.delivery_info || null,
       return_eligible: form.return_eligible,
       cod_available: form.cod_available,
+      show_purchase_proof: form.show_purchase_proof,
+      online_discount_type: form.online_discount_type,
+      online_discount_value: Number(form.online_discount_value) || 0,
+      cod_advance_type: form.cod_advance_type,
+      cod_advance_value: form.cod_advance_type === 'none' ? 0 : Number(form.cod_advance_value) || 0,
       tags: form.tags.split(',').map((t) => t.trim()).filter(Boolean),
       video_url: form.video_url || null,
       is_active: form.is_active,
@@ -234,6 +261,14 @@ export default function ProductForm() {
     navigate('/admin/products')
   }
 
+  const priceNum = Number(form.price) || 0
+  const discountNum = Number(form.online_discount_value) || 0
+  const payNowAmount = form.online_discount_type === 'percent' ? Math.round((priceNum * Math.min(discountNum, 100)) / 100) : Math.min(discountNum, priceNum)
+  const payNowPreview = discountNum > 0 && priceNum > 0 ? `Badge: ${formatINR(payNowAmount)} OFF. Shopper pays ${formatINR(priceNum - payNowAmount)} online instead of ${formatINR(priceNum)}.` : null
+  const advanceNum = Number(form.cod_advance_value) || 0
+  const advanceAmount = form.cod_advance_type === 'percent' ? Math.round((priceNum * Math.min(advanceNum, 100)) / 100) : Math.min(advanceNum, priceNum)
+  const codPreview = form.cod_advance_type !== 'none' && advanceNum > 0 && priceNum > 0 ? `Shopper pays ${formatINR(advanceAmount)} now and ${formatINR(priceNum - advanceAmount)} on delivery (per item).` : null
+
   if (loading) return <FullPageSpinner />
 
   return (
@@ -277,13 +312,58 @@ export default function ProductForm() {
           </Card>
 
           <Card>
+            <h3 className="font-serif text-lg">Offers & Payment</h3>
+            <p className="mb-4 mt-1 text-xs text-ink-500">Set per product. Shoppers see these in the checkout popup. Leave at 0 / None to switch them off.</p>
+            <div className="grid gap-6 lg:grid-cols-2">
+              <div className="rounded-xl border border-blush-200 p-4">
+                <p className="text-sm font-semibold text-ink-900">Pay Now discount</p>
+                <p className="mb-3 text-xs text-ink-500">Shows an "₹X OFF" badge on the Pay Now button and takes it off when the shopper pays online.</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <Select label="Type" value={form.online_discount_type} onChange={(e) => setForm({ ...form, online_discount_type: e.target.value as FormState['online_discount_type'] })}>
+                    <option value="amount">Fixed amount (₹)</option>
+                    <option value="percent">Percentage (%)</option>
+                  </Select>
+                  <Input
+                    label={form.online_discount_type === 'percent' ? 'Discount (%)' : 'Discount (₹)'}
+                    type="number" min="0" step="1" placeholder="0"
+                    value={form.online_discount_value}
+                    onChange={(e) => setForm({ ...form, online_discount_value: e.target.value })}
+                  />
+                </div>
+                {payNowPreview && <p className="mt-3 text-xs font-medium text-emerald-700">{payNowPreview}</p>}
+              </div>
+
+              <div className="rounded-xl border border-blush-200 p-4">
+                <p className="text-sm font-semibold text-ink-900">Cash on Delivery: partial payment</p>
+                <p className="mb-3 text-xs text-ink-500">The shopper pays this much online now to confirm a COD order and the rest in cash on delivery.</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <Select label="Advance" value={form.cod_advance_type} onChange={(e) => setForm({ ...form, cod_advance_type: e.target.value as FormState['cod_advance_type'] })}>
+                    <option value="none">None (full COD)</option>
+                    <option value="amount">Fixed amount (₹)</option>
+                    <option value="percent">Percentage (%)</option>
+                  </Select>
+                  <Input
+                    label={form.cod_advance_type === 'percent' ? 'Advance (%)' : 'Advance (₹)'}
+                    type="number" min="0" step="1" placeholder="0"
+                    disabled={form.cod_advance_type === 'none'}
+                    value={form.cod_advance_value}
+                    onChange={(e) => setForm({ ...form, cod_advance_value: e.target.value })}
+                  />
+                </div>
+                {codPreview && <p className="mt-3 text-xs font-medium text-emerald-700">{codPreview}</p>}
+                {!form.cod_available && <p className="mt-3 text-xs text-amber-700">Cash on Delivery is switched off for this product, so the advance will not be used.</p>}
+              </div>
+            </div>
+          </Card>
+
+          <Card>
             <h3 className="mb-4 font-serif text-lg">Specifications</h3>
             <div className="grid gap-4 sm:grid-cols-2">
               <Input label="Material / Finish" value={form.material} onChange={(e) => setForm({ ...form, material: e.target.value })} />
               <Input label="Colour" value={form.colour} onChange={(e) => setForm({ ...form, colour: e.target.value })} />
               <Input label="Size / Dimensions" value={form.size} onChange={(e) => setForm({ ...form, size: e.target.value })} />
               <Input label="Weight (grams)" type="number" value={form.weight_grams} onChange={(e) => setForm({ ...form, weight_grams: e.target.value })} />
-              <Textarea label="Care Instructions" className="sm:col-span-2" value={form.care_instructions} onChange={(e) => setForm({ ...form, care_instructions: e.target.value })} />
+              <Textarea label="Extra care note (optional, shown under the standard care points)" className="sm:col-span-2" value={form.care_instructions} onChange={(e) => setForm({ ...form, care_instructions: e.target.value })} />
               <Textarea label="What's Included" value={form.whats_included} onChange={(e) => setForm({ ...form, whats_included: e.target.value })} />
               <Textarea label="Delivery Information" value={form.delivery_info} onChange={(e) => setForm({ ...form, delivery_info: e.target.value })} />
               <Input label="Product Video URL (optional)" className="sm:col-span-2" value={form.video_url} onChange={(e) => setForm({ ...form, video_url: e.target.value })} />
@@ -297,9 +377,10 @@ export default function ProductForm() {
             </div>
             <div className="space-y-3">
               {variants.map((v) => (
-                <div key={v.tempId} className="grid grid-cols-2 gap-2 rounded-xl border border-blush-100 p-3 sm:grid-cols-6">
+                <div key={v.tempId} className="grid grid-cols-2 gap-2 rounded-xl border border-blush-100 p-3 sm:grid-cols-7">
                   <Input placeholder="Name (Gold)" value={v.variant_name ?? ''} onChange={(e) => updateVariant(v.tempId, { variant_name: e.target.value })} />
                   <Input placeholder="SKU" value={v.sku ?? ''} onChange={(e) => updateVariant(v.tempId, { sku: e.target.value })} />
+                  <Input placeholder="Colour" value={v.colour ?? ''} onChange={(e) => updateVariant(v.tempId, { colour: e.target.value })} />
                   <Input placeholder="Price" type="number" value={v.price ?? ''} onChange={(e) => updateVariant(v.tempId, { price: Number(e.target.value) })} />
                   <Input placeholder="Stock" type="number" value={v.stock_quantity ?? 0} onChange={(e) => updateVariant(v.tempId, { stock_quantity: Number(e.target.value) })} />
                   <div className="relative">
@@ -368,6 +449,27 @@ export default function ProductForm() {
               {uploading ? 'Uploading...' : 'Click to upload images'}
               <input type="file" accept="image/*" multiple hidden onChange={(e) => handleImageUpload(e.target.files)} disabled={uploading} />
             </label>
+          </Card>
+
+          <Card>
+            <h3 className="mb-4 font-serif text-lg">Product Page Display</h3>
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-sm font-medium text-ink-900">Show "people purchased"</p>
+                <p className="mt-0.5 text-xs text-ink-500">The "[Name] and N others purchased" line under the buttons on this product's page.</p>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={form.show_purchase_proof}
+                aria-label="Show people purchased on the product page"
+                onClick={() => setForm({ ...form, show_purchase_proof: !form.show_purchase_proof })}
+                className={cn('relative mt-0.5 h-6 w-11 shrink-0 rounded-full transition-colors', form.show_purchase_proof ? 'bg-brand-600' : 'bg-gray-300')}
+              >
+                <span className={cn('absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all', form.show_purchase_proof ? 'left-[22px]' : 'left-0.5')} />
+              </button>
+            </div>
+            <p className="mt-3 text-xs font-medium text-ink-700">{form.show_purchase_proof ? 'Currently shown' : 'Currently hidden'}</p>
           </Card>
 
           <Card>

@@ -13,8 +13,8 @@ createRoot(document.getElementById('root')!).render(
         position="top-center"
         toastOptions={{
           style: {
-            background: '#241318',
-            color: '#fffaf9',
+            background: '#722F37',
+            color: '#F8F4E7',
             fontFamily: 'Poppins, sans-serif',
             fontSize: '14px',
           },

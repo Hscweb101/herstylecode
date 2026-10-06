@@ -16,7 +16,7 @@ export function ProductCard({ product }: { product: Product }) {
   const [hovered, setHovered] = useState(false)
 
   const sortedImages = [...(product.images ?? [])].sort((a, b) => (a.is_primary === b.is_primary ? a.sort_order - b.sort_order : a.is_primary ? -1 : 1))
-  const primaryImage = sortedImages[0]?.url ?? 'https://placehold.co/600x600/FCE7EF/D6336C?text=HerStyleCode'
+  const primaryImage = sortedImages[0]?.url ?? 'https://placehold.co/600x600/F1EBD8/722F37?text=HerStyleCode'
   const secondaryImage = sortedImages[1]?.url ?? primaryImage
   const image = hovered ? secondaryImage : primaryImage
   const pct = discountPercent(product.price, product.compare_at_price)

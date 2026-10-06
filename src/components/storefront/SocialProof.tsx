@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { BadgeCheck } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
-const AVATAR_COLORS = ['#e34c86', '#c2185b', '#be185d', '#ec4899', '#d6336c', '#a21caf']
+const AVATAR_COLORS = ['#722F37', '#8a3d47', '#5c262c', '#a05660', '#6b2a3a', '#7b3f4a']
 
 /**
  * Round profile picture for a customer/reviewer.

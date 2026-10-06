@@ -82,10 +82,18 @@ export default function OrderConfirmation() {
             </div>
           ))}
         </div>
-        <div className="mt-4 flex justify-between border-t border-blush-100 pt-4 text-base font-semibold">
-          <span>{order.payment_method === 'cod' ? 'Total (Pay on Delivery)' : 'Total Paid'}</span>
-          <span>{formatINR(order.total_amount)}</span>
-        </div>
+        {order.payment_method === 'cod' && order.advance_paid && Number(order.advance_amount) > 0 ? (
+          <div className="mt-4 space-y-1 border-t border-blush-100 pt-4 text-sm">
+            <div className="flex justify-between text-ink-500"><span>Order total</span><span>{formatINR(order.total_amount)}</span></div>
+            <div className="flex justify-between text-emerald-700"><span>Advance paid online</span><span>-{formatINR(order.advance_amount)}</span></div>
+            <div className="flex justify-between text-base font-semibold"><span>Pay on delivery</span><span>{formatINR(order.total_amount - order.advance_amount)}</span></div>
+          </div>
+        ) : (
+          <div className="mt-4 flex justify-between border-t border-blush-100 pt-4 text-base font-semibold">
+            <span>{order.payment_method === 'cod' ? 'Total (Pay on Delivery)' : 'Total Paid'}</span>
+            <span>{formatINR(order.total_amount)}</span>
+          </div>
+        )}
       </div>
 
       <div className="mt-8 flex justify-center gap-3">

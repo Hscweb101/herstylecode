@@ -61,7 +61,7 @@ Deno.serve(async (req) => {
 
     const { data: products, error: productsError } = await admin
       .from('products')
-      .select('id, name, sku, price, stock_quantity, track_inventory, is_active, return_eligible, cod_available')
+      .select('id, name, sku, price, stock_quantity, track_inventory, is_active, return_eligible, cod_available, online_discount_type, online_discount_value, cod_advance_type, cod_advance_value')
       .in('id', productIds)
     if (productsError) throw productsError
 
@@ -72,6 +72,9 @@ Deno.serve(async (req) => {
     const { data: images } = await admin.from('product_images').select('product_id, url, is_primary').in('product_id', productIds)
 
     let subtotal = 0
+    // Per-product offers set in Admin > Products: a discount for paying online, and an advance payment for COD.
+    let onlineDiscount = 0
+    let codAdvance = 0
     const orderItemsPayload: Record<string, unknown>[] = []
     const stockOps: { productId: string; variantId: string | null; qty: number }[] = []
 
@@ -94,6 +97,14 @@ Deno.serve(async (req) => {
 
       const lineTotal = unitPrice * item.quantity
       subtotal += lineTotal
+
+      const offerValue = (type: string | null, value: unknown) => {
+        const v = Number(value) || 0
+        if (v <= 0) return 0
+        return Math.min(lineTotal, type === 'percent' ? Math.round((lineTotal * Math.min(v, 100)) / 100) : Math.round(v * item.quantity))
+      }
+      if (body.paymentMethod === 'razorpay') onlineDiscount += offerValue(product.online_discount_type, product.online_discount_value)
+      if (body.paymentMethod === 'cod' && product.cod_advance_type !== 'none') codAdvance += offerValue(product.cod_advance_type, product.cod_advance_value)
 
       const image =
         (variant?.image_url as string | undefined) ??
@@ -148,14 +159,21 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: 'Cash on Delivery is not available' }, 400)
     }
 
+    // Free shipping is judged before the "Pay Now" discount, so paying online never makes shipping paid.
+    const shippingAmount = subtotal - discountAmount >= shippingSettings.free_shipping_threshold ? 0 : shippingSettings.standard_shipping_fee
+
+    // "Pay Now" discount for paying online (stacks with a coupon, never takes the order below zero).
+    discountAmount = Math.min(subtotal, discountAmount + onlineDiscount)
     const netAfterDiscount = subtotal - discountAmount
-    const shippingAmount = netAfterDiscount >= shippingSettings.free_shipping_threshold ? 0 : shippingSettings.standard_shipping_fee
 
     const { data: taxSettingsRow } = await admin.from('store_settings').select('value').eq('key', 'tax').maybeSingle()
     const taxSettings = (taxSettingsRow?.value as { gst_percentage: number; prices_include_tax: boolean }) ?? { gst_percentage: 0, prices_include_tax: true }
     const taxAmount = taxSettings.prices_include_tax ? 0 : Math.round(netAfterDiscount * (taxSettings.gst_percentage / 100))
 
     const totalAmount = Math.round(netAfterDiscount + shippingAmount + taxAmount)
+
+    // Partial COD: part of the total is paid online now, the rest on delivery. Needs at least Rs 1 left to collect.
+    const advanceAmount = body.paymentMethod === 'cod' ? Math.min(Math.round(codAdvance), Math.max(0, totalAmount - 1)) : 0
 
     // ---- Create the order ----
     const { data: order, error: orderError } = await admin
@@ -173,6 +191,8 @@ Deno.serve(async (req) => {
         shipping_amount: shippingAmount,
         tax_amount: taxAmount,
         total_amount: totalAmount,
+        advance_amount: advanceAmount,
+        advance_paid: false,
         coupon_id: couponId,
         coupon_code: body.couponCode ?? null,
         shipping_address: body.shippingAddress,
@@ -191,7 +211,7 @@ Deno.serve(async (req) => {
       if (couponRow) await admin.from('coupons').update({ used_count: couponRow.used_count + 1 }).eq('id', couponId)
     }
 
-    if (body.paymentMethod === 'cod') {
+    if (body.paymentMethod === 'cod' && advanceAmount === 0) {
       // Decrement stock immediately for COD orders (no online payment gate).
       for (const op of stockOps) {
         const { error: stockError } = await admin.rpc('decrement_stock', {
@@ -221,11 +241,14 @@ Deno.serve(async (req) => {
     }
     const auth = btoa(`${razorpayKeyId}:${razorpayKeySecret}`)
 
+    // Online payment charges the full total, or just the advance for a partial-COD order.
+    const chargeAmount = body.paymentMethod === 'cod' ? advanceAmount : totalAmount
+
     const rpRes = await fetch('https://api.razorpay.com/v1/orders', {
       method: 'POST',
       headers: { Authorization: `Basic ${auth}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        amount: Math.round(totalAmount * 100),
+        amount: Math.round(chargeAmount * 100),
         currency: 'INR',
         receipt: order.order_number,
         notes: { order_id: order.id },
@@ -241,7 +264,7 @@ Deno.serve(async (req) => {
       order_id: order.id,
       provider: 'razorpay',
       razorpay_order_id: rpData.id,
-      amount: totalAmount,
+      amount: chargeAmount,
       status: 'created',
       raw_response: rpData,
     })
@@ -253,6 +276,8 @@ Deno.serve(async (req) => {
       amount: rpData.amount,
       currency: rpData.currency,
       keyId: razorpayKeyId,
+      advanceAmount: body.paymentMethod === 'cod' ? advanceAmount : 0,
+      balanceDue: body.paymentMethod === 'cod' ? totalAmount - advanceAmount : 0,
     })
   } catch (err) {
     console.error(err)

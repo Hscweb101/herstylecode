@@ -16,28 +16,29 @@
   --font-script: "Cormorant Garamond", ui-serif, Georgia, serif;
   --font-sans: "Poppins", ui-sans-serif, system-ui, sans-serif;
 
-  --color-cream: #fffaf9;
-  --color-blush-50: #fff5f8;
-  --color-blush-100: #fce7ef;
-  --color-blush-200: #f8d0e0;
-  --color-blush-300: #f3aec8;
-  --color-brand-50: #fef1f6;
-  --color-brand-100: #fde4ee;
-  --color-brand-200: #fbc9dc;
-  --color-brand-300: #f193b5;
-  --color-brand-400: #ec6d9c;
-  --color-brand-500: #e34c86;
-  --color-brand-600: #cf3573;
-  --color-brand-700: #ab275e;
-  --color-brand-800: #7d1c46;
-  --color-ink-900: #241318;
-  --color-ink-700: #4a2a34;
-  --color-ink-500: #7a5560;
-  --color-ink-300: #b79aa2;
+  --color-white: #F8F4E7;
+  --color-cream: #F8F4E7;
+  --color-blush-50: #f1ebd8;
+  --color-blush-100: #ebe3cc;
+  --color-blush-200: #ddd2b6;
+  --color-blush-300: #cdbf99;
+  --color-brand-50: #f6ebe9;
+  --color-brand-100: #efdcd9;
+  --color-brand-200: #e2c2bf;
+  --color-brand-300: #c08e93;
+  --color-brand-400: #a05660;
+  --color-brand-500: #8a3d47;
+  --color-brand-600: #722F37;
+  --color-brand-700: #5c262c;
+  --color-brand-800: #451c21;
+  --color-ink-900: #2a1a1c;
+  --color-ink-700: #4d3a3c;
+  --color-ink-500: #7a6568;
+  --color-ink-300: #a39390;
   --color-gold-500: #b8935a;
 
-  --shadow-luxe: 0 10px 40px -12px rgba(171, 39, 94, 0.18);
-  --shadow-luxe-sm: 0 4px 18px -6px rgba(171, 39, 94, 0.15);
+  --shadow-luxe: 0 10px 40px -12px rgba(114, 47, 55, 0.2);
+  --shadow-luxe-sm: 0 4px 18px -6px rgba(114, 47, 55, 0.16);
 }
 
 @layer base {
@@ -121,8 +122,8 @@
   89% { transform: translateX(0) rotate(0); }
 }
 @keyframes buyGlow {
-  0% { box-shadow: 0 0 0 0 rgba(207, 53, 115, 0.5); }
-  70%, 100% { box-shadow: 0 0 0 12px rgba(207, 53, 115, 0); }
+  0% { box-shadow: 0 0 0 0 rgba(114, 47, 55, 0.5); }
+  70%, 100% { box-shadow: 0 0 0 12px rgba(114, 47, 55, 0); }
 }
 .btn-shiver:not(:disabled) {
   animation: buyShiver 3.2s ease-in-out infinite, buyGlow 1.8s ease-out infinite;
@@ -130,7 +131,7 @@
 .btn-shiver:not(:disabled):hover {
   animation: none;
   transform: translateY(-2px) scale(1.03);
-  box-shadow: 0 12px 26px -8px rgba(171, 39, 94, 0.55);
+  box-shadow: 0 12px 26px -8px rgba(114, 47, 55, 0.55);
 }
 @media (prefers-reduced-motion: reduce) {
   .btn-shiver:not(:disabled) {
@@ -217,9 +218,9 @@
   height: 22px;
   margin-top: -11px;
   border-radius: 9999px;
-  background: #fff;
+  background: #F8F4E7;
   border: 3px solid var(--color-brand-600);
-  box-shadow: 0 2px 8px rgba(171, 39, 94, 0.35);
+  box-shadow: 0 2px 8px rgba(114, 47, 55, 0.35);
   cursor: grab;
   transition: transform 0.15s ease;
 }
@@ -228,9 +229,9 @@
   width: 16px;
   height: 16px;
   border-radius: 9999px;
-  background: #fff;
+  background: #F8F4E7;
   border: 3px solid var(--color-brand-600);
-  box-shadow: 0 2px 8px rgba(171, 39, 94, 0.35);
+  box-shadow: 0 2px 8px rgba(114, 47, 55, 0.35);
   cursor: grab;
 }
 .range-thumb:active::-webkit-slider-thumb {
@@ -238,7 +239,7 @@
   transform: scale(1.15);
 }
 .range-thumb:focus-visible::-webkit-slider-thumb {
-  outline: 3px solid rgba(227, 76, 134, 0.35);
+  outline: 3px solid rgba(114, 47, 55, 0.35);
 }
 
 /* Lift the floating WhatsApp button above the phone sticky purchase bar. */
@@ -321,7 +322,7 @@
    Scoped to .admin-ui so the storefront is untouched. Restyles the shared
    Button/Input/Badge/card classes used by every admin page without changing
    any markup, data or tables. */
-.admin-ui { font-family: var(--font-sans); color: #111827; background: #f9fafb; }
+.admin-ui { --color-white: #ffffff; font-family: var(--font-sans); color: #111827; background: #f9fafb; }
 .admin-ui h1, .admin-ui h2, .admin-ui h3, .admin-ui h4 { font-family: var(--font-sans); letter-spacing: 0; font-weight: 600; }
 .admin-ui .font-serif { font-family: var(--font-sans); font-weight: 600; }
 .admin-ui .shadow-luxe-sm, .admin-ui .shadow-luxe { box-shadow: none; border: 1px solid #e5e7eb; }
@@ -333,7 +334,7 @@
 .admin-ui select, .admin-ui textarea { border-radius: 0.5rem; border-color: #d1d5db; }
 .admin-ui input:focus, .admin-ui select:focus, .admin-ui textarea:focus {
   border-color: var(--color-brand-500);
-  box-shadow: 0 0 0 2px rgba(227, 76, 134, 0.18);
+  box-shadow: 0 0 0 2px rgba(114, 47, 55, 0.18);
 }
 .admin-ui table thead th { background: #f9fafb; color: #6b7280; }
 .admin-ui table tbody tr:hover { background: #fafafa; }
@@ -356,10 +357,10 @@
 /* Gentle "Pay Now" nudge: a short shake plus a soft glow once every ~6s, only 5 times, then it stays calm.
    Pauses on hover/focus and is off for people who prefer reduced motion. */
 @keyframes payNudge {
-  0%, 82%, 100% { transform: translateX(0) rotate(0); box-shadow: 0 3px 0 0 #ab275e, 0 0 0 0 rgba(227, 76, 134, 0); }
-  84% { transform: translateX(-3px) rotate(-1deg); box-shadow: 0 3px 0 0 #ab275e, 0 0 0 0 rgba(227, 76, 134, 0.45); }
+  0%, 82%, 100% { transform: translateX(0) rotate(0); box-shadow: 0 3px 0 0 #4a1d23, 0 0 0 0 rgba(114, 47, 55, 0); }
+  84% { transform: translateX(-3px) rotate(-1deg); box-shadow: 0 3px 0 0 #4a1d23, 0 0 0 0 rgba(114, 47, 55, 0.45); }
   87% { transform: translateX(3px) rotate(1deg); }
-  90% { transform: translateX(-2px) rotate(-0.6deg); box-shadow: 0 3px 0 0 #ab275e, 0 0 0 9px rgba(227, 76, 134, 0); }
+  90% { transform: translateX(-2px) rotate(-0.6deg); box-shadow: 0 3px 0 0 #4a1d23, 0 0 0 9px rgba(114, 47, 55, 0); }
   93% { transform: translateX(2px) rotate(0.6deg); }
   96% { transform: translateX(0) rotate(0); }
 }

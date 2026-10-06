@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { ArrowLeft, Check, ExternalLink, PackageSearch } from 'lucide-react'
 import toast from 'react-hot-toast'
@@ -126,10 +126,9 @@ export default function TrackOrder() {
   const [orders, setOrders] = useState<TrackedOrder[] | null>(null)
   const [selected, setSelected] = useState<TrackedOrder | null>(null)
 
-  const handleSearch = async (e: React.FormEvent) => {
-    e.preventDefault()
-    const number = normalizeOrderNumber(orderNumber)
-    const who = contact.trim()
+  const runSearch = async (rawNumber: string, rawContact: string) => {
+    const number = normalizeOrderNumber(rawNumber)
+    const who = rawContact.trim()
     if (!number && !who) {
       toast.error('Enter your Order ID or your email')
       return
@@ -152,6 +151,21 @@ export default function TrackOrder() {
     setOrders(found)
     if (found.length === 1) setSelected(found[0])
   }
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault()
+    void runSearch(orderNumber, contact)
+  }
+
+  // Scanning the QR code on a packing slip opens /track-order?order=HSC1001 -- show that order straight away.
+  const autoRan = useRef(false)
+  useEffect(() => {
+    const fromLink = params.get('order')
+    if (autoRan.current || !fromLink) return
+    autoRan.current = true
+    void runSearch(fromLink, params.get('email') ?? '')
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-10 sm:py-14">

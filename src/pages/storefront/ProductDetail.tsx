@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { Heart, Minus, Plus, Truck, Share2, Star, ChevronLeft, ChevronRight, ChevronDown, Lock, Banknote, PenLine, X } from 'lucide-react'
+import { CARE_STEPS } from '@/lib/careGuide'
+import { colourSwatch } from '@/lib/colours'
 import { supabase } from '@/lib/supabase'
 import { fetchProductBySlug, fetchProducts } from '@/lib/queries'
 import type { Product, ProductVariant, Review } from '@/types'
@@ -203,6 +205,31 @@ function Accordion({ title, children, defaultOpen = false }: { title: string; ch
           <div className="pb-4 text-sm leading-relaxed text-ink-700">{children}</div>
         </div>
       </div>
+    </div>
+  )
+}
+
+/** The standard six care points, each a short heading + one line, with a link to the full guide. */
+function CareList({ note }: { note?: string | null }) {
+  return (
+    <div>
+      <ul className="grid gap-x-8 gap-y-3 sm:grid-cols-2">
+        {CARE_STEPS.map(({ icon: Icon, title, short }) => (
+          <li key={title} className="flex items-start gap-3">
+            <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-600/10 text-brand-600">
+              <Icon size={16} />
+            </span>
+            <span className="min-w-0">
+              <span className="block text-sm font-semibold text-ink-900">{title}</span>
+              <span className="block text-[13px] leading-snug text-ink-500">{short}</span>
+            </span>
+          </li>
+        ))}
+      </ul>
+      {note && <p className="mt-3 text-[13px] text-ink-500">{note}</p>}
+      <Link to="/care-instructions" className="mt-4 inline-block text-sm font-medium text-brand-600 underline underline-offset-2">
+        Read the full care guide
+      </Link>
     </div>
   )
 }
@@ -460,6 +487,7 @@ export default function ProductDetail() {
   const displayPrice = selectedVariant?.price ?? product.price
   const displayCompareAt = selectedVariant?.compare_at_price ?? product.compare_at_price
   const displayStock = selectedVariant ? selectedVariant.stock_quantity : product.stock_quantity
+  const colourLabel = selectedVariant?.colour || selectedVariant?.variant_name || product.colour
   const outOfStock = product.track_inventory !== false && displayStock <= 0
   const pct = discountPercent(displayPrice, displayCompareAt)
   const images = selectedVariant?.image_url
@@ -523,19 +551,33 @@ export default function ProductDetail() {
             <LiveViewerCount productId={product.id} />
           </div>
 
+          {colourLabel && (!product.variants || product.variants.length === 0) && (
+            <p className="mt-4 flex items-center gap-2 text-sm text-ink-700">
+              <span className="text-xs font-semibold uppercase tracking-wide text-ink-500">Colour</span>
+              <span className="flex items-center gap-1.5 font-medium">
+                <span className="h-3.5 w-3.5 rounded-full ring-1 ring-ink-300/60" style={{ background: colourSwatch(colourLabel) }} aria-hidden />
+                {colourLabel}
+              </span>
+            </p>
+          )}
+
           {product.variants && product.variants.length > 0 && (
             <div className="mt-6">
-              <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-500">Choose Variant</h4>
+              <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-500">
+                Colour{selectedVariant ? <span className="ml-1.5 font-medium normal-case tracking-normal text-ink-900">: {selectedVariant.colour || selectedVariant.variant_name}</span> : null}
+              </h4>
               <div className="flex flex-wrap gap-2">
                 {product.variants.filter((v) => v.is_active).map((v) => (
                   <button
                     key={v.id}
                     onClick={() => selectVariant(v)}
                     className={cn(
-                      'rounded-full border px-4 py-2 text-sm',
+                      'flex items-center gap-2 rounded-full border px-4 py-2 text-sm',
                       selectedVariant?.id === v.id ? 'border-brand-500 bg-blush-50 text-brand-700' : 'border-blush-200 text-ink-700',
+                      v.stock_quantity <= 0 && product.track_inventory !== false && 'opacity-50',
                     )}
                   >
+                    <span className="h-3.5 w-3.5 shrink-0 rounded-full ring-1 ring-ink-300/60" style={{ background: colourSwatch(v.colour || v.variant_name) }} aria-hidden />
                     {v.variant_name}
                   </button>
                 ))}
@@ -640,9 +682,11 @@ export default function ProductDetail() {
             </div>
           </div>
 
-          <div className="mt-4">
-            <PurchaseSocialProof productId={product.id} />
-          </div>
+          {product.show_purchase_proof !== false && (
+            <div className="mt-4">
+              <PurchaseSocialProof productId={product.id} />
+            </div>
+          )}
 
           <TrustStrip returnEligible={!!product.return_eligible} codAvailable={!!product.cod_available} />
           <p className="mt-3 hidden items-center gap-2 text-xs text-ink-500 md:flex">
@@ -656,21 +700,9 @@ export default function ProductDetail() {
         <Accordion title="Product Description" defaultOpen>
           <p className="whitespace-pre-line">{product.description}</p>
         </Accordion>
-        {(product.material || product.colour || product.size || product.weight_grams || selectedVariant?.colour || selectedVariant?.size) && (
-          <Accordion title="Specifications">
-            <dl className="grid grid-cols-2 gap-y-2">
-              {product.material && (<><dt className="text-ink-300">Material</dt><dd>{product.material}</dd></>)}
-              {(selectedVariant?.colour ?? product.colour) && (<><dt className="text-ink-300">Colour</dt><dd>{selectedVariant?.colour ?? product.colour}</dd></>)}
-              {(selectedVariant?.size ?? product.size) && (<><dt className="text-ink-300">Size</dt><dd>{selectedVariant?.size ?? product.size}</dd></>)}
-              {product.weight_grams && (<><dt className="text-ink-300">Weight</dt><dd>{product.weight_grams} g</dd></>)}
-            </dl>
-          </Accordion>
-        )}
-        {product.care_instructions && (
-          <Accordion title="Care Instructions">
-            <p>{product.care_instructions}</p>
-          </Accordion>
-        )}
+        <Accordion title="Care Instructions">
+          <CareList note={product.care_instructions} />
+        </Accordion>
         {product.whats_included && (
           <Accordion title="What's Included">
             <p>{product.whats_included}</p>
@@ -689,21 +721,11 @@ export default function ProductDetail() {
             <h3 className="mb-3 font-serif text-xl">Description</h3>
             <p className="whitespace-pre-line text-sm leading-relaxed text-ink-700">{product.description}</p>
           </div>
-          <div>
-            <h3 className="mb-3 font-serif text-xl">Specifications</h3>
-            <dl className="grid grid-cols-2 gap-y-2 text-sm">
-              {product.material && (<><dt className="text-ink-300">Material</dt><dd className="text-ink-700">{product.material}</dd></>)}
-              {(selectedVariant?.colour ?? product.colour) && (<><dt className="text-ink-300">Colour</dt><dd className="text-ink-700">{selectedVariant?.colour ?? product.colour}</dd></>)}
-              {(selectedVariant?.size ?? product.size) && (<><dt className="text-ink-300">Size</dt><dd className="text-ink-700">{selectedVariant?.size ?? product.size}</dd></>)}
-              {product.weight_grams && (<><dt className="text-ink-300">Weight</dt><dd className="text-ink-700">{product.weight_grams} g</dd></>)}
-            </dl>
+          <div className="border-t border-blush-200">
+            <Accordion title="Care Instructions">
+              <CareList note={product.care_instructions} />
+            </Accordion>
           </div>
-          {product.care_instructions && (
-            <div>
-              <h3 className="mb-3 font-serif text-xl">Care Instructions</h3>
-              <p className="text-sm text-ink-700">{product.care_instructions}</p>
-            </div>
-          )}
           {product.whats_included && (
             <div>
               <h3 className="mb-3 font-serif text-xl">What's Included</h3>
@@ -798,7 +820,7 @@ export default function ProductDetail() {
             </p>
           </Accordion>
           <Accordion title="How do I take care of my jewellery?">
-            <p>Keep it away from water, perfume and moisture, and store it in a dry pouch after use. Wipe gently with a soft cloth.</p>
+            <p>Keep it dry, apply perfume before wearing it, and store it in a clean pouch. See our <Link to="/care-instructions" className="font-medium text-brand-600 underline">full care guide</Link>.</p>
           </Accordion>
         </div>
       </div>
@@ -818,7 +840,7 @@ export default function ProductDetail() {
       <div
         aria-hidden={!showStickyBar}
         className={cn(
-          'fixed inset-x-0 bottom-0 z-40 border-t border-blush-100 bg-white/95 px-4 pt-3 shadow-[0_-8px_24px_-12px_rgba(171,39,94,0.25)] backdrop-blur transition-transform duration-300 md:hidden',
+          'fixed inset-x-0 bottom-0 z-40 border-t border-blush-100 bg-white/95 px-4 pt-3 shadow-[0_-8px_24px_-12px_rgba(114,47,55,0.25)] backdrop-blur transition-transform duration-300 md:hidden',
           'pb-[calc(0.75rem+env(safe-area-inset-bottom))]',
           showStickyBar ? 'translate-y-0' : 'translate-y-full',
         )}

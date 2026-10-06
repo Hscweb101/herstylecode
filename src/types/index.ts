@@ -2,7 +2,7 @@ export type OrderStatus =
   | 'new' | 'paid' | 'processing' | 'packed' | 'shipped'
   | 'out_for_delivery' | 'delivered' | 'cancelled' | 'returned' | 'refunded'
 
-export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded' | 'partially_refunded'
+export type PaymentStatus = 'pending' | 'paid' | 'partially_paid' | 'failed' | 'refunded' | 'partially_refunded'
 export type PaymentMethod = 'razorpay' | 'cod'
 
 export interface Category {
@@ -77,6 +77,11 @@ export interface Product {
   delivery_info: string | null
   return_eligible: boolean
   cod_available: boolean
+  show_purchase_proof: boolean
+  online_discount_type: 'amount' | 'percent'
+  online_discount_value: number
+  cod_advance_type: 'none' | 'amount' | 'percent'
+  cod_advance_value: number
   video_url: string | null
   tags: string[]
   is_active: boolean
@@ -176,6 +181,8 @@ export interface Order {
   shipping_amount: number
   tax_amount: number
   total_amount: number
+  advance_amount: number
+  advance_paid: boolean
   coupon_code: string | null
   shipping_address: ShippingAddressJson
   billing_address: ShippingAddressJson | null

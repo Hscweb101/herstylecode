@@ -25,7 +25,7 @@ export function MegaShell({
       onMouseLeave={onLeave}
       aria-hidden={!open}
       className={cn(
-        'absolute inset-x-0 top-full z-50 hidden border-t border-blush-100 bg-white shadow-[0_28px_44px_-26px_rgba(171,39,94,0.4)] transition-all duration-200 md:block',
+        'absolute inset-x-0 top-full z-50 hidden border-t border-blush-100 bg-white shadow-[0_28px_44px_-26px_rgba(114,47,55,0.4)] transition-all duration-200 md:block',
         open ? 'visible translate-y-0 opacity-100' : 'pointer-events-none invisible -translate-y-2 opacity-0',
       )}
     >

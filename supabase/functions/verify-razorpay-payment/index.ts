@@ -40,8 +40,12 @@ Deno.serve(async (req) => {
     const { data: order } = await admin.from('orders').select('*').eq('id', orderId).single()
     if (!order) return jsonResponse({ error: 'Order not found' }, 404)
 
-    // Idempotent: if already paid (e.g. webhook beat us to it), just return success.
-    if (order.payment_status !== 'paid') {
+    // Partial COD: the online payment is only the advance. The rest is collected on delivery.
+    const isCodAdvance = order.payment_method === 'cod' && Number(order.advance_amount) > 0
+    const alreadyDone = isCodAdvance ? order.advance_paid : order.payment_status === 'paid'
+
+    // Idempotent: if already handled (e.g. webhook beat us to it), just return success.
+    if (!alreadyDone) {
       const { data: items } = await admin.from('order_items').select('product_id, variant_id, quantity').eq('order_id', orderId)
       for (const item of items ?? []) {
         const { error: stockError } = await admin.rpc('decrement_stock', {
@@ -54,8 +58,18 @@ Deno.serve(async (req) => {
         if (stockError) console.error('Stock decrement failed', stockError.message)
       }
 
-      await admin.from('orders').update({ status: 'paid', payment_status: 'paid' }).eq('id', orderId)
-      await admin.from('order_status_history').insert({ order_id: orderId, status: 'paid', note: 'Payment verified via Razorpay' })
+      if (isCodAdvance) {
+        const balance = Number(order.total_amount) - Number(order.advance_amount)
+        await admin.from('orders').update({ status: 'new', payment_status: 'partially_paid', advance_paid: true }).eq('id', orderId)
+        await admin.from('order_status_history').insert({
+          order_id: orderId,
+          status: 'new',
+          note: `COD advance of Rs ${order.advance_amount} paid via Razorpay. Rs ${balance} to collect on delivery`,
+        })
+      } else {
+        await admin.from('orders').update({ status: 'paid', payment_status: 'paid' }).eq('id', orderId)
+        await admin.from('order_status_history').insert({ order_id: orderId, status: 'paid', note: 'Payment verified via Razorpay' })
+      }
 
       if (order.customer_id) {
         const { data: cart } = await admin.from('carts').select('id').eq('customer_id', order.customer_id).maybeSingle()

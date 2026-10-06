@@ -35,7 +35,8 @@ Deno.serve(async (req) => {
         await admin.from('payments').update({ razorpay_payment_id: entity.id, status: 'captured', raw_response: entity }).eq('id', payment.id)
 
         const { data: order } = await admin.from('orders').select('*').eq('id', payment.order_id).single()
-        if (order && order.payment_status !== 'paid') {
+        const isCodAdvance = order?.payment_method === 'cod' && Number(order?.advance_amount) > 0
+        if (order && (isCodAdvance ? !order.advance_paid : order.payment_status !== 'paid')) {
           const { data: items } = await admin.from('order_items').select('product_id, variant_id, quantity').eq('order_id', order.id)
           for (const item of items ?? []) {
             await admin.rpc('decrement_stock', {
@@ -46,8 +47,13 @@ Deno.serve(async (req) => {
               p_reference_id: order.id,
             })
           }
-          await admin.from('orders').update({ status: 'paid', payment_status: 'paid' }).eq('id', order.id)
-          await admin.from('order_status_history').insert({ order_id: order.id, status: 'paid', note: 'Payment captured (webhook)' })
+          if (isCodAdvance) {
+            await admin.from('orders').update({ status: 'new', payment_status: 'partially_paid', advance_paid: true }).eq('id', order.id)
+            await admin.from('order_status_history').insert({ order_id: order.id, status: 'new', note: 'COD advance captured (webhook)' })
+          } else {
+            await admin.from('orders').update({ status: 'paid', payment_status: 'paid' }).eq('id', order.id)
+            await admin.from('order_status_history').insert({ order_id: order.id, status: 'paid', note: 'Payment captured (webhook)' })
+          }
         }
       }
     }
