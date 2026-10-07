@@ -5,7 +5,7 @@ import {
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { fetchProducts } from '@/lib/queries'
-import type { Product, Banner, Review, Category, Reel, Faq, Moment } from '@/types'
+import type { Product, Banner, Category, Reel, Faq, Moment } from '@/types'
 import { ProductCard } from '@/components/storefront/ProductCard'
 import { ReelsRail } from '@/components/storefront/ReelsRail'
 import { QuoteSeparator } from '@/components/storefront/QuoteSeparator'
@@ -25,8 +25,8 @@ function ProductRail({ title, eyebrow, products, viewAllHref }: { title: string;
     <section className="mx-auto max-w-7xl px-4 py-12 md:px-8">
       <div className="mb-8 flex items-end justify-between">
         <div>
-          <p className="font-script mb-1 text-lg text-brand-500">{eyebrow}</p>
-          <h2 className="text-2xl text-ink-900 md:text-3xl">{title}</h2>
+          <p className="font-script mb-1 text-xl font-semibold text-brand-400">{eyebrow}</p>
+          <h2 className="text-2xl font-bold text-brand-600 md:text-3xl">{title}</h2>
         </div>
         <Link to={viewAllHref} className="hidden text-sm font-medium text-brand-600 hover:underline md:block">
           View All →
@@ -45,30 +45,33 @@ function ProductRail({ title, eyebrow, products, viewAllHref }: { title: string;
 }
 
 function HeroSlide({ banner }: { banner: Banner | null }) {
+  /* Sizes are in vw so the text block scales with the image exactly like the design reference
+     (text sits left, burgundy serif title, dusty-pink eyebrow, short rule, burgundy pill button). */
   return (
-    <div className="relative h-[65vh] min-h-[440px] w-full overflow-hidden bg-blush-100 md:h-[88vh]">
+    <div className="relative h-[82svh] min-h-[500px] w-full overflow-hidden bg-blush-100 md:aspect-[16/9] md:h-auto md:max-h-[92vh] md:min-h-0">
       <picture>
         {banner?.mobile_image_url && <source media="(max-width: 767px)" srcSet={banner.mobile_image_url} />}
         <img
           src={banner?.image_url ?? 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?q=80&w=1600&auto=format&fit=crop'}
           alt={banner?.title ?? 'HerStyleCode jewellery'}
-          className="absolute inset-0 h-full w-full animate-kenburns object-cover"
+          className="absolute inset-0 h-full w-full object-cover"
         />
       </picture>
-      <div className="absolute inset-0 bg-gradient-to-r from-ink-900/70 via-ink-900/25 to-transparent" />
-      <div className="relative mx-auto flex h-full max-w-7xl flex-col items-start justify-center px-4 [text-shadow:0_2px_16px_rgba(0,0,0,0.45)] md:px-8">
-        <p className="font-script mb-2 text-xl text-brand-200 md:text-2xl">Your Style. Your Rules.</p>
-        <h1 className="max-w-2xl text-3xl leading-tight text-white md:text-6xl">
+      <div className="relative flex h-full flex-col items-start justify-center pb-[10%] pl-[5.5vw] pr-[6vw] md:pb-[3%] md:pl-[16vw]">
+        <p className="text-[3.1vw] font-semibold uppercase tracking-[0.2em] text-brand-400 md:text-[0.9vw]">Your Style. Your Rules.</p>
+        <h1 className="mt-[1.6vw] max-w-[8.5em] text-balance text-[10vw] font-medium leading-[1.04] tracking-tight text-brand-600 md:mt-[0.8vw] md:text-[4.5vw]">
           {banner?.title ?? 'Jewellery That Speaks Your Story'}
         </h1>
-        <p className="mt-3 max-w-md text-sm text-white/85 md:text-base">
+        <span className="my-[3vw] block h-[2px] w-[20vw] bg-brand-600 md:my-[1.6vw] md:w-[7vw]" />
+        <p className="max-w-[12em] font-serif text-[4.5vw] leading-snug text-brand-600 md:max-w-[12.5em] md:text-[1.5vw]">
           {banner?.subtitle ?? 'Curated fashion (artificial) jewellery for every mood, every occasion, every version of you.'}
         </p>
         <Link
           to={banner?.link_url ?? '/collections/new-arrivals'}
-          className="mt-6 inline-block rounded-full bg-brand-600 px-8 py-3.5 text-sm font-medium tracking-wide text-white shadow-luxe transition-transform hover:scale-105 hover:bg-brand-700"
+          className="mt-[5vw] inline-flex items-center gap-[2vw] rounded-full bg-brand-600 px-[7vw] py-[3.2vw] font-serif text-[4.6vw] text-cream shadow-luxe transition-transform hover:scale-105 hover:bg-brand-700 md:mt-[2.2vw] md:gap-[0.8vw] md:px-[2.3vw] md:py-[0.95vw] md:text-[1.35vw]"
         >
           {banner?.cta_text ?? 'Shop New Arrivals'}
+          <ChevronRight className="h-[1.1em] w-[1.1em]" />
         </Link>
       </div>
     </div>
@@ -100,14 +103,14 @@ function HeroCarousel({ banners }: { banners: Banner[] }) {
           <button
             aria-label="Previous banner"
             onClick={() => setActive((a) => (a - 1 + slides.length) % slides.length)}
-            className="absolute left-3 top-1/2 hidden -translate-y-1/2 rounded-full bg-white/80 p-2 text-ink-900 opacity-0 shadow-luxe-sm transition-opacity group-hover:opacity-100 md:block"
+            className="absolute left-3 top-1/2 hidden -translate-y-1/2 rounded-full bg-cream/90 p-2 text-brand-600 opacity-0 shadow-luxe-sm transition-opacity group-hover:opacity-100 md:block"
           >
             <ChevronLeft size={20} />
           </button>
           <button
             aria-label="Next banner"
             onClick={() => setActive((a) => (a + 1) % slides.length)}
-            className="absolute right-3 top-1/2 hidden -translate-y-1/2 rounded-full bg-white/80 p-2 text-ink-900 opacity-0 shadow-luxe-sm transition-opacity group-hover:opacity-100 md:block"
+            className="absolute right-3 top-1/2 hidden -translate-y-1/2 rounded-full bg-cream/90 p-2 text-brand-600 opacity-0 shadow-luxe-sm transition-opacity group-hover:opacity-100 md:block"
           >
             <ChevronRight size={20} />
           </button>
@@ -117,7 +120,7 @@ function HeroCarousel({ banners }: { banners: Banner[] }) {
                 key={i}
                 aria-label={`Go to banner ${i + 1}`}
                 onClick={() => setActive(i)}
-                className={cn('h-2 rounded-full transition-all', i === active ? 'w-6 bg-brand-600' : 'w-2 bg-white/70')}
+                className={cn('h-2 rounded-full transition-all', i === active ? 'w-6 bg-brand-600' : 'w-2 bg-brand-600/30')}
               />
             ))}
           </div>
@@ -171,8 +174,8 @@ function OurStorySection() {
             visible ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0',
           )}
         >
-          <p className="font-script mb-2 text-lg text-brand-500">Why &ldquo;Her Style Code&rdquo;?</p>
-          <h2 className="text-2xl leading-tight text-ink-900 md:text-3xl">The Story Behind Her Style Code</h2>
+          <p className="font-script mb-2 text-xl font-semibold text-brand-400">Why &ldquo;Her Style Code&rdquo;?</p>
+          <h2 className="text-2xl font-bold leading-tight text-brand-600 md:text-3xl">The Story Behind Her Style Code</h2>
           <CollapsibleBrandStory />
           <Link
             to="/page/about-us"
@@ -194,8 +197,8 @@ function CategoryGrid({ categories }: { categories: Category[] }) {
   return (
     <section className="mx-auto max-w-7xl px-4 py-14 md:px-8">
       <div className="mb-8">
-        <p className="font-script mb-1 text-lg text-brand-500">Curated For You</p>
-        <h2 className="text-2xl text-ink-900 md:text-3xl">Shop by Category</h2>
+        <p className="font-script mb-1 text-xl font-semibold text-brand-400">Curated For You</p>
+        <h2 className="text-2xl font-bold text-brand-600 md:text-3xl">Shop by Category</h2>
       </div>
       {/* scroll-px keeps the first card clear of the screen edge when it snaps into place */}
       <div ref={scrollerRef} className="scrollbar-none -mx-4 flex scroll-px-4 snap-x snap-mandatory gap-5 overflow-x-auto px-4 pb-2 md:gap-6">
@@ -376,20 +379,43 @@ function BrandBand() {
   )
 }
 
-function ReviewsRail({ reviews }: { reviews: (Review & { product_name?: string })[] }) {
-  if (reviews.length === 0) return null
+/* Static on purpose (not loaded from the database). Edit the text below to change what shows on the home page. */
+const TESTIMONIALS = [
+  { quote: 'The earrings look so much more expensive than they are. I wore them to a wedding and got compliments all night.', name: 'Priya S.', place: 'Mumbai', item: 'Statement Earrings' },
+  { quote: 'Lightweight, no skin irritation and the shine is still perfect after weeks. The packaging felt like a gift.', name: 'Ananya R.', place: 'Bengaluru', item: 'Necklace Set' },
+  { quote: 'Finally a jewellery brand that gets my style. Delivery was quick and the pieces match the photos exactly.', name: 'Neha K.', place: 'Delhi', item: 'Jhumka Collection' },
+]
+
+function ReviewsRail() {
   return (
-    <section className="bg-blush-50 py-14">
-      <div className="mx-auto max-w-7xl px-4 md:px-8">
-        <SectionHeading eyebrow="Loved By Customers" title="What They're Saying" />
-        <div className="grid gap-5 md:grid-cols-3">
-          {reviews.map((r) => (
-            <div key={r.id} className="rounded-2xl bg-white p-6 shadow-luxe-sm">
-              <StarRating rating={r.rating} />
-              {r.title && <p className="mt-3 font-serif text-lg text-ink-900">{r.title}</p>}
-              <p className="mt-2 text-sm text-ink-500">{r.body}</p>
-              <p className="mt-4 text-xs font-medium text-brand-600">— {r.reviewer_name}{r.product_name ? `, on ${r.product_name}` : ''}</p>
-            </div>
+    <section className="relative overflow-hidden bg-brand-600 py-16 md:py-20">
+      <div className="pointer-events-none absolute -left-16 -top-16 h-64 w-64 rounded-full bg-brand-400/15 blur-2xl" />
+      <div className="pointer-events-none absolute -bottom-20 -right-10 h-72 w-72 rounded-full bg-brand-400/15 blur-2xl" />
+      <div className="relative mx-auto max-w-7xl px-4 md:px-8">
+        <div className="mb-10 text-center">
+          <p className="font-script mb-1 text-xl font-semibold text-brand-400 md:text-2xl">Loved By Customers</p>
+          <h2 className="text-3xl font-bold text-cream md:text-4xl">What They&rsquo;re Saying</h2>
+          <span className="mx-auto mt-4 block h-px w-16 bg-brand-400" />
+        </div>
+        <div className="grid gap-6 md:grid-cols-3">
+          {TESTIMONIALS.map((t) => (
+            <figure
+              key={t.name}
+              className="group relative flex flex-col rounded-3xl bg-cream p-7 pt-9 shadow-luxe transition-transform duration-300 hover:-translate-y-1.5"
+            >
+              <span className="absolute -top-5 left-7 flex h-11 w-11 items-center justify-center rounded-full bg-brand-400 font-serif text-3xl leading-none text-cream shadow-luxe-sm">
+                <span className="translate-y-[3px]">&ldquo;</span>
+              </span>
+              <StarRating rating={5} />
+              <blockquote className="mt-4 flex-1 font-serif text-[17px] leading-relaxed text-brand-600">{t.quote}</blockquote>
+              <figcaption className="mt-6 flex items-center gap-3 border-t border-brand-400/30 pt-4">
+                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-600 text-sm font-semibold text-cream">{t.name[0]}</span>
+                <span className="text-sm">
+                  <span className="block font-semibold text-brand-600">{t.name}</span>
+                  <span className="block text-xs text-brand-400">{t.place} &middot; {t.item}</span>
+                </span>
+              </figcaption>
+            </figure>
           ))}
         </div>
       </div>
@@ -403,7 +429,6 @@ export default function Home() {
   const [newArrivals, setNewArrivals] = useState<Product[]>([])
   const [bestSellers, setBestSellers] = useState<Product[]>([])
   const [trending, setTrending] = useState<Product[]>([])
-  const [reviews, setReviews] = useState<(Review & { product_name?: string })[]>([])
   const [reels, setReels] = useState<Reel[]>([])
   const [moments, setMoments] = useState<Moment[]>([])
   const [faqs, setFaqs] = useState<Faq[]>([])
@@ -419,17 +444,11 @@ export default function Home() {
 
   useEffect(() => {
     async function load() {
-      const [banners, na, bs, tr, rv, rl, mo, fq] = await Promise.all([
+      const [banners, na, bs, tr, rl, mo, fq] = await Promise.all([
         supabase.from('banners').select('*').eq('is_active', true).order('sort_order').limit(5),
         fetchProducts({ flag: 'is_new_arrival', limit: 8 }),
         fetchProducts({ flag: 'is_bestseller', limit: 8 }),
         fetchProducts({ flag: 'is_trending', limit: 8 }),
-        supabase
-          .from('reviews')
-          .select('*, product:products(name)')
-          .eq('is_approved', true)
-          .order('created_at', { ascending: false })
-          .limit(3),
         supabase.from('reels').select('*').eq('is_active', true).order('sort_order'),
         supabase.from('moments').select('*, product:products(slug), category:categories(slug)').eq('is_active', true).order('sort_order'),
         supabase.from('faqs').select('*').eq('is_active', true).order('sort_order').limit(6),
@@ -438,9 +457,6 @@ export default function Home() {
       setNewArrivals(na)
       setBestSellers(bs)
       setTrending(tr)
-      setReviews(
-        ((rv.data as unknown as (Review & { product?: { name: string } })[]) ?? []).map((r) => ({ ...r, product_name: r.product?.name })),
-      )
       setReels((rl.data as Reel[]) ?? [])
       setMoments((mo.data as unknown as Moment[]) ?? [])
       setFaqs((fq.data as Faq[]) ?? [])
@@ -462,7 +478,7 @@ export default function Home() {
       <ReelsRail reels={reels} />
       <MomentsSection moments={moments} />
       <QuoteSeparator />
-      <ReviewsRail reviews={reviews} />
+      <ReviewsRail />
       <FaqHomeSection faqs={faqs} />
       <BrandBand />
       <OurStorySection />

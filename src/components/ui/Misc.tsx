@@ -80,8 +80,8 @@ export function SectionHeading({
 }) {
   return (
     <div className={cn('mb-8 text-center', className)}>
-      {eyebrow && <p className="font-script mb-1 text-lg text-brand-500">{eyebrow}</p>}
-      <h2 className="text-3xl text-ink-900 md:text-4xl">{title}</h2>
+      {eyebrow && <p className="font-script mb-1 text-xl font-semibold text-brand-400">{eyebrow}</p>}
+      <h2 className="text-3xl font-bold text-brand-600 md:text-4xl">{title}</h2>
     </div>
   )
 }

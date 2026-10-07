@@ -42,7 +42,7 @@ export async function downloadPackingSlip(order: Order, supportEmail?: string) {
     errorCorrectionLevel: 'M',
     margin: 1,
     width: 360,
-    color: { dark: '#722F37', light: '#ffffff' },
+    color: { dark: '#600619', light: '#ffffff' },
   })
 
   const doc = new jsPDF({ unit: 'mm', format: 'a5', orientation: 'portrait' })

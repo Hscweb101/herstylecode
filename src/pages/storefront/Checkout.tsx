@@ -161,7 +161,7 @@ export default function Checkout() {
         description: `Order ${data.orderNumber}`,
         order_id: data.razorpayOrderId,
         prefill: { name: form.full_name, email: form.email, contact: form.phone },
-        theme: { color: '#722F37' },
+        theme: { color: '#600619' },
         handler: async (response) => {
           const { data: verifyData, error: verifyError } = await supabase.functions.invoke('verify-razorpay-payment', {
             body: {

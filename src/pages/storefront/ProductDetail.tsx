@@ -840,7 +840,7 @@ export default function ProductDetail() {
       <div
         aria-hidden={!showStickyBar}
         className={cn(
-          'fixed inset-x-0 bottom-0 z-40 border-t border-blush-100 bg-white/95 px-4 pt-3 shadow-[0_-8px_24px_-12px_rgba(114,47,55,0.25)] backdrop-blur transition-transform duration-300 md:hidden',
+          'fixed inset-x-0 bottom-0 z-40 border-t border-blush-100 bg-white/95 px-4 pt-3 shadow-[0_-8px_24px_-12px_rgba(96,6,25,0.25)] backdrop-blur transition-transform duration-300 md:hidden',
           'pb-[calc(0.75rem+env(safe-area-inset-bottom))]',
           showStickyBar ? 'translate-y-0' : 'translate-y-full',
         )}

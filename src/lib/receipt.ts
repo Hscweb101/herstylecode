@@ -16,7 +16,7 @@ export function downloadReceipt(order: Order, supportEmail?: string) {
   const html = `<!doctype html><html><head><meta charset="utf-8"><title>Receipt ${esc(order.order_number)}</title>
 <style>
 body{font-family:Arial,Helvetica,sans-serif;color:#222;max-width:720px;margin:24px auto;padding:0 16px;font-size:14px}
-h1{margin:0;font-size:22px;color:#722F37}.top{display:flex;justify-content:space-between;border-bottom:2px solid #722F37;padding-bottom:12px;margin-bottom:16px}
+h1{margin:0;font-size:22px;color:#600619}.top{display:flex;justify-content:space-between;border-bottom:2px solid #600619;padding-bottom:12px;margin-bottom:16px}
 table{width:100%;border-collapse:collapse;margin-top:12px}th,td{padding:8px;border-bottom:1px solid #eee;text-align:left}th{background:#f1ebd8;font-size:12px;text-transform:uppercase}
 .r{text-align:right}small{color:#777}.tot td{font-weight:bold;font-size:15px;border-top:2px solid #222}.foot{margin-top:24px;font-size:12px;color:#666;text-align:center}
 @media print{button{display:none}}

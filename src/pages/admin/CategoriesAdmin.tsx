@@ -96,10 +96,11 @@ export default function CategoriesAdmin() {
       </Table>
 
       {editing && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink-900/40 px-4">
-          <Card className="w-full max-w-md">
-            <form onSubmit={handleSave} className="space-y-4">
-              <h3 className="font-serif text-lg">{editing.id ? 'Edit' : 'Add'} Category</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink-900/40 px-4 py-4">
+          <Card className="flex max-h-[92vh] w-full max-w-md flex-col !p-0">
+            <form onSubmit={handleSave} className="flex min-h-0 flex-1 flex-col">
+              <h3 className="shrink-0 border-b border-blush-100 px-5 py-4 font-serif text-lg">{editing.id ? 'Edit' : 'Add'} Category</h3>
+              <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-5 py-4">
               <Select
                 label="Parent Category (leave blank for a top-level category)"
                 value={editing.parent_id}
@@ -139,7 +140,8 @@ export default function CategoriesAdmin() {
 
               <Input label="Sort Order" type="number" value={editing.sort_order} onChange={(e) => setEditing({ ...editing, sort_order: Number(e.target.value) })} />
               <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={editing.is_active} onChange={(e) => setEditing({ ...editing, is_active: e.target.checked })} /> Active</label>
-              <div className="flex justify-end gap-2">
+              </div>
+              <div className="flex shrink-0 justify-end gap-2 border-t border-blush-100 px-5 py-3">
                 <Button type="button" variant="ghost" onClick={() => setEditing(null)}>Cancel</Button>
                 <Button type="submit">Save</Button>
               </div>

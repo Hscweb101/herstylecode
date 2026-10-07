@@ -20,7 +20,7 @@ const STATUS_COLORS: Record<string, string> = {
   new: '#d97706', paid: '#2563eb', processing: '#7c3aed', packed: '#0891b2', shipped: '#0d9488',
   out_for_delivery: '#65a30d', delivered: '#16a34a', cancelled: '#6b7280', returned: '#ea580c', refunded: '#dc2626',
 }
-const BRAND = '#722F37'
+const BRAND = '#600619'
 const TOOLTIP_STYLE = { borderRadius: 8, borderColor: '#e5e7eb', fontSize: 13 }
 
 type OrderRow = Pick<Order, 'id' | 'customer_id' | 'total_amount' | 'status' | 'payment_status' | 'payment_method' | 'placed_at' | 'advance_amount' | 'advance_paid'>

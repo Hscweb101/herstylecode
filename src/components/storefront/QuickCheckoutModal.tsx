@@ -318,7 +318,7 @@ export function QuickCheckoutModal({ product, variant, qty: initialQty, onClose 
         description: paymentMethod === 'cod' ? `Advance for order ${data.orderNumber}` : `Order ${data.orderNumber}`,
         order_id: data.razorpayOrderId,
         prefill: { name: effective.full_name, email: effective.email, contact: phone },
-        theme: { color: '#722F37' },
+        theme: { color: '#600619' },
         handler: async (response) => {
           const { data: verifyData, error: verifyError } = await supabase.functions.invoke('verify-razorpay-payment', {
             body: {
@@ -555,7 +555,7 @@ export function QuickCheckoutModal({ product, variant, qty: initialQty, onClose 
                 type="button"
                 onClick={() => placeOrder('razorpay')}
                 disabled={!!placing}
-                className="btn-nudge relative flex min-h-12 flex-col items-center justify-center rounded-lg bg-brand-600 px-2 py-2 text-white shadow-[0_3px_0_0_#4a1d23] transition hover:bg-brand-700 active:translate-y-[2px] active:shadow-[0_1px_0_0_#4a1d23] disabled:cursor-not-allowed disabled:opacity-60"
+                className="btn-nudge relative flex min-h-12 flex-col items-center justify-center rounded-lg bg-brand-600 px-2 py-2 text-white shadow-[0_3px_0_0_#3d0411] transition hover:bg-brand-700 active:translate-y-[2px] active:shadow-[0_1px_0_0_#3d0411] disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {onlineDiscount > 0 && (
                   <span className="absolute -top-2.5 right-1.5 rounded-full bg-gold-500 px-2 py-0.5 text-[10px] font-bold uppercase leading-none tracking-wide text-ink-900 shadow-sm">

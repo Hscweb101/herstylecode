@@ -124,7 +124,7 @@ export function Header() {
       </MegaShell>
 
       {mobileMenuOpen && (
-        <div className="border-t border-blush-100 bg-white px-4 py-4 md:hidden">
+        <div className="border-t border-blush-100 bg-cream px-4 py-4 md:hidden">
           <nav className="flex flex-col divide-y divide-blush-100">
             {[
               ...primaryLinks,
@@ -133,7 +133,7 @@ export function Header() {
               ...infoLinks,
               { label: isAnonymous ? 'Sign In / Register' : 'My Account', to: '/account' },
             ].map((l) => (
-              <Link key={l.label} to={l.to} onClick={() => setMobileMenuOpen(false)} className="py-3 text-sm font-medium text-ink-700 hover:text-brand-600">
+              <Link key={l.label} to={l.to} onClick={() => setMobileMenuOpen(false)} className="py-3 text-sm font-semibold text-brand-600 hover:text-brand-400">
                 {l.label}
               </Link>
             ))}
