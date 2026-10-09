@@ -218,16 +218,10 @@ export function QuickCheckoutModal({ product, variant, qty: initialQty, onClose 
   const total = subtotal + shipping
   const codAvailable = settings.shipping.cod_available && product.cod_available !== false
 
-  // Per-product offers from the admin panel: money off for paying online, and an advance payment for COD.
-  const onlineDiscount = Math.min(
-    subtotal,
-    onlineDiscountFor(product, price, quantity) + extras.reduce((sum, e) => sum + onlineDiscountFor(e.product, e.price, e.qty), 0),
-  )
+  // Site-wide offers from Admin > Settings: money off for paying online, and an advance payment for COD.
+  const onlineDiscount = onlineDiscountFor(settings.payment_offers, subtotal)
   const onlineTotal = total - onlineDiscount
-  const codAdvance = Math.min(
-    codAdvanceFor(product, price, quantity) + extras.reduce((sum, e) => sum + codAdvanceFor(e.product, e.price, e.qty), 0),
-    Math.max(0, total - 1),
-  )
+  const codAdvance = codAdvanceFor(settings.payment_offers, total)
 
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) => setForm((f) => ({ ...f, [key]: value }))
 

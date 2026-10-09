@@ -353,4 +353,12 @@ export interface StoreSettingsMap {
   tax: { gst_percentage: number; prices_include_tax: boolean }
   announcement_bar: { enabled: boolean; speed_seconds: number; items: string[] }
   analytics: { ga4_id: string; meta_pixel_id: string; gsc_verification: string }
+  payment_offers: PaymentOffers
+}
+
+export interface PaymentOffers {
+  online_discount_type: 'amount' | 'percent'
+  online_discount_value: number
+  cod_advance_type: 'none' | 'amount' | 'percent'
+  cod_advance_value: number
 }

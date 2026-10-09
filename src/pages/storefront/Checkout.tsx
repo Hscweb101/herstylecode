@@ -74,10 +74,9 @@ export default function Checkout() {
   const discount = coupon?.discount ?? 0
   const total = Math.max(0, sub + shipping - discount)
 
-  // Per-product offers from the admin panel (the server re-calculates these when the order is created).
-  const lineOf = (i: (typeof items)[number]) => i.variant?.price ?? i.product?.price ?? 0
-  const onlineDiscount = paymentMethod === 'razorpay' ? Math.min(sub, items.reduce((n, i) => n + onlineDiscountFor(i.product, lineOf(i), i.quantity), 0)) : 0
-  const codAdvance = paymentMethod === 'cod' ? Math.min(items.reduce((n, i) => n + codAdvanceFor(i.product, lineOf(i), i.quantity), 0), Math.max(0, total - 1)) : 0
+  // Site-wide offers from Admin > Settings (the server re-calculates these when the order is created).
+  const onlineDiscount = paymentMethod === 'razorpay' ? onlineDiscountFor(settings.payment_offers, sub) : 0
+  const codAdvance = paymentMethod === 'cod' ? codAdvanceFor(settings.payment_offers, total) : 0
   const payable = total - onlineDiscount
 
   const codBlockedBy = items.find((i) => i.product?.cod_available === false)?.product?.name ?? null

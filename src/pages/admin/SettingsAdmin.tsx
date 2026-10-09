@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import { supabase } from '@/lib/supabase'
+import { DEFAULT_PAYMENT_OFFERS } from '@/lib/offers'
 import { invalidateStoreSettingsCache, DEFAULT_SOCIAL_LINKS } from '@/hooks/useStoreSettings'
 import { PageHeader, Card } from '@/components/admin/AdminUI'
-import { Input, Textarea, FieldLabel } from '@/components/ui/Input'
+import { Input, Select, Textarea, FieldLabel } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { FullPageSpinner } from '@/components/ui/Misc'
 import type { StoreSettingsMap } from '@/types'
@@ -19,6 +20,7 @@ const DEFAULTS: StoreSettingsMap = {
     items: ['Free shipping on prepaid orders above ₹999', 'Cash on Delivery available', 'Easy 7-day returns'],
   },
   analytics: { ga4_id: '', meta_pixel_id: '', gsc_verification: '' },
+  payment_offers: DEFAULT_PAYMENT_OFFERS,
 }
 
 export default function SettingsAdmin() {
@@ -80,6 +82,47 @@ export default function SettingsAdmin() {
             <Input label="Facebook URL" value={settings.social_links.facebook} onChange={(e) => update('social_links', { facebook: e.target.value })} />
             <Input label="Pinterest URL" value={settings.social_links.pinterest} onChange={(e) => update('social_links', { pinterest: e.target.value })} />
             <Input label="YouTube URL" value={settings.social_links.youtube} onChange={(e) => update('social_links', { youtube: e.target.value })} />
+          </div>
+        </Card>
+
+        <Card className="lg:col-span-2">
+          <h3 className="font-serif text-lg">Payment Offers (whole store)</h3>
+          <p className="mb-4 mt-1 text-xs text-ink-500">Applies to every product at checkout. Set the value to 0 / None to switch an offer off.</p>
+          <div className="grid gap-6 lg:grid-cols-2">
+            <div className="rounded-xl border border-blush-200 p-4">
+              <p className="text-sm font-semibold text-ink-900">Pay Now discount</p>
+              <p className="mb-3 text-xs text-ink-500">Taken off the order when the shopper pays online, and shown as an "OFF" badge on the Pay Now button.</p>
+              <div className="grid grid-cols-2 gap-3">
+                <Select label="Type" value={settings.payment_offers.online_discount_type} onChange={(e) => update('payment_offers', { online_discount_type: e.target.value as 'amount' | 'percent' })}>
+                  <option value="percent">Percentage (%)</option>
+                  <option value="amount">Fixed amount (₹)</option>
+                </Select>
+                <Input
+                  label={settings.payment_offers.online_discount_type === 'percent' ? 'Discount (%)' : 'Discount (₹)'}
+                  type="number" min={0} max={settings.payment_offers.online_discount_type === 'percent' ? 100 : undefined}
+                  value={settings.payment_offers.online_discount_value}
+                  onChange={(e) => update('payment_offers', { online_discount_value: Number(e.target.value) })}
+                />
+              </div>
+            </div>
+            <div className="rounded-xl border border-blush-200 p-4">
+              <p className="text-sm font-semibold text-ink-900">Cash on Delivery: partial payment</p>
+              <p className="mb-3 text-xs text-ink-500">The shopper pays this much online now to confirm a COD order and the rest in cash on delivery.</p>
+              <div className="grid grid-cols-2 gap-3">
+                <Select label="Advance" value={settings.payment_offers.cod_advance_type} onChange={(e) => update('payment_offers', { cod_advance_type: e.target.value as 'none' | 'amount' | 'percent' })}>
+                  <option value="none">None (full COD)</option>
+                  <option value="percent">Percentage (%)</option>
+                  <option value="amount">Fixed amount (₹)</option>
+                </Select>
+                <Input
+                  label={settings.payment_offers.cod_advance_type === 'percent' ? 'Advance (%)' : 'Advance (₹)'}
+                  type="number" min={0} max={settings.payment_offers.cod_advance_type === 'percent' ? 100 : undefined}
+                  disabled={settings.payment_offers.cod_advance_type === 'none'}
+                  value={settings.payment_offers.cod_advance_value}
+                  onChange={(e) => update('payment_offers', { cod_advance_value: Number(e.target.value) })}
+                />
+              </div>
+            </div>
           </div>
         </Card>
 

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import { DEFAULT_PAYMENT_OFFERS } from '@/lib/offers'
 import type { StoreSettingsMap } from '@/types'
 
 export const DEFAULT_SOCIAL_LINKS = {
@@ -27,6 +28,7 @@ const DEFAULTS: StoreSettingsMap = {
     items: ['Free shipping on prepaid orders above ₹999', 'Cash on Delivery available', 'Easy 7-day returns'],
   },
   analytics: { ga4_id: '', meta_pixel_id: '', gsc_verification: '' },
+  payment_offers: DEFAULT_PAYMENT_OFFERS,
 }
 
 let cache: StoreSettingsMap | null = null

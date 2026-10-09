@@ -24,7 +24,7 @@ export function CategoryNav() {
   if (topLevel.length === 0 && navLinks.length === 0) return null
 
   return (
-    <div className="sticky top-0 z-30 hidden border-b border-blush-100 bg-white/95 backdrop-blur md:block" onMouseLeave={hide}>
+    <div className="sticky top-0 z-30 hidden bg-brand-600 md:block" onMouseLeave={hide}>
       <div className="mx-auto max-w-7xl px-8">
         <nav className="flex items-center justify-center gap-8">
           {topLevel.map((c) => {
@@ -45,8 +45,8 @@ export function CategoryNav() {
                 aria-expanded={isActive}
                 className={cn(
                   'relative flex items-center gap-1 py-2.5 text-sm font-medium tracking-wide transition-colors',
-                  'after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:origin-left after:scale-x-0 after:bg-brand-500 after:transition-transform after:duration-300',
-                  isActive ? 'text-brand-600 after:scale-x-100' : 'text-ink-700 hover:text-brand-600',
+                  'after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:origin-left after:scale-x-0 after:bg-white after:transition-transform after:duration-300',
+                  isActive ? 'text-white after:scale-x-100' : 'text-cream/90 hover:text-white',
                 )}
               >
                 {c.name}
@@ -60,7 +60,7 @@ export function CategoryNav() {
               key={link.id}
               to={link.url}
               onMouseEnter={hide}
-              className="flex items-center py-2.5 text-sm font-semibold tracking-wide text-brand-600 transition-colors hover:text-brand-700"
+              className="flex items-center py-2.5 text-sm font-semibold tracking-wide text-white transition-colors hover:text-cream"
             >
               {link.label}
             </Link>

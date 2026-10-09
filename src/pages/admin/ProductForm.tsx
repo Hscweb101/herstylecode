@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { Trash2, Plus, Star } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
-import { cn, formatINR, slugify } from '@/lib/utils'
+import { cn, slugify } from '@/lib/utils'
 import { resizeImage } from '@/lib/image'
 import { PageHeader, Card } from '@/components/admin/AdminUI'
 import { Input, Textarea, Select } from '@/components/ui/Input'
@@ -161,20 +161,6 @@ export default function ProductForm() {
       toast.error('Name, SKU and Price are required')
       return
     }
-    const discountValue = Number(form.online_discount_value) || 0
-    const advanceValue = Number(form.cod_advance_value) || 0
-    if (form.online_discount_type === 'percent' && discountValue > 100) {
-      toast.error('Pay Now discount cannot be more than 100%')
-      return
-    }
-    if (form.cod_advance_type === 'percent' && advanceValue > 100) {
-      toast.error('COD advance cannot be more than 100%')
-      return
-    }
-    if (form.online_discount_type === 'amount' && discountValue >= Number(form.price)) {
-      toast.error('Pay Now discount must be less than the price')
-      return
-    }
     setSaving(true)
 
     const payload = {
@@ -261,14 +247,6 @@ export default function ProductForm() {
     navigate('/admin/products')
   }
 
-  const priceNum = Number(form.price) || 0
-  const discountNum = Number(form.online_discount_value) || 0
-  const payNowAmount = form.online_discount_type === 'percent' ? Math.round((priceNum * Math.min(discountNum, 100)) / 100) : Math.min(discountNum, priceNum)
-  const payNowPreview = discountNum > 0 && priceNum > 0 ? `Badge: ${formatINR(payNowAmount)} OFF. Shopper pays ${formatINR(priceNum - payNowAmount)} online instead of ${formatINR(priceNum)}.` : null
-  const advanceNum = Number(form.cod_advance_value) || 0
-  const advanceAmount = form.cod_advance_type === 'percent' ? Math.round((priceNum * Math.min(advanceNum, 100)) / 100) : Math.min(advanceNum, priceNum)
-  const codPreview = form.cod_advance_type !== 'none' && advanceNum > 0 && priceNum > 0 ? `Shopper pays ${formatINR(advanceAmount)} now and ${formatINR(priceNum - advanceAmount)} on delivery (per item).` : null
-
   if (loading) return <FullPageSpinner />
 
   return (
@@ -308,51 +286,6 @@ export default function ProductForm() {
               <Input label="Compare-at Price (₹)" type="number" value={form.compare_at_price} onChange={(e) => setForm({ ...form, compare_at_price: e.target.value })} />
               <Input label="Stock Quantity" type="number" value={form.stock_quantity} onChange={(e) => setForm({ ...form, stock_quantity: e.target.value })} />
               <Input label="Low Stock Threshold" type="number" value={form.low_stock_threshold} onChange={(e) => setForm({ ...form, low_stock_threshold: e.target.value })} />
-            </div>
-          </Card>
-
-          <Card>
-            <h3 className="font-serif text-lg">Offers & Payment</h3>
-            <p className="mb-4 mt-1 text-xs text-ink-500">Set per product. Shoppers see these in the checkout popup. Leave at 0 / None to switch them off.</p>
-            <div className="grid gap-6 lg:grid-cols-2">
-              <div className="rounded-xl border border-blush-200 p-4">
-                <p className="text-sm font-semibold text-ink-900">Pay Now discount</p>
-                <p className="mb-3 text-xs text-ink-500">Shows an "₹X OFF" badge on the Pay Now button and takes it off when the shopper pays online.</p>
-                <div className="grid grid-cols-2 gap-3">
-                  <Select label="Type" value={form.online_discount_type} onChange={(e) => setForm({ ...form, online_discount_type: e.target.value as FormState['online_discount_type'] })}>
-                    <option value="amount">Fixed amount (₹)</option>
-                    <option value="percent">Percentage (%)</option>
-                  </Select>
-                  <Input
-                    label={form.online_discount_type === 'percent' ? 'Discount (%)' : 'Discount (₹)'}
-                    type="number" min="0" step="1" placeholder="0"
-                    value={form.online_discount_value}
-                    onChange={(e) => setForm({ ...form, online_discount_value: e.target.value })}
-                  />
-                </div>
-                {payNowPreview && <p className="mt-3 text-xs font-medium text-emerald-700">{payNowPreview}</p>}
-              </div>
-
-              <div className="rounded-xl border border-blush-200 p-4">
-                <p className="text-sm font-semibold text-ink-900">Cash on Delivery: partial payment</p>
-                <p className="mb-3 text-xs text-ink-500">The shopper pays this much online now to confirm a COD order and the rest in cash on delivery.</p>
-                <div className="grid grid-cols-2 gap-3">
-                  <Select label="Advance" value={form.cod_advance_type} onChange={(e) => setForm({ ...form, cod_advance_type: e.target.value as FormState['cod_advance_type'] })}>
-                    <option value="none">None (full COD)</option>
-                    <option value="amount">Fixed amount (₹)</option>
-                    <option value="percent">Percentage (%)</option>
-                  </Select>
-                  <Input
-                    label={form.cod_advance_type === 'percent' ? 'Advance (%)' : 'Advance (₹)'}
-                    type="number" min="0" step="1" placeholder="0"
-                    disabled={form.cod_advance_type === 'none'}
-                    value={form.cod_advance_value}
-                    onChange={(e) => setForm({ ...form, cod_advance_value: e.target.value })}
-                  />
-                </div>
-                {codPreview && <p className="mt-3 text-xs font-medium text-emerald-700">{codPreview}</p>}
-                {!form.cod_available && <p className="mt-3 text-xs text-amber-700">Cash on Delivery is switched off for this product, so the advance will not be used.</p>}
-              </div>
             </div>
           </Card>
 

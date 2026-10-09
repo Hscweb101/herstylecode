@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
-  Truck, ShieldCheck, RotateCcw, Sparkles, ChevronLeft, ChevronRight, Gem, BadgeCheck, Package, Heart,
+  Truck, ShieldCheck, RotateCcw, Sparkles, ChevronLeft, ChevronRight, Gem, CircleDot, BadgeCheck, Package, Heart,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { fetchProducts } from '@/lib/queries'
@@ -19,27 +19,47 @@ import { cn } from '@/lib/utils'
 import { useSeo } from '@/hooks/useSeo'
 import storyImg from '@/assets/about/aboutimg1.webp'
 
-function ProductRail({ title, eyebrow, products, viewAllHref }: { title: string; eyebrow: string; products: Product[]; viewAllHref: string }) {
+function SectionHeader({ eyebrow, title, subtitle, tagline, viewAllHref }: { eyebrow: string; title: string; subtitle: string; tagline?: string; viewAllHref?: string }) {
+  return (
+    <div className="mb-7 flex items-start justify-between gap-6 md:mb-9">
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-3 text-brand-400">
+          <span className="text-[11px] font-medium uppercase tracking-[0.3em] md:text-xs">{eyebrow}</span>
+          <span className="h-px max-w-56 flex-1 bg-brand-300/70" />
+          <Sparkles size={13} className="fill-current" />
+        </div>
+        <h2 className="mt-2 text-4xl font-semibold leading-tight text-brand-600 md:text-6xl">{title}</h2>
+        <p className="mt-2 text-[11px] uppercase tracking-[0.3em] text-brand-400 md:text-xs">{subtitle}</p>
+      </div>
+      <div className="hidden shrink-0 items-center gap-8 md:flex">
+        {tagline && <p className="font-script max-w-[9rem] text-right text-2xl leading-tight text-brand-400">{tagline}</p>}
+        {viewAllHref && (
+          <Link to={viewAllHref} className="rounded-full border border-brand-600 px-6 py-2.5 text-sm font-medium text-brand-600 transition-colors hover:bg-brand-600 hover:text-cream">
+            View All →
+          </Link>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function ProductRail({
+  title, eyebrow, subtitle, tagline, products, viewAllHref, cols = 4,
+}: { title: string; eyebrow: string; subtitle: string; tagline: string; products: Product[]; viewAllHref: string; cols?: 4 | 5 }) {
   if (products.length === 0) return null
   return (
-    <section className="mx-auto max-w-7xl px-4 py-12 md:px-8">
-      <div className="mb-8 flex items-end justify-between">
-        <div>
-          <p className="font-script mb-1 text-xl font-semibold text-brand-400">{eyebrow}</p>
-          <h2 className="text-2xl font-bold text-brand-600 md:text-3xl">{title}</h2>
-        </div>
-        <Link to={viewAllHref} className="hidden text-sm font-medium text-brand-600 hover:underline md:block">
-          View All →
-        </Link>
-      </div>
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-6">
-        {products.map((p) => (
+    <section className="mx-auto max-w-7xl px-4 py-10 md:px-8 md:py-12">
+      <SectionHeader eyebrow={eyebrow} title={title} subtitle={subtitle} tagline={tagline} viewAllHref={viewAllHref} />
+      <div className={cn('grid grid-cols-2 gap-3.5 md:gap-5', cols === 5 ? 'md:grid-cols-5' : 'md:grid-cols-4')}>
+        {products.slice(0, cols).map((p) => (
           <ProductCard key={p.id} product={p} />
         ))}
       </div>
-      <Link to={viewAllHref} className="mt-6 block text-center text-sm font-medium text-brand-600 hover:underline md:hidden">
-        View All →
-      </Link>
+      <div className="mt-7 text-center md:hidden">
+        <Link to={viewAllHref} className="inline-block rounded-full border border-brand-600 px-6 py-2.5 text-sm font-medium text-brand-600">
+          View All →
+        </Link>
+      </div>
     </section>
   )
 }
@@ -189,73 +209,88 @@ function OurStorySection() {
   )
 }
 
+function categoryIcon(c: Category) {
+  const k = `${c.slug} ${c.name}`.toLowerCase()
+  if (k.includes('ring')) return CircleDot
+  if (k.includes('set')) return Gem
+  return Sparkles
+}
+
 function CategoryGrid({ categories }: { categories: Category[] }) {
   const topLevel = categories.filter((c) => !c.parent_id)
   const scrollerRef = useRef<HTMLDivElement>(null)
   const scrollBy = (dir: 1 | -1) => scrollerRef.current?.scrollBy({ left: dir * 360, behavior: 'smooth' })
   if (topLevel.length === 0) return null
   return (
-    <section className="mx-auto max-w-7xl px-4 py-14 md:px-8">
-      <div className="mb-8">
-        <p className="font-script mb-1 text-xl font-semibold text-brand-400">Curated For You</p>
-        <h2 className="text-2xl font-bold text-brand-600 md:text-3xl">Shop by Category</h2>
+    <section className="mx-auto max-w-7xl px-4 py-10 md:px-8 md:py-14">
+      <div className="mb-7 flex items-start justify-between gap-6 md:mb-9">
+        <div>
+          <div className="flex items-center gap-3 text-brand-400">
+            <span className="text-[11px] font-medium uppercase tracking-[0.3em] md:text-xs">Curated For You</span>
+            <span className="h-px w-24 bg-brand-300/70 md:w-40" />
+            <Sparkles size={13} className="fill-current" />
+          </div>
+          <h2 className="mt-2 text-4xl font-semibold leading-tight text-brand-600 md:text-6xl">Shop by Category</h2>
+          <span className="mt-3 block h-px w-48 bg-brand-300/70 md:w-72" />
+        </div>
+        <p className="hidden max-w-[14rem] text-right text-xs uppercase leading-relaxed tracking-[0.3em] text-brand-400 md:block">
+          Explore pieces for every side of you
+        </p>
       </div>
       {/* scroll-px keeps the first card clear of the screen edge when it snaps into place */}
-      <div ref={scrollerRef} className="scrollbar-none -mx-4 flex scroll-px-4 snap-x snap-mandatory gap-5 overflow-x-auto px-4 pb-2 md:gap-6">
-        {topLevel.map((c) => (
-          <Link
-            key={c.id}
-            to={`/category/${c.slug}`}
-            className="group flex w-[42%] shrink-0 snap-start flex-col items-center gap-3 text-center sm:w-[30%] md:w-[19%]"
-          >
-            <div className="cylinder-shape aspect-[3/4] w-full overflow-hidden bg-gradient-to-b from-blush-100 to-blush-200 shadow-luxe transition-transform duration-300 group-hover:-translate-y-1 group-hover:shadow-luxe">
-              {c.video_url ? (
-                <video
-                  src={c.video_url}
-                  poster={c.image_url ?? undefined}
-                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
-                  preload="metadata"
-                />
-              ) : (
-                <img
-                  src={c.image_url ?? `https://placehold.co/400x520/FCE7EF/D6336C?text=${encodeURIComponent(c.name)}`}
-                  alt={c.name}
-                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
-                />
-              )}
-            </div>
-            <div>
-              <span className="block text-sm font-medium text-ink-700 md:text-base">{c.name}</span>
-              {c.description && <span className="mt-0.5 hidden text-xs text-ink-300 md:block">{c.description}</span>}
-            </div>
-          </Link>
-        ))}
-        <Link
-          to="/shop"
-          className="group flex w-[42%] shrink-0 snap-start flex-col items-center justify-center gap-2 text-center sm:w-[30%] md:w-[19%]"
-        >
-          <div className="cylinder-shape flex aspect-[3/4] w-full items-center justify-center gap-1 bg-blush-50 text-brand-600 shadow-luxe transition-transform duration-300 group-hover:-translate-y-1">
-            <span className="text-sm font-medium">View All</span>
-            <ChevronRight size={16} />
-          </div>
-        </Link>
+      <div ref={scrollerRef} className="scrollbar-none -mx-4 flex scroll-px-4 snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-4 md:gap-5">
+        {topLevel.map((c) => {
+          const Icon = categoryIcon(c)
+          return (
+            <Link
+              key={c.id}
+              to={`/category/${c.slug}`}
+              className="group flex w-[62%] shrink-0 snap-start flex-col overflow-hidden rounded-t-[999px] rounded-b-3xl border border-brand-300/50 bg-cream shadow-[0_10px_26px_-12px_rgba(96,6,25,0.3)] transition-transform duration-300 hover:-translate-y-1 sm:w-[34%] md:w-[calc((100%-5rem)/5)]"
+            >
+              <div className="aspect-[3/3.6] w-full overflow-hidden bg-gradient-to-b from-blush-100 to-blush-200">
+                {c.video_url ? (
+                  <video
+                    src={c.video_url}
+                    poster={c.image_url ?? undefined}
+                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    preload="metadata"
+                  />
+                ) : (
+                  <img
+                    src={c.image_url ?? `https://placehold.co/400x520/EFE3CD/600619?text=${encodeURIComponent(c.name)}`}
+                    alt={c.name}
+                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                )}
+              </div>
+              <div className="flex items-center gap-3 bg-white/70 px-3.5 py-3">
+                <Icon size={22} strokeWidth={1.4} className="shrink-0 text-brand-600" />
+                <span className="h-7 w-px shrink-0 bg-brand-300/60" />
+                <span className="min-w-0 flex-1 text-center font-serif text-[15px] leading-tight text-brand-600 md:text-base">{c.name}</span>
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-brand-300 text-brand-600 transition-colors group-hover:bg-brand-600 group-hover:text-cream">
+                  <ChevronRight size={15} />
+                </span>
+              </div>
+            </Link>
+          )
+        })}
       </div>
-      <div className="mt-4 flex items-center justify-end gap-2">
+      <div className="mt-2 flex items-center justify-end gap-2.5">
         <button
           aria-label="Scroll categories left"
           onClick={() => scrollBy(-1)}
-          className="rounded-full border border-blush-200 bg-white p-2 text-ink-700 transition-colors hover:bg-blush-50 active:scale-95"
+          className="rounded-full border border-brand-300 p-2 text-brand-600 transition-colors hover:bg-brand-600 hover:text-cream active:scale-95"
         >
           <ChevronLeft size={18} />
         </button>
         <button
           aria-label="Scroll categories right"
           onClick={() => scrollBy(1)}
-          className="rounded-full border border-blush-200 bg-white p-2 text-ink-700 transition-colors hover:bg-blush-50 active:scale-95"
+          className="rounded-full border border-brand-300 p-2 text-brand-600 transition-colors hover:bg-brand-600 hover:text-cream active:scale-95"
         >
           <ChevronRight size={18} />
         </button>
@@ -472,9 +507,9 @@ export default function Home() {
       <HeroCarousel banners={heroBanners} />
       <UspStrip />
       <CategoryGrid categories={categories} />
-      <ProductRail title="New Arrivals" eyebrow="Fresh In" products={newArrivals} viewAllHref="/collections/new-arrivals" />
-      <ProductRail title="Best Sellers" eyebrow="Customer Favourites" products={bestSellers} viewAllHref="/collections/best-sellers" />
-      <ProductRail title="Trending Now" eyebrow="What's Hot" products={trending} viewAllHref="/collections/trending" />
+      <ProductRail title="New Arrivals" eyebrow="Fresh In" subtitle="Discover what's new" tagline="Fresh Picks Just For You" products={newArrivals} viewAllHref="/collections/new-arrivals" />
+      <ProductRail title="Best Sellers" eyebrow="Customer Favourites" subtitle="Loved again and again" tagline="Our Bestselling Pieces" products={bestSellers} viewAllHref="/collections/best-sellers" />
+      <ProductRail title="Trending Now" eyebrow="What's Hot" subtitle="Our most-loved picks right now" tagline="Styles Everyone Is Loving" cols={5} products={trending} viewAllHref="/collections/trending" />
       <ReelsRail reels={reels} />
       <MomentsSection moments={moments} />
       <QuoteSeparator />
