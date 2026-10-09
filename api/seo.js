@@ -28,6 +28,12 @@ const STATIC_META = {
     path: '/faq',
     h1: 'Frequently Asked Questions',
   },
+  care: {
+    title: 'Jewellery Care Instructions - Keep Fashion Jewellery Shiny | HerStyleCode',
+    description: 'How to clean, store and wear your HerStyleCode fashion jewellery so it stays shiny and lasts longer.',
+    path: '/care-instructions',
+    h1: 'Jewellery Care Instructions',
+  },
   contact: {
     title: 'Contact HerStyleCode (Her Style Code) - Customer Support',
     description: 'Get in touch with the HerStyleCode team for order help, product questions or collaborations. We reply fast on email and WhatsApp.',

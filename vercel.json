@@ -19,6 +19,7 @@
     { "source": "/shop", "destination": "/api/seo?type=shop" },
     { "source": "/blog", "destination": "/api/seo?type=blog" },
     { "source": "/faq", "destination": "/api/seo?type=faq" },
+    { "source": "/care-instructions", "destination": "/api/seo?type=care" },
     { "source": "/contact", "destination": "/api/seo?type=contact" },
     { "source": "/((?!api/).*)", "destination": "/index.html" }
   ]
