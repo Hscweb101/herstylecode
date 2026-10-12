@@ -4,7 +4,7 @@ import type { Product } from '@/types'
 export const PRODUCT_CARD_SELECT = `
   id, name, slug, sku, price, compare_at_price, stock_quantity, track_inventory,
   is_active, is_featured, is_new_arrival, is_bestseller, is_trending, is_on_sale,
-  rating_avg, rating_count, category_id, tags, created_at,
+  rating_avg, rating_count, category_id, tags, created_at, material, colour,
   images:product_images(url, is_primary, sort_order)
 `
 
