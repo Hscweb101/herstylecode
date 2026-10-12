@@ -121,7 +121,7 @@ const collectionLinks = [
   { label: 'New Arrivals', to: '/collections/new-arrivals', note: 'Fresh this season' },
   { label: 'Best Sellers', to: '/collections/best-sellers', note: 'Loved by everyone' },
   { label: 'Sale', to: '/collections/sale', note: 'Limited-time offers' },
-  { label: 'Earrings Under 399', to: '/category/earrings?maxPrice=399&material=none', note: 'Pretty & pocket-friendly' },
+  { label: 'Earrings Under 399', to: '/category/earrings?maxPrice=399&material=Mixed', note: 'Pretty & pocket-friendly' },
 ]
 
 export function ShopMegaMenu({ categories, onNavigate }: { categories: Category[]; onNavigate: () => void }) {

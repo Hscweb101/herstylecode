@@ -414,82 +414,44 @@ function BrandBand() {
   )
 }
 
-/* Static on purpose (not loaded from the database). Edit the text below to change what shows on the home page.
-   The rating summary is worked out from this list, so it always matches the reviews shown. `photo` picks which product photo is used (by position). */
+/* Static on purpose (not loaded from the database). Edit the text below to change what shows on the home page. */
 const TESTIMONIALS = [
-  { quote: 'The earrings look so much more expensive than they are. I wore them to a wedding and got compliments all night.', name: 'Priya S.', date: '12/09/2026', stars: 5, photo: 0 },
-  { quote: 'Lightweight, no skin irritation and the shine is still perfect after weeks. The packaging felt like a gift.', name: 'Ananya R.', date: '28/08/2026', stars: 5, photo: 1 },
-  { quote: 'Finally a jewellery brand that gets my style. Delivery was quick and the pieces match the photos exactly.', name: 'Neha K.', date: '03/09/2026', stars: 5, photo: 2 },
-  { quote: 'Bought it for my sister’s birthday and she has not taken it off since. Looks premium and feels very comfortable.', name: 'Kavita M.', date: '19/09/2026', stars: 5, photo: 3 },
-  { quote: 'Good quality for the price. Colour is slightly deeper than the photo but honestly looks even better in person.', name: 'Ritika J.', date: '22/09/2026', stars: 4, photo: 4 },
-  { quote: 'Lovely finish and super easy to style with both ethnic and western outfits. Will order again.', name: 'Sneha P.', date: '30/09/2026', stars: 5, photo: 5 },
+  { quote: 'The earrings look so much more expensive than they are. I wore them to a wedding and got compliments all night.', name: 'Priya S.', place: 'Mumbai', item: 'Statement Earrings' },
+  { quote: 'Lightweight, no skin irritation and the shine is still perfect after weeks. The packaging felt like a gift.', name: 'Ananya R.', place: 'Bengaluru', item: 'Necklace Set' },
+  { quote: 'Finally a jewellery brand that gets my style. Delivery was quick and the pieces match the photos exactly.', name: 'Neha K.', place: 'Delhi', item: 'Jhumka Collection' },
 ]
 
-function ReviewsRail({ photos }: { photos: string[] }) {
-  const total = TESTIMONIALS.length
-  const average = TESTIMONIALS.reduce((n, t) => n + t.stars, 0) / total
-  const counts = [5, 4, 3, 2, 1].map((star) => ({ star, count: TESTIMONIALS.filter((t) => t.stars === star).length }))
-  const photoAt = (i: number) => (photos.length ? photos[i % photos.length] : null)
-  const strip = photos.slice(0, 12)
-
+function ReviewsRail() {
   return (
-    <section className="bg-white py-10 md:py-14">
-      <div className="mx-auto max-w-7xl px-4 md:px-8">
-        <h2 className="text-2xl font-bold text-ink-900 md:text-3xl">Reviews</h2>
-
-        {/* Overall rating + breakdown */}
-        <div className="mt-5 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-          <div className="flex items-center gap-5">
-            <div>
-              <p className="text-[11px] text-ink-500">Overall Rating</p>
-              <p className="text-6xl font-light leading-none text-ink-900 md:text-7xl">{average.toFixed(1)}</p>
-            </div>
-            <div>
-              <StarRating rating={Math.round(average)} />
-              <p className="mt-1 text-[11px] text-ink-500">Based on {total} Reviews</p>
-            </div>
-          </div>
-          <div className="w-full max-w-xs space-y-1.5 md:max-w-sm">
-            {counts.map(({ star, count }) => (
-              <div key={star} className="flex items-center gap-2 text-[11px] text-ink-700">
-                <span className="w-6 shrink-0">{star} <span className="text-brand-500">★</span></span>
-                <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-gray-200">
-                  <span className="block h-full rounded-full bg-brand-500" style={{ width: `${(count / total) * 100}%` }} />
-                </span>
-                <span className="w-5 shrink-0 text-right text-ink-500">{count}</span>
-              </div>
-            ))}
-          </div>
+    <section className="relative overflow-hidden bg-brand-600 py-16 md:py-20">
+      <div className="pointer-events-none absolute -left-16 -top-16 h-64 w-64 rounded-full bg-brand-400/15 blur-2xl" />
+      <div className="pointer-events-none absolute -bottom-20 -right-10 h-72 w-72 rounded-full bg-brand-400/15 blur-2xl" />
+      <div className="relative mx-auto max-w-7xl px-4 md:px-8">
+        <div className="mb-10 text-center">
+          <p className="font-script mb-1 text-xl font-semibold text-brand-400 md:text-2xl">Loved By Customers</p>
+          <h2 className="text-3xl font-bold text-cream md:text-4xl">What They&rsquo;re Saying</h2>
+          <span className="mx-auto mt-4 block h-px w-16 bg-brand-400" />
         </div>
-
-        {/* Photo strip */}
-        {strip.length > 0 && (
-          <div className="scrollbar-none -mx-4 mt-6 flex gap-2 overflow-x-auto px-4 md:mx-0 md:px-0">
-            {strip.map((src, i) => (
-              <img key={`${src}-${i}`} src={src} alt="" className="h-28 w-28 shrink-0 rounded-md object-cover md:h-36 md:w-36" />
-            ))}
-          </div>
-        )}
-
-        {/* Review cards */}
-        <div className="scrollbar-none -mx-4 mt-5 flex gap-3 overflow-x-auto px-4 pb-2 md:mx-0 md:px-0">
-          {TESTIMONIALS.map((t) => {
-            const img = photoAt(t.photo)
-            return (
-              <figure key={t.name} className="flex w-60 shrink-0 flex-col overflow-hidden rounded-md border border-gray-200 bg-white md:w-72">
-                {img && <img src={img} alt="" className="aspect-[4/3] w-full object-cover" />}
-                <div className="flex flex-1 flex-col p-3.5">
-                  <StarRating rating={t.stars} />
-                  <blockquote className="mt-2 flex-1 text-xs leading-relaxed text-ink-500">{t.quote}</blockquote>
-                  <figcaption className="mt-3">
-                    <span className="block text-xs font-bold text-ink-900">{t.name}</span>
-                    <span className="mt-1 flex items-center gap-1 text-[10px] text-brand-600"><BadgeCheck size={12} /> verified buyer</span>
-                    <span className="mt-1 block text-[10px] text-ink-300">{t.date}</span>
-                  </figcaption>
-                </div>
-              </figure>
-            )
-          })}
+        <div className="grid gap-6 md:grid-cols-3">
+          {TESTIMONIALS.map((t) => (
+            <figure
+              key={t.name}
+              className="group relative flex flex-col rounded-3xl bg-cream p-7 pt-9 shadow-luxe transition-transform duration-300 hover:-translate-y-1.5"
+            >
+              <span className="absolute -top-5 left-7 flex h-11 w-11 items-center justify-center rounded-full bg-brand-400 font-serif text-3xl leading-none text-cream shadow-luxe-sm">
+                <span className="translate-y-[3px]">&ldquo;</span>
+              </span>
+              <StarRating rating={5} />
+              <blockquote className="mt-4 flex-1 font-serif text-[17px] leading-relaxed text-brand-600">{t.quote}</blockquote>
+              <figcaption className="mt-6 flex items-center gap-3 border-t border-brand-400/30 pt-4">
+                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-600 text-sm font-semibold text-cream">{t.name[0]}</span>
+                <span className="text-sm">
+                  <span className="block font-semibold text-brand-600">{t.name}</span>
+                  <span className="block text-xs text-brand-400">{t.place} &middot; {t.item}</span>
+                </span>
+              </figcaption>
+            </figure>
+          ))}
         </div>
       </div>
     </section>
@@ -540,15 +502,6 @@ export default function Home() {
 
   if (loading) return <FullPageSpinner />
 
-  // Real product photos for the reviews section (best sellers first, then trending, then new arrivals).
-  const reviewPhotos = Array.from(
-    new Set(
-      [...bestSellers, ...trending, ...newArrivals]
-        .map((p) => (p.images ?? []).find((i) => i.is_primary)?.url ?? p.images?.[0]?.url)
-        .filter((u): u is string => !!u),
-    ),
-  )
-
   return (
     <div>
       <HeroCarousel banners={heroBanners} />
@@ -560,7 +513,7 @@ export default function Home() {
       <ReelsRail reels={reels} />
       <MomentsSection moments={moments} />
       <QuoteSeparator />
-      <ReviewsRail photos={reviewPhotos} />
+      <ReviewsRail />
       <FaqHomeSection faqs={faqs} />
       <BrandBand />
       <OurStorySection />

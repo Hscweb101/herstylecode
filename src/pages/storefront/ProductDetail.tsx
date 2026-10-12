@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { Heart, Minus, Plus, Truck, Share2, Star, ChevronLeft, ChevronRight, ChevronDown, Lock, Banknote, PenLine, X } from 'lucide-react'
+import { Heart, Minus, Plus, Truck, Share2, Star, ChevronLeft, ChevronRight, ChevronDown, Lock, Banknote, PenLine, X, BadgeCheck } from 'lucide-react'
 import { CARE_STEPS } from '@/lib/careGuide'
 import { colourSwatch } from '@/lib/colours'
 import { supabase } from '@/lib/supabase'
@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/Button'
 import { Textarea, Input } from '@/components/ui/Input'
 import { ProductCard } from '@/components/storefront/ProductCard'
 import { QuickCheckoutModal } from '@/components/storefront/QuickCheckoutModal'
-import { LiveViewerCount, PurchaseSocialProof, ReviewerAvatar } from '@/components/storefront/SocialProof'
+import { LiveViewerCount, PurchaseSocialProof } from '@/components/storefront/SocialProof'
 import { SmartImage } from '@/components/ui/SmartImage'
 import { useCartStore } from '@/store/cartStore'
 import { useWishlistStore } from '@/store/wishlistStore'
@@ -742,8 +742,8 @@ export default function ProductDetail() {
       </div>
 
       {/* Details - tablet/desktop: open sections + reviews */}
-      <div className="mt-8 grid gap-10 md:mt-14 md:grid-cols-3">
-        <div className="hidden space-y-8 md:col-span-2 md:block">
+      <div className="mt-8 md:mt-14">
+        <div className="hidden space-y-8 md:block">
           <div>
             <h3 className="mb-3 text-3xl font-semibold leading-tight text-brand-600 md:text-4xl">Description</h3>
             <p className="whitespace-pre-line text-sm leading-relaxed text-ink-700">{product.description}</p>
@@ -766,54 +766,95 @@ export default function ProductDetail() {
             </div>
           )}
         </div>
+      </div>
 
-        <div>
-          <h3 className="mb-4 font-serif text-xl">Reviews ({reviews.length})</h3>
-          <div className="space-y-4">
-            {reviews.length === 0 && <p className="text-sm text-ink-300">No reviews yet. Be the first to review!</p>}
-            {reviews.map((r) => (
-              <div key={r.id} className="flex gap-3 border-b border-blush-100 pb-4">
-                <ReviewerAvatar name={r.reviewer_name} />
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-ink-900">
-                    {r.reviewer_name}
-                    {r.is_verified_purchase && <span className="ml-2 text-xs font-normal text-emerald-600">Verified Purchase</span>}
-                  </p>
-                  <div className="mt-0.5">
-                    <StarRating rating={r.rating} size={13} />
-                  </div>
-                  {r.title && <p className="mt-1 text-sm font-medium text-ink-900">{r.title}</p>}
-                  <p className="mt-1 text-sm text-ink-500">{r.body}</p>
-                  {r.images && r.images.length > 0 && (
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      {r.images.map((url, idx) => (
-                        <button
-                          key={idx}
-                          type="button"
-                          aria-label={`View review photo ${idx + 1}`}
-                          onClick={() => setLightbox({ images: r.images, index: idx })}
-                          className="overflow-hidden rounded-lg ring-1 ring-blush-200 transition hover:ring-brand-400"
-                        >
-                          <img src={url} alt="" loading="lazy" className="h-16 w-16 cursor-zoom-in object-cover" />
-                        </button>
-                      ))}
-                    </div>
-                  )}
+      {/* Reviews */}
+      <section className="mt-12 border-t border-blush-200 pt-8 md:mt-14">
+        <h3 className="text-2xl font-bold text-ink-900 md:text-3xl">Reviews</h3>
+
+        {reviews.length === 0 ? (
+          <p className="mt-4 text-sm text-ink-300">No reviews yet. Be the first to review!</p>
+        ) : (
+          <>
+            {/* Overall rating + breakdown */}
+            <div className="mt-5 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+              <div className="flex items-center gap-5">
+                <div>
+                  <p className="text-[11px] text-ink-500">Overall Rating</p>
+                  <p className="text-6xl font-light leading-none text-ink-900 md:text-7xl">{(reviews.reduce((n, r) => n + r.rating, 0) / reviews.length).toFixed(1)}</p>
+                </div>
+                <div>
+                  <StarRating rating={reviews.reduce((n, r) => n + r.rating, 0) / reviews.length} />
+                  <p className="mt-1 text-[11px] text-ink-500">Based on {reviews.length} {reviews.length === 1 ? 'Review' : 'Reviews'}</p>
                 </div>
               </div>
-            ))}
-          </div>
-          <div className="mt-6">
-            {canReview ? (
-              <ReviewForm productId={product.id} onSubmitted={() => {}} />
-            ) : (
-              <p className="rounded-2xl bg-blush-50 p-4 text-sm text-ink-500">
-                Only customers who've purchased this item can leave a review.
-              </p>
-            )}
-          </div>
+              <div className="w-full max-w-xs space-y-1.5 md:max-w-sm">
+                {[5, 4, 3, 2, 1].map((star) => {
+                  const count = reviews.filter((r) => Math.round(r.rating) === star).length
+                  return (
+                    <div key={star} className="flex items-center gap-2 text-[11px] text-ink-700">
+                      <span className="w-6 shrink-0">{star} <span className="text-brand-500">★</span></span>
+                      <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-gray-200">
+                        <span className="block h-full rounded-full bg-brand-500" style={{ width: `${(count / reviews.length) * 100}%` }} />
+                      </span>
+                      <span className="w-5 shrink-0 text-right text-ink-500">{count}</span>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* Photo strip: every customer photo */}
+            {(() => {
+              const allPhotos = reviews.flatMap((r) => r.images ?? [])
+              if (allPhotos.length === 0) return null
+              return (
+                <div className="scrollbar-none -mx-4 mt-6 flex gap-2 overflow-x-auto px-4 md:mx-0 md:px-0">
+                  {allPhotos.map((url, idx) => (
+                    <button key={`${url}-${idx}`} type="button" aria-label={`View customer photo ${idx + 1}`} onClick={() => setLightbox({ images: allPhotos, index: idx })} className="shrink-0">
+                      <img src={url} alt="" className="h-24 w-24 cursor-zoom-in rounded-md object-cover md:h-32 md:w-32" />
+                    </button>
+                  ))}
+                </div>
+              )
+            })()}
+
+            {/* Review cards */}
+            <div className="scrollbar-none -mx-4 mt-5 flex snap-x gap-3 overflow-x-auto px-4 pb-2 md:mx-0 md:px-0">
+              {reviews.map((r) => (
+                <figure key={r.id} className="flex w-[78%] shrink-0 snap-start flex-col overflow-hidden rounded-md border border-gray-200 bg-white sm:w-64 md:w-72">
+                  {r.images && r.images.length > 0 && (
+                    <button type="button" aria-label="View review photos" onClick={() => setLightbox({ images: r.images, index: 0 })} className="relative block">
+                      <img src={r.images[0]} alt="" className="aspect-[4/3] w-full cursor-zoom-in object-cover" />
+                      {r.images.length > 1 && <span className="absolute right-2 top-2 rounded bg-black/55 px-1.5 py-0.5 text-[10px] text-white">+{r.images.length - 1}</span>}
+                    </button>
+                  )}
+                  <div className="flex flex-1 flex-col p-3.5">
+                    <StarRating rating={r.rating} size={13} />
+                    {r.title && <p className="mt-2 text-xs font-semibold text-ink-900">{r.title}</p>}
+                    {r.body && <blockquote className="mt-1.5 flex-1 text-xs leading-relaxed text-ink-500">{r.body}</blockquote>}
+                    <figcaption className="mt-3">
+                      <span className="block text-xs font-bold text-ink-900">{r.reviewer_name}</span>
+                      {r.is_verified_purchase && <span className="mt-1 flex items-center gap-1 text-[10px] text-brand-600"><BadgeCheck size={12} /> verified buyer</span>}
+                      <span className="mt-1 block text-[10px] text-ink-300">{new Date(r.created_at).toLocaleDateString('en-GB')}</span>
+                    </figcaption>
+                  </div>
+                </figure>
+              ))}
+            </div>
+          </>
+        )}
+
+        <div className="mt-6 max-w-xl">
+          {canReview ? (
+            <ReviewForm productId={product.id} onSubmitted={() => {}} />
+          ) : (
+            <p className="rounded-2xl bg-blush-50 p-4 text-sm text-ink-500">
+              Only customers who've purchased this item can leave a review.
+            </p>
+          )}
         </div>
-      </div>
+      </section>
 
       {lightbox && <ImageLightbox images={lightbox.images} index={lightbox.index} onClose={() => setLightbox(null)} />}
 

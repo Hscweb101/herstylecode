@@ -26,7 +26,7 @@ interface FormState {
 
 const EMPTY_FORM: FormState = {
   name: '', slug: '', sku: '', category_id: '', short_description: '', description: '', price: '', compare_at_price: '',
-  stock_quantity: '0', low_stock_threshold: '5', material: '', colour: '', size: '', weight_grams: '', care_instructions: '',
+  stock_quantity: '0', low_stock_threshold: '5', material: 'Mixed', colour: '', size: '', weight_grams: '', care_instructions: '',
   whats_included: '', delivery_info: '', return_eligible: true, cod_available: true, tags: '', video_url: '',
   show_purchase_proof: true, online_discount_type: 'amount', online_discount_value: '', cod_advance_type: 'none', cod_advance_value: '',
   is_active: true, is_featured: false, is_new_arrival: false, is_bestseller: false, is_trending: false, is_on_sale: false,
@@ -71,7 +71,7 @@ export default function ProductForm() {
           short_description: product.short_description ?? '', description: product.description ?? '',
           price: String(product.price), compare_at_price: product.compare_at_price ? String(product.compare_at_price) : '',
           stock_quantity: String(product.stock_quantity), low_stock_threshold: String(product.low_stock_threshold),
-          material: product.material ?? '', colour: product.colour ?? '', size: product.size ?? '',
+          material: product.material?.trim() || 'Mixed', colour: product.colour ?? '', size: product.size ?? '',
           weight_grams: product.weight_grams ? String(product.weight_grams) : '', care_instructions: product.care_instructions ?? '',
           whats_included: product.whats_included ?? '', delivery_info: product.delivery_info ?? '',
           return_eligible: product.return_eligible, cod_available: product.cod_available, tags: (product.tags ?? []).join(', '), video_url: product.video_url ?? '',
@@ -95,6 +95,11 @@ export default function ProductForm() {
   const addMaterial = async () => {
     const name = newMaterial.trim()
     if (!name) return
+    if (name.toLowerCase() === 'mixed') {
+      setForm((f) => ({ ...f, material: 'Mixed' }))
+      setNewMaterial('')
+      return
+    }
     if (materials.some((m) => m.toLowerCase() === name.toLowerCase())) {
       setForm((f) => ({ ...f, material: materials.find((m) => m.toLowerCase() === name.toLowerCase())! }))
       setNewMaterial('')
@@ -199,7 +204,7 @@ export default function ProductForm() {
       compare_at_price: form.compare_at_price ? Number(form.compare_at_price) : null,
       stock_quantity: Number(form.stock_quantity),
       low_stock_threshold: Number(form.low_stock_threshold),
-      material: form.material || null,
+      material: form.material.trim() || 'Mixed',
       colour: form.colour || null,
       size: form.size || null,
       weight_grams: form.weight_grams ? Number(form.weight_grams) : null,
@@ -318,10 +323,10 @@ export default function ProductForm() {
             <h3 className="mb-4 font-serif text-lg">Specifications</h3>
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <Select label="Material" value={form.material} onChange={(e) => setForm({ ...form, material: e.target.value })}>
-                  <option value="">None</option>
-                  {materials.map((m) => <option key={m} value={m}>{m}</option>)}
-                  {form.material && !materials.includes(form.material) && <option value={form.material}>{form.material}</option>}
+                <Select label="Material" value={form.material || 'Mixed'} onChange={(e) => setForm({ ...form, material: e.target.value })}>
+                  <option value="Mixed">Mixed</option>
+                  {materials.filter((m) => m.toLowerCase() !== 'mixed').map((m) => <option key={m} value={m}>{m}</option>)}
+                  {form.material && form.material !== 'Mixed' && !materials.includes(form.material) && <option value={form.material}>{form.material}</option>}
                 </Select>
                 <div className="mt-2 flex gap-2">
                   <input
@@ -338,7 +343,7 @@ export default function ProductForm() {
                 </button>
                 {editMaterials && (
                   <div className="mt-2 flex flex-wrap gap-2">
-                    {materials.map((m) => (
+                    {materials.filter((m) => m.toLowerCase() !== 'mixed').map((m) => (
                       <span key={m} className="flex items-center gap-1.5 rounded-full bg-blush-50 px-3 py-1 text-xs text-ink-700">
                         {m}
                         <button type="button" aria-label={`Remove ${m}`} onClick={() => removeMaterial(m)} className="text-red-500">×</button>
