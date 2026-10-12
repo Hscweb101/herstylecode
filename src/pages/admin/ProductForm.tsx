@@ -9,6 +9,7 @@ import { PageHeader, Card } from '@/components/admin/AdminUI'
 import { Input, Textarea, Select } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { FullPageSpinner } from '@/components/ui/Misc'
+import { useMaterials } from '@/hooks/useMaterials'
 import type { Category, ProductImage, ProductVariant } from '@/types'
 
 interface FormState {
@@ -48,6 +49,9 @@ export default function ProductForm() {
   const [variants, setVariants] = useState<VariantRow[]>([])
   const [loading, setLoading] = useState(!isNew)
   const [saving, setSaving] = useState(false)
+  const { materials, save: saveMaterials } = useMaterials()
+  const [newMaterial, setNewMaterial] = useState('')
+  const [editMaterials, setEditMaterials] = useState(false)
 
   useEffect(() => {
     supabase.from('categories').select('*').order('sort_order').then(({ data }) => setCategories((data as Category[]) ?? []))
@@ -87,6 +91,27 @@ export default function ProductForm() {
     }
     load()
   }, [id, isNew])
+
+  const addMaterial = async () => {
+    const name = newMaterial.trim()
+    if (!name) return
+    if (materials.some((m) => m.toLowerCase() === name.toLowerCase())) {
+      setForm((f) => ({ ...f, material: materials.find((m) => m.toLowerCase() === name.toLowerCase())! }))
+      setNewMaterial('')
+      return
+    }
+    const err = await saveMaterials([...materials, name])
+    if (err) return toast.error(err)
+    setForm((f) => ({ ...f, material: name }))
+    setNewMaterial('')
+    toast.success(`"${name}" added to material options`)
+  }
+
+  const removeMaterial = async (name: string) => {
+    const err = await saveMaterials(materials.filter((m) => m !== name))
+    if (err) return toast.error(err)
+    if (form.material === name) setForm((f) => ({ ...f, material: '' }))
+  }
 
   const handleNameChange = (name: string) => {
     setForm((f) => ({ ...f, name, slug: isNew ? slugify(name) : f.slug }))
@@ -292,7 +317,37 @@ export default function ProductForm() {
           <Card>
             <h3 className="mb-4 font-serif text-lg">Specifications</h3>
             <div className="grid gap-4 sm:grid-cols-2">
-              <Input label="Material / Finish" value={form.material} onChange={(e) => setForm({ ...form, material: e.target.value })} />
+              <div>
+                <Select label="Material" value={form.material} onChange={(e) => setForm({ ...form, material: e.target.value })}>
+                  <option value="">None</option>
+                  {materials.map((m) => <option key={m} value={m}>{m}</option>)}
+                  {form.material && !materials.includes(form.material) && <option value={form.material}>{form.material}</option>}
+                </Select>
+                <div className="mt-2 flex gap-2">
+                  <input
+                    value={newMaterial}
+                    onChange={(e) => setNewMaterial(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); void addMaterial() } }}
+                    placeholder="Add a new material (e.g. Silver)"
+                    className="min-w-0 flex-1 rounded-xl border border-blush-200 px-3 py-2 text-sm"
+                  />
+                  <Button type="button" size="sm" variant="outline" onClick={addMaterial}>Add</Button>
+                </div>
+                <button type="button" onClick={() => setEditMaterials((o) => !o)} className="mt-2 text-xs text-brand-600 underline">
+                  {editMaterials ? 'Hide material list' : 'Manage material list'}
+                </button>
+                {editMaterials && (
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {materials.map((m) => (
+                      <span key={m} className="flex items-center gap-1.5 rounded-full bg-blush-50 px-3 py-1 text-xs text-ink-700">
+                        {m}
+                        <button type="button" aria-label={`Remove ${m}`} onClick={() => removeMaterial(m)} className="text-red-500">×</button>
+                      </span>
+                    ))}
+                    {materials.length === 0 && <span className="text-xs text-ink-300">No materials yet.</span>}
+                  </div>
+                )}
+              </div>
               <Input label="Colour" value={form.colour} onChange={(e) => setForm({ ...form, colour: e.target.value })} />
               <Input label="Size / Dimensions" value={form.size} onChange={(e) => setForm({ ...form, size: e.target.value })} />
               <Input label="Weight (grams)" type="number" value={form.weight_grams} onChange={(e) => setForm({ ...form, weight_grams: e.target.value })} />

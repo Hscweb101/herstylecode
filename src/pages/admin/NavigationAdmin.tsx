@@ -66,7 +66,7 @@ export default function NavigationAdmin() {
     <div>
       <PageHeader
         title="Bottom Nav Links"
-        description="Quick filter links shown after your categories in the bar under the header (e.g. “Under ₹399”). URL must start with /shop? — e.g. /shop?maxPrice=399, or /shop?minPrice=500&maxPrice=1000 for a range."
+        description="Quick filter links shown after your categories in the bar under the header (e.g. “Under ₹399”). URL must start with /shop? or /category/<slug>? — e.g. /category/earrings?maxPrice=399&material=none (earrings under 399 with no material), /shop?maxPrice=399, or /shop?minPrice=500&maxPrice=1000 for a range."
         action={<Button onClick={() => setEditing({ ...EMPTY })}><Plus size={16} /> Add Link</Button>}
       />
       <Table>

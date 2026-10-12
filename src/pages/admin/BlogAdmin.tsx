@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
-import { Plus, Pencil, Trash2, ExternalLink } from 'lucide-react'
+import { Plus, Pencil, Trash2, ExternalLink, X } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { slugify } from '@/lib/utils'
-import { PageHeader, Table, Th, Td, IconButton, ConfirmModal, Card } from '@/components/admin/AdminUI'
+import { PageHeader, Table, Th, Td, IconButton, ConfirmModal } from '@/components/admin/AdminUI'
 import { Badge, FullPageSpinner } from '@/components/ui/Misc'
 import { Button } from '@/components/ui/Button'
 import { Input, Textarea } from '@/components/ui/Input'
+import { RichTextEditor } from '@/components/admin/RichTextEditor'
 import type { BlogPost } from '@/types'
 
 const EMPTY = {
@@ -46,6 +47,10 @@ export default function BlogAdmin() {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!editing) return
+    if (!editing.content.replace(/<[^>]*>/g, '').trim() && !editing.content.includes('<img')) {
+      toast.error('Please write the blog content first')
+      return
+    }
     const wasPublished = editing.id ? posts.find((p) => p.id === editing.id)?.is_published : false
     const payload = {
       title: editing.title,
@@ -115,16 +120,24 @@ export default function BlogAdmin() {
       </Table>
 
       {editing && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-ink-900/40 px-4 py-8">
-          <Card className="w-full max-w-2xl">
-            <form onSubmit={handleSave} className="space-y-4">
+        <div className="admin-ui fixed inset-0 z-50 flex items-center justify-center bg-ink-900/40 p-2 sm:p-4">
+          <form onSubmit={handleSave} className="flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-2xl">
+            {/* Header with the close button always visible */}
+            <div className="flex shrink-0 items-center justify-between border-b border-gray-200 px-4 py-3 sm:px-5">
               <h3 className="font-serif text-lg">{editing.id ? 'Edit' : 'New'} Post</h3>
+              <button type="button" onClick={() => setEditing(null)} aria-label="Close" className="rounded-lg p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-900">
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Scrollable body */}
+            <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-4 sm:px-5">
               <Input
                 label="Title" required autoFocus value={editing.title}
                 onChange={(e) => setEditing({ ...editing, title: e.target.value, slug: editing.id ? editing.slug : slugify(e.target.value) })}
               />
-              <Input label="Slug" required value={editing.slug} onChange={(e) => setEditing({ ...editing, slug: e.target.value })} />
-              <Textarea label="Excerpt (shown in previews)" value={editing.excerpt} onChange={(e) => setEditing({ ...editing, excerpt: e.target.value })} />
+              <Input label="Web address (slug)" required hint="Made from the title automatically. Only change it if you need to." value={editing.slug} onChange={(e) => setEditing({ ...editing, slug: e.target.value })} />
+              <Textarea label="Short summary (shown in previews)" value={editing.excerpt} onChange={(e) => setEditing({ ...editing, excerpt: e.target.value })} />
 
               <div>
                 <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-ink-500">Cover Image</label>
@@ -135,24 +148,25 @@ export default function BlogAdmin() {
                 </label>
               </div>
 
-              <Textarea
-                label="Content (HTML — supports h2/h3/p/ul/ol/blockquote/img/a tags)"
-                className="[&_textarea]:min-h-[260px]"
-                required
-                value={editing.content}
-                onChange={(e) => setEditing({ ...editing, content: e.target.value })}
-              />
+              <div>
+                <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-ink-500">Blog content</label>
+                <p className="mb-2 text-xs text-ink-300">Type here, or copy your blog from Word / Google Docs and paste it. Use the picture button to add images.</p>
+                <RichTextEditor key={editing.id || 'new'} value={editing.content} onChange={(html) => setEditing((prev) => (prev ? { ...prev, content: html } : prev))} />
+              </div>
+
               <Input label="Tags (comma-separated)" value={editing.tags} onChange={(e) => setEditing({ ...editing, tags: e.target.value })} placeholder="styling tips, gifting" />
               <Input label="Author Name" value={editing.author_name} onChange={(e) => setEditing({ ...editing, author_name: e.target.value })} />
               <Input label="SEO Title (optional)" value={editing.seo_title} onChange={(e) => setEditing({ ...editing, seo_title: e.target.value })} />
               <Textarea label="SEO Description (optional)" value={editing.seo_description} onChange={(e) => setEditing({ ...editing, seo_description: e.target.value })} />
-              <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={editing.is_published} onChange={(e) => setEditing({ ...editing, is_published: e.target.checked })} /> Published</label>
-              <div className="flex justify-end gap-2">
-                <Button type="button" variant="ghost" onClick={() => setEditing(null)}>Cancel</Button>
-                <Button type="submit">Save</Button>
-              </div>
-            </form>
-          </Card>
+              <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={editing.is_published} onChange={(e) => setEditing({ ...editing, is_published: e.target.checked })} /> Published (visible on the website)</label>
+            </div>
+
+            {/* Buttons always visible */}
+            <div className="flex shrink-0 justify-end gap-2 border-t border-gray-200 bg-white px-4 py-3 sm:px-5">
+              <Button type="button" variant="ghost" onClick={() => setEditing(null)}>Cancel</Button>
+              <Button type="submit">Save</Button>
+            </div>
+          </form>
         </div>
       )}
       <ConfirmModal open={!!deleteTarget} title="Delete Post" description={`Delete "${deleteTarget?.title}"?`} onConfirm={handleDelete} onCancel={() => setDeleteTarget(null)} />

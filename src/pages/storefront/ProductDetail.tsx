@@ -187,7 +187,7 @@ const PAYMENT_LOGOS = [
   { file: 'rupay.svg', name: 'RuPay' },
 ]
 
-function Accordion({ title, children, defaultOpen = false }: { title: string; children: React.ReactNode; defaultOpen?: boolean }) {
+function Accordion({ title, children, defaultOpen = false, strong = false }: { title: string; children: React.ReactNode; defaultOpen?: boolean; strong?: boolean }) {
   const [open, setOpen] = useState(defaultOpen)
   return (
     <div className="border-b border-blush-200">
@@ -195,7 +195,7 @@ function Accordion({ title, children, defaultOpen = false }: { title: string; ch
         type="button"
         aria-expanded={open}
         onClick={() => setOpen((o) => !o)}
-        className="flex w-full items-center justify-between gap-3 py-4 text-left text-sm font-medium text-ink-900"
+        className={cn('flex w-full items-center justify-between gap-3 py-4 text-left', strong ? 'text-lg font-bold text-brand-600' : 'text-sm font-medium text-ink-900')}
       >
         {title}
         <ChevronDown size={18} className={cn('shrink-0 text-ink-500 transition-transform duration-300', open && 'rotate-180')} />
@@ -206,6 +206,28 @@ function Accordion({ title, children, defaultOpen = false }: { title: string; ch
         </div>
       </div>
     </div>
+  )
+}
+
+/** Material / colour / size / weight, shown only for the fields filled in from the admin panel. */
+function SpecList({ product }: { product: Product }) {
+  const rows: [string, string][] = [
+    ['Material', product.material?.trim() ?? ''],
+    ['Colour', product.colour?.trim() ?? ''],
+    ['Size', product.size?.trim() ?? ''],
+    ['Weight', product.weight_grams ? `${product.weight_grams} g` : ''],
+  ]
+  const shown = rows.filter(([, v]) => v)
+  if (shown.length === 0) return null
+  return (
+    <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-sm">
+      {shown.map(([k, v]) => (
+        <div key={k} className="contents">
+          <dt className="font-semibold text-ink-900">{k}</dt>
+          <dd className="text-ink-700">{v}</dd>
+        </div>
+      ))}
+    </dl>
   )
 }
 
@@ -697,9 +719,14 @@ export default function ProductDetail() {
 
       {/* Details - phones: collapsible sections */}
       <div className="mt-8 border-t border-blush-200 md:hidden">
-        <Accordion title="Product Description" defaultOpen>
+        <Accordion title="Description" defaultOpen strong>
           <p className="whitespace-pre-line">{product.description}</p>
         </Accordion>
+        {(product.material || product.colour || product.size || product.weight_grams) && (
+          <Accordion title="Specifications" defaultOpen strong>
+            <SpecList product={product} />
+          </Accordion>
+        )}
         <Accordion title="Care Instructions">
           <CareList note={product.care_instructions} />
         </Accordion>
@@ -718,9 +745,15 @@ export default function ProductDetail() {
       <div className="mt-8 grid gap-10 md:mt-14 md:grid-cols-3">
         <div className="hidden space-y-8 md:col-span-2 md:block">
           <div>
-            <h3 className="mb-3 font-serif text-xl">Description</h3>
+            <h3 className="mb-3 text-3xl font-semibold leading-tight text-brand-600 md:text-4xl">Description</h3>
             <p className="whitespace-pre-line text-sm leading-relaxed text-ink-700">{product.description}</p>
           </div>
+          {(product.material || product.colour || product.size || product.weight_grams) && (
+            <div>
+              <h3 className="mb-3 text-3xl font-semibold leading-tight text-brand-600 md:text-4xl">Specifications</h3>
+              <SpecList product={product} />
+            </div>
+          )}
           <div className="border-t border-blush-200">
             <Accordion title="Care Instructions">
               <CareList note={product.care_instructions} />

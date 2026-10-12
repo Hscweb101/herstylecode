@@ -11,6 +11,7 @@ import { Select } from '@/components/ui/Input'
 import { useCategories } from '@/hooks/useCategories'
 import { cn, discountPercent, formatINR } from '@/lib/utils'
 import { useSeo } from '@/hooks/useSeo'
+import { useMaterials } from '@/hooks/useMaterials'
 
 const TITLES: Record<string, string> = {
   'new-arrivals': 'New Arrivals',
@@ -126,13 +127,17 @@ export default function Shop({ mode }: { mode: 'all' | 'collection' | 'category'
   const sort = searchParams.get('sort') ?? 'newest'
   const search = searchParams.get('q') ?? ''
   const colourParam = searchParams.get('colour') ?? ''
+  const materialParam = searchParams.get('material') ?? '' // a material name, or 'none' for products with no material
+  const { materials } = useMaterials()
   const maxPriceParam = searchParams.get('maxPrice') ?? ''
   const minPriceParam = searchParams.get('minPrice') ?? ''
   const page = Math.max(1, Number(searchParams.get('page')) || 1)
   const serverSort = (SERVER_SORTS.includes(sort) ? sort : 'newest') as ProductFilters['sort']
 
   const pageTitle =
-    mode === 'all' && maxPriceParam && !minPriceParam
+    mode === 'category' && maxPriceParam && !minPriceParam && !search
+      ? `${slug?.replace(/-/g, ' ')} Under ₹${maxPriceParam}`
+      : mode === 'all' && maxPriceParam && !minPriceParam
       ? `Under ₹${maxPriceParam}`
       : mode === 'all'
         ? 'Shop All'
@@ -141,7 +146,7 @@ export default function Shop({ mode }: { mode: 'all' | 'collection' | 'category'
           : slug?.replace(/-/g, ' ')
 
   const seoName = (pageTitle ?? '').toString().replace(/\b\w/g, (c) => c.toUpperCase())
-  const filtered = Boolean(search || colourParam || maxPriceParam || minPriceParam || page > 1 || (searchParams.get('sort') && searchParams.get('sort') !== 'newest'))
+  const filtered = Boolean(search || colourParam || materialParam || maxPriceParam || minPriceParam || page > 1 || (searchParams.get('sort') && searchParams.get('sort') !== 'newest'))
   useSeo({
     title: mode === 'all' ? 'Shop Fashion Jewellery Online - Earrings, Necklaces, Rings & Bangles' : `${seoName} - Buy Online in India`,
     description:
@@ -195,7 +200,13 @@ export default function Shop({ mode }: { mode: 'all' | 'collection' | 'category'
   )
 
   const visibleProducts = useMemo(() => {
-    const list = colourParam ? products.filter((p) => (p as Product & { colour?: string }).colour === colourParam) : products
+    let list = colourParam ? products.filter((p) => (p as Product & { colour?: string }).colour === colourParam) : products
+    if (materialParam) {
+      list = list.filter((p) => {
+        const m = ((p as Product & { material?: string | null }).material ?? '').trim().toLowerCase()
+        return materialParam === 'none' ? m === '' : m === materialParam.toLowerCase()
+      })
+    }
     // Best Sellers / Sale / New Arrivals: those products first, everything else after (stable, keeps the default order).
     const rank = (p: Product): number => {
       if (sort === 'best_sellers') return p.is_bestseller ? 1 : 0
@@ -205,7 +216,7 @@ export default function Shop({ mode }: { mode: 'all' | 'collection' | 'category'
     }
     if (!['best_sellers', 'new_arrivals', 'sale'].includes(sort)) return list
     return [...list].sort((a, b) => rank(b) - rank(a))
-  }, [products, colourParam, sort])
+  }, [products, colourParam, materialParam, sort])
 
   const topLevelCategories = useMemo(() => categories.filter((c) => !c.parent_id), [categories])
   const currentCategory = useMemo(() => (mode === 'category' ? categories.find((c) => c.slug === slug) : undefined), [categories, mode, slug])
@@ -254,6 +265,7 @@ export default function Shop({ mode }: { mode: 'all' | 'collection' | 'category'
   const activeFilters = [
     priceChip && { label: priceChip, remove: () => setParams({ minPrice: '', maxPrice: '' }) },
     colourParam && { label: colourParam, remove: () => updateParam('colour', '') },
+    materialParam && { label: materialParam === 'none' ? 'No material' : materialParam, remove: () => updateParam('material', '') },
     search && { label: `“${search}”`, remove: () => updateParam('q', '') },
   ].filter(Boolean) as { label: string; remove: () => void }[]
 
@@ -297,6 +309,30 @@ export default function Shop({ mode }: { mode: 'all' | 'collection' | 'category'
     </>
   )
 
+  const materialChips = (
+    <>
+      {[...materials.map((m) => ({ value: m, label: m })), { value: 'none', label: 'None' }].map(({ value, label }) => {
+        const on = materialParam.toLowerCase() === value.toLowerCase()
+        return (
+          <button
+            key={value}
+            type="button"
+            aria-pressed={on}
+            onClick={() => updateParam('material', on ? '' : value)}
+            className={cn(
+              'shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-medium transition-all',
+              on
+                ? 'border-brand-600 bg-brand-600 text-white shadow-luxe-sm'
+                : 'border-blush-200 bg-white text-ink-700 hover:border-brand-400 hover:text-brand-600',
+            )}
+          >
+            {label}
+          </button>
+        )
+      })}
+    </>
+  )
+
   // Desktop / tablet: filter card in the sidebar.
   const filterPanel = (
     <div className="overflow-hidden rounded-2xl border border-brand-200/60 bg-white shadow-luxe md:sticky md:top-28">
@@ -333,6 +369,11 @@ export default function Shop({ mode }: { mode: 'all' | 'collection' | 'category'
         <div>
           <FilterHeading>Price</FilterHeading>
           {priceSlider}
+        </div>
+
+        <div>
+          <FilterHeading>Material</FilterHeading>
+          <div className="flex flex-wrap gap-2">{materialChips}</div>
         </div>
 
         {colours.length > 0 && (
@@ -442,6 +483,7 @@ export default function Shop({ mode }: { mode: 'all' | 'collection' | 'category'
           ))}
         </Select>
 
+        <div className="scrollbar-none -mx-4 flex gap-2 overflow-x-auto px-4 pb-1">{materialChips}</div>
         {colours.length > 0 && <div className="scrollbar-none -mx-4 flex gap-2 overflow-x-auto px-4 pb-1">{colourChips}</div>}
       </div>
 

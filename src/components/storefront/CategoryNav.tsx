@@ -11,9 +11,9 @@ export function CategoryNav() {
   const { categories } = useCategories()
   const { items: allNavLinks } = useNavigationItems()
   const { active, show, hide, keep, close } = useHoverMenu<string>()
-  // Only "quick filter" links (e.g. Under ₹399 -> /shop?maxPrice=399) belong in this bar —
+  // Only "quick filter" links (e.g. Earrings Under 399 -> /category/earrings?maxPrice=399&material=none) belong in this bar —
   // other navigation_items rows are a separate, unrelated menu and are ignored here.
-  const navLinks = allNavLinks.filter((l) => !l.parent_id && l.url.startsWith('/shop?'))
+  const navLinks = allNavLinks.filter((l) => !l.parent_id && (l.url.startsWith('/shop?') || /^\/category\/[^?]+\?/.test(l.url)))
   const topLevel = categories.filter((c) => !c.parent_id)
 
   // Keep the last opened category's content mounted while the panel fades out.
@@ -44,9 +44,9 @@ export function CategoryNav() {
                 onClick={close}
                 aria-expanded={isActive}
                 className={cn(
-                  'relative flex items-center gap-1 py-2.5 text-sm font-medium tracking-wide transition-colors',
+                  'relative flex items-center gap-1 py-2.5 text-sm font-bold tracking-wide text-white transition-colors',
                   'after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:origin-left after:scale-x-0 after:bg-white after:transition-transform after:duration-300',
-                  isActive ? 'text-white after:scale-x-100' : 'text-cream/90 hover:text-white',
+                  isActive ? 'after:scale-x-100' : 'hover:text-cream',
                 )}
               >
                 {c.name}
@@ -60,7 +60,7 @@ export function CategoryNav() {
               key={link.id}
               to={link.url}
               onMouseEnter={hide}
-              className="flex items-center py-2.5 text-sm font-semibold tracking-wide text-white transition-colors hover:text-cream"
+              className="flex items-center py-2.5 text-sm font-bold tracking-wide text-white transition-colors hover:text-cream"
             >
               {link.label}
             </Link>
