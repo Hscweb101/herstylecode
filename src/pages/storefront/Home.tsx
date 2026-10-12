@@ -466,7 +466,7 @@ function ReviewsRail({ photos }: { photos: string[] }) {
         {strip.length > 0 && (
           <div className="scrollbar-none -mx-4 mt-6 flex gap-2 overflow-x-auto px-4 md:mx-0 md:px-0">
             {strip.map((src, i) => (
-              <img key={`${src}-${i}`} src={src} alt="" loading="lazy" className="h-28 w-28 shrink-0 rounded-md object-cover md:h-36 md:w-36" />
+              <img key={`${src}-${i}`} src={src} alt="" className="h-28 w-28 shrink-0 rounded-md object-cover md:h-36 md:w-36" />
             ))}
           </div>
         )}
@@ -477,7 +477,7 @@ function ReviewsRail({ photos }: { photos: string[] }) {
             const img = photoAt(t.photo)
             return (
               <figure key={t.name} className="flex w-60 shrink-0 flex-col overflow-hidden rounded-md border border-gray-200 bg-white md:w-72">
-                {img && <img src={img} alt="" loading="lazy" className="aspect-[4/3] w-full object-cover" />}
+                {img && <img src={img} alt="" className="aspect-[4/3] w-full object-cover" />}
                 <div className="flex flex-1 flex-col p-3.5">
                   <StarRating rating={t.stars} />
                   <blockquote className="mt-2 flex-1 text-xs leading-relaxed text-ink-500">{t.quote}</blockquote>
