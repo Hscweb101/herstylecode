@@ -22,7 +22,7 @@ import { useSeo } from '@/hooks/useSeo'
 import { SITE_URL, BRAND_NAME, absoluteUrl, trimDescription } from '@/lib/seo'
 
 /** Full-screen preview for review photos: tap outside / X / Esc to close, arrows or swipe buttons to browse. */
-function ImageLightbox({ images, index, onClose }: { images: string[]; index: number; onClose: () => void }) {
+function ImageLightbox({ images, index, onClose, size = 'small', label = 'Review photo' }: { images: string[]; index: number; onClose: () => void; size?: 'small' | 'large'; label?: string }) {
   const [i, setI] = useState(index)
   const many = images.length > 1
   const prev = () => setI((n) => (n - 1 + images.length) % images.length)
@@ -43,13 +43,17 @@ function ImageLightbox({ images, index, onClose }: { images: string[]; index: nu
   }, [images.length, onClose])
 
   return (
-    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/85 p-4" role="dialog" aria-modal="true" aria-label="Review photo" onClick={onClose}>
+    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/85 p-4" role="dialog" aria-modal="true" aria-label={label} onClick={onClose}>
       <button type="button" aria-label="Close preview" onClick={onClose} className="absolute right-3 top-3 flex h-10 w-10 items-center justify-center rounded-full bg-white/15 text-white hover:bg-white/25">
         <X size={22} />
       </button>
       {/* Image frame: capped size on big screens; arrows sit outside it on desktop, over it on phones */}
       <div className="relative" onClick={(e) => e.stopPropagation()}>
-        <img src={images[i]} alt="" className="max-h-[72vh] max-w-[min(92vw,640px)] rounded-xl object-contain shadow-2xl" />
+        <img
+          src={images[i]}
+          alt=""
+          className={cn('rounded-xl object-contain shadow-2xl', size === 'large' ? 'max-h-[88vh] max-w-[min(94vw,1000px)] bg-white' : 'max-h-[56vh] max-w-[min(86vw,380px)]')}
+        />
         {many && (
           <button type="button" aria-label="Previous photo" onClick={prev} className="absolute left-2 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/40 text-white hover:bg-black/60 sm:-left-14 sm:bg-white/15 sm:hover:bg-white/25">
             <ChevronLeft size={24} />
@@ -268,6 +272,8 @@ function Gallery({
   alt: string
 }) {
   const [touchStartX, setTouchStartX] = useState<number | null>(null)
+  const [preview, setPreview] = useState(false)
+  const [zoom, setZoom] = useState<{ x: number; y: number } | null>(null) // hover position in %, desktop only
   const railRef = useRef<HTMLDivElement>(null)
 
   const current = Math.max(0, images.findIndex((i) => i.url === activeUrl))
@@ -311,7 +317,14 @@ function Gallery({
       )}
 
       <div
-        className="relative aspect-[4/5] min-w-0 flex-1 overflow-hidden rounded-3xl bg-blush-50"
+        className={cn('relative aspect-[4/5] min-w-0 flex-1 overflow-hidden rounded-3xl bg-blush-50', main && 'cursor-zoom-in')}
+        onClick={() => main && setPreview(true)}
+        onMouseMove={(e) => {
+          if (!window.matchMedia('(hover: hover)').matches) return
+          const r = e.currentTarget.getBoundingClientRect()
+          setZoom({ x: ((e.clientX - r.left) / r.width) * 100, y: ((e.clientY - r.top) / r.height) * 100 })
+        }}
+        onMouseLeave={() => setZoom(null)}
         onTouchStart={(e) => setTouchStartX(e.touches[0].clientX)}
         onTouchEnd={(e) => {
           if (touchStartX === null) return
@@ -330,7 +343,8 @@ function Gallery({
             loading="eager"
             fetchPriority="high"
             draggable={false}
-            className="h-full w-full animate-[fadeIn_.25s_ease-out] object-cover"
+            className="h-full w-full animate-[fadeIn_.25s_ease-out] object-cover transition-transform duration-150 ease-out"
+            style={zoom ? { transform: 'scale(2.2)', transformOrigin: `${zoom.x}% ${zoom.y}%` } : undefined}
           />
         )}
         {images.length > 1 && (
@@ -338,7 +352,7 @@ function Gallery({
             <button
               type="button"
               aria-label="Previous image"
-              onClick={() => go(-1)}
+              onClick={(e) => { e.stopPropagation(); go(-1) }}
               className="absolute left-3 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-ink-700 shadow-luxe-sm"
             >
               <ChevronLeft size={18} />
@@ -346,7 +360,7 @@ function Gallery({
             <button
               type="button"
               aria-label="Next image"
-              onClick={() => go(1)}
+              onClick={(e) => { e.stopPropagation(); go(1) }}
               className="absolute right-3 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-ink-700 shadow-luxe-sm"
             >
               <ChevronRight size={18} />
@@ -357,6 +371,7 @@ function Gallery({
           </>
         )}
       </div>
+      {preview && <ImageLightbox images={images.map((i) => i.url)} index={current} size="large" label={`${alt} photos`} onClose={() => setPreview(false)} />}
     </div>
   )
 }
