@@ -4,7 +4,7 @@ import { CheckCircle2, Copy, Download } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useSeo } from '@/hooks/useSeo'
 import { supabase } from '@/lib/supabase'
-import { downloadReceipt } from '@/lib/receipt'
+import { downloadInvoice } from '@/lib/invoice'
 import { useStoreSettings } from '@/hooks/useStoreSettings'
 import type { Order } from '@/types'
 import { formatINR, formatDate } from '@/lib/utils'
@@ -55,13 +55,13 @@ export default function OrderConfirmation() {
           </button>
         </div>
         <p className="mt-3 text-xs leading-relaxed text-ink-500">
-          You will need this order number to track your order on the Track Order page. Please also download your receipt and keep it for your records.
+          You will need this order number to track your order on the Track Order page. Please also download your invoice and keep it for your records.
         </p>
         <Button
           className="mt-3 w-full"
-          onClick={() => { if (!downloadReceipt(order, settings.store_info.support_email)) toast.error('Please allow pop-ups to download the receipt') }}
+          onClick={() => downloadInvoice(order, settings.store_info).catch(() => toast.error('Could not create the invoice'))}
         >
-          <Download size={15} /> Download Receipt
+          <Download size={15} /> Download Invoice
         </Button>
       </div>
 

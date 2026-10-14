@@ -344,7 +344,7 @@ export default function Shop({ mode }: { mode: 'all' | 'collection' | 'category'
 
         <div>
           <FilterHeading>Material</FilterHeading>
-          <div className="flex flex-wrap gap-2">{materialChips}</div>
+          <div className="flex flex-col items-stretch gap-2 [&>button]:text-left">{materialChips}</div>
         </div>
 
         {activeFilters.length > 0 && (

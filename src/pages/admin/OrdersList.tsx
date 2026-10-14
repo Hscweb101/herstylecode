@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Download, FileDown, Trash2 } from 'lucide-react'
+import { Download, FileDown, FileText, Trash2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { supabase } from '@/lib/supabase'
 import { downloadPackingSlip } from '@/lib/packingSlip'
+import { downloadInvoice } from '@/lib/invoice'
 import { useStoreSettings } from '@/hooks/useStoreSettings'
 import { formatINR, formatDate, isUnpaidOnlineOrder } from '@/lib/utils'
 import { PageHeader, Table, Th, Td, IconButton, ConfirmModal } from '@/components/admin/AdminUI'
@@ -68,6 +69,20 @@ export default function OrdersList() {
     }
   }
 
+  const handleInvoice = async (o: Order) => {
+    const { data } = await supabase.from('orders').select('*, items:order_items(*)').eq('id', o.id).single()
+    if (!data) {
+      toast.error('Could not load the order')
+      return
+    }
+    try {
+      await downloadInvoice(data as unknown as Order, settings.store_info)
+    } catch (err) {
+      console.error(err)
+      toast.error('Could not create the invoice')
+    }
+  }
+
   const handleDelete = async () => {
     if (!deleteTarget) return
     const { error } = await supabase.from('orders').delete().eq('id', deleteTarget.id)
@@ -118,6 +133,7 @@ export default function OrdersList() {
               <Td>
                 <div className="flex gap-1">
                   <IconButton title="Download packing slip" onClick={() => handlePackingSlip(o)}><FileDown size={15} /></IconButton>
+                  <IconButton title="Download invoice" onClick={() => handleInvoice(o)}><FileText size={15} /></IconButton>
                   <IconButton title="Delete" onClick={() => setDeleteTarget(o)}><Trash2 size={15} /></IconButton>
                 </div>
               </Td>

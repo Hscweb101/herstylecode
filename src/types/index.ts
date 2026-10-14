@@ -169,6 +169,7 @@ export interface OrderItem {
 export interface Order {
   id: string
   order_number: string
+  invoice_number?: string | null
   customer_id: string | null
   guest_name: string | null
   guest_email: string | null

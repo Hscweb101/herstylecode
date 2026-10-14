@@ -157,7 +157,6 @@ function UspStrip() {
     { icon: RotateCcw, label: '7-Day Easy Returns' },
     { icon: Sparkles, label: 'Premium Quality' },
     { icon: Gem, label: 'Handpicked Designs' },
-    { icon: BadgeCheck, label: 'Certified Craftsmanship' },
   ]
   return (
     <section className="bg-gradient-to-r from-brand-600 via-brand-500 to-brand-600 py-4 shadow-luxe-sm">

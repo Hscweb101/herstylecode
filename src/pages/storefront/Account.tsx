@@ -1,13 +1,15 @@
 import { useEffect, useState } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { Package, MapPin, User as UserIcon, LogOut, Trash2 } from 'lucide-react'
+import { Package, MapPin, User as UserIcon, LogOut, Trash2, Download } from 'lucide-react'
 import { useSeo } from '@/hooks/useSeo'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/store/authStore'
 import { formatINR, formatDate, cn } from '@/lib/utils'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
+import { downloadInvoice } from '@/lib/invoice'
+import { useStoreSettings } from '@/hooks/useStoreSettings'
 import { Badge, EmptyState, FullPageSpinner } from '@/components/ui/Misc'
 import type { Order, Address } from '@/types'
 
@@ -18,6 +20,7 @@ const STATUS_LABELS: Record<string, string> = {
 }
 
 function OrdersTab({ userId }: { userId: string }) {
+  const { settings } = useStoreSettings()
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
   const [expanded, setExpanded] = useState<string | null>(null)
@@ -69,6 +72,9 @@ function OrdersTab({ userId }: { userId: string }) {
                 </div>
               ))}
               {order.tracking_number && <p className="text-xs text-ink-500">Tracking: {order.tracking_number}</p>}
+              <Button variant="outline" size="sm" onClick={() => downloadInvoice(order, settings.store_info).catch(() => toast.error('Could not create the invoice'))}>
+                <Download size={14} /> Download Invoice
+              </Button>
             </div>
           )}
         </div>

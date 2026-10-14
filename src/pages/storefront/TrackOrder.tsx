@@ -21,9 +21,14 @@ const STATUS_LABELS: Record<string, string> = {
 
 const fmtDay = (iso: string) => new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })
 
-/** "1001", "hsc1001", "# HSC-1001" -> "HSC1001". Empty stays empty. */
+/**
+ * "hsc-ord-2026-001", "HSCORD2026001", "# HSC-ORD-2026-1" -> "HSC-ORD-2026-001"; legacy "1001"/"hsc 1001" -> "HSC1001".
+ * Empty stays empty.
+ */
 function normalizeOrderNumber(raw: string) {
   const cleaned = raw.toUpperCase().replace(/[^A-Z0-9]/g, '')
+  const current = cleaned.match(/^HSCORD(\d{4})(\d+)$/)
+  if (current) return `HSC-ORD-${current[1]}-${current[2].padStart(3, '0')}`
   return /^[0-9]+$/.test(cleaned) ? `HSC${cleaned}` : cleaned
 }
 
@@ -183,7 +188,7 @@ export default function TrackOrder() {
       <form onSubmit={handleSearch} className="mt-8 space-y-4 rounded-2xl border border-blush-100 bg-white p-5 shadow-luxe-sm sm:p-6">
         <Input
           label="Order ID"
-          placeholder="e.g. HSC1001"
+          placeholder="e.g. HSC-ORD-2026-001"
           autoCapitalize="characters"
           value={orderNumber}
           onChange={(e) => setOrderNumber(e.target.value)}

@@ -4,6 +4,7 @@ import toast from 'react-hot-toast'
 import { Check, ChevronDown, FileDown } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { downloadPackingSlip } from '@/lib/packingSlip'
+import { downloadInvoice } from '@/lib/invoice'
 import { useStoreSettings } from '@/hooks/useStoreSettings'
 import { formatINR, formatDate, cn } from '@/lib/utils'
 import { PageHeader, Card } from '@/components/admin/AdminUI'
@@ -158,6 +159,16 @@ export default function OrderDetailAdmin() {
     setSlipLoading(false)
   }
 
+  const handleInvoice = async () => {
+    if (!order) return
+    try {
+      await downloadInvoice(order, settings.store_info)
+    } catch (err) {
+      console.error(err)
+      toast.error('Could not create the invoice')
+    }
+  }
+
   if (loading) return <FullPageSpinner />
   if (!order) return null
 
@@ -171,6 +182,7 @@ export default function OrderDetailAdmin() {
         action={
           <div className="flex gap-2 print:hidden">
             <Button onClick={handlePackingSlip} loading={slipLoading}><FileDown size={15} /> Packing Slip</Button>
+            <Button variant="outline" onClick={handleInvoice}><FileDown size={15} /> Invoice</Button>
             <Button variant="ghost" onClick={() => navigate('/admin/orders')}>Back</Button>
           </div>
         }
