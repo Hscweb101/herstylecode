@@ -70,6 +70,61 @@ function ImageLightbox({ images, index, onClose, size = 'small', label = 'Review
   )
 }
 
+/** Small popup for a review photo: shows the whole review card (photo, stars, text, name) in a compact size. */
+function ReviewPreview({ review, index, onClose }: { review: Review; index: number; onClose: () => void }) {
+  const [i, setI] = useState(index)
+  const photos = review.images ?? []
+  const many = photos.length > 1
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+      if (e.key === 'ArrowLeft') setI((n) => (n - 1 + photos.length) % photos.length)
+      if (e.key === 'ArrowRight') setI((n) => (n + 1) % photos.length)
+    }
+    document.body.style.overflow = 'hidden'
+    window.addEventListener('keydown', onKey)
+    return () => {
+      document.body.style.overflow = ''
+      window.removeEventListener('keydown', onKey)
+    }
+  }, [photos.length, onClose])
+
+  return (
+    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 p-4" role="dialog" aria-modal="true" aria-label="Review" onClick={onClose}>
+      <figure className="relative w-full max-w-[260px] overflow-hidden rounded-xl bg-white shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        <button type="button" aria-label="Close" onClick={onClose} className="absolute right-2 top-2 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-black/50 text-white hover:bg-black/70">
+          <X size={15} />
+        </button>
+        <div className="relative">
+          <img src={photos[i]} alt="" className="aspect-[4/3] w-full object-cover" />
+          {many && (
+            <>
+              <button type="button" aria-label="Previous photo" onClick={() => setI((n) => (n - 1 + photos.length) % photos.length)} className="absolute left-1.5 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full bg-black/45 text-white hover:bg-black/65">
+                <ChevronLeft size={16} />
+              </button>
+              <button type="button" aria-label="Next photo" onClick={() => setI((n) => (n + 1) % photos.length)} className="absolute right-1.5 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full bg-black/45 text-white hover:bg-black/65">
+                <ChevronRight size={16} />
+              </button>
+              <span className="absolute bottom-1.5 right-2 rounded bg-black/55 px-1.5 py-0.5 text-[10px] text-white">{i + 1} / {photos.length}</span>
+            </>
+          )}
+        </div>
+        <div className="max-h-40 overflow-y-auto p-3">
+          <StarRating rating={review.rating} size={12} />
+          {review.title && <p className="mt-1.5 text-xs font-semibold text-ink-900">{review.title}</p>}
+          {review.body && <blockquote className="mt-1 text-[11px] leading-relaxed text-ink-500">{review.body}</blockquote>}
+          <figcaption className="mt-2">
+            <span className="block text-[11px] font-bold text-ink-900">{review.reviewer_name}</span>
+            {review.is_verified_purchase && <span className="mt-0.5 flex items-center gap-1 text-[10px] text-brand-600"><BadgeCheck size={11} /> verified buyer</span>}
+            <span className="mt-0.5 block text-[10px] text-ink-300">{new Date(review.created_at).toLocaleDateString('en-GB')}</span>
+          </figcaption>
+        </div>
+      </figure>
+    </div>
+  )
+}
+
 function ReviewForm({ productId, onSubmitted }: { productId: string; onSubmitted: () => void }) {
   const [open, setOpen] = useState(false)
   const profile = useAuthStore((s) => s.profile)
@@ -387,7 +442,7 @@ export default function ProductDetail() {
   const [related, setRelated] = useState<Product[]>([])
   const [recentlyViewed, setRecentlyViewed] = useState<Product[]>([])
   const [canReview, setCanReview] = useState(false)
-  const [lightbox, setLightbox] = useState<{ images: string[]; index: number } | null>(null)
+  const [lightbox, setLightbox] = useState<{ review: Review; index: number } | null>(null)
   const [quickCheckoutOpen, setQuickCheckoutOpen] = useState(false)
   const [showStickyBar, setShowStickyBar] = useState(false)
   const actionsRef = useRef<HTMLDivElement>(null)
@@ -821,13 +876,13 @@ export default function ProductDetail() {
 
             {/* Photo strip: every customer photo */}
             {(() => {
-              const allPhotos = reviews.flatMap((r) => r.images ?? [])
+              const allPhotos = reviews.flatMap((r) => (r.images ?? []).map((url, index) => ({ url, review: r, index })))
               if (allPhotos.length === 0) return null
               return (
                 <div className="scrollbar-none -mx-4 mt-6 flex gap-2 overflow-x-auto px-4 md:mx-0 md:px-0">
-                  {allPhotos.map((url, idx) => (
-                    <button key={`${url}-${idx}`} type="button" aria-label={`View customer photo ${idx + 1}`} onClick={() => setLightbox({ images: allPhotos, index: idx })} className="shrink-0">
-                      <img src={url} alt="" className="h-24 w-24 cursor-zoom-in rounded-md object-cover md:h-32 md:w-32" />
+                  {allPhotos.map(({ url, review, index }, idx) => (
+                    <button key={`${url}-${idx}`} type="button" aria-label={`View customer photo ${idx + 1}`} onClick={() => setLightbox({ review, index })} className="shrink-0">
+                      <img src={url} alt="" className="h-24 w-24 cursor-pointer rounded-md object-cover md:h-32 md:w-32" />
                     </button>
                   ))}
                 </div>
@@ -839,8 +894,8 @@ export default function ProductDetail() {
               {reviews.map((r) => (
                 <figure key={r.id} className="flex w-[78%] shrink-0 snap-start flex-col overflow-hidden rounded-md border border-gray-200 bg-white sm:w-64 md:w-72">
                   {r.images && r.images.length > 0 && (
-                    <button type="button" aria-label="View review photos" onClick={() => setLightbox({ images: r.images, index: 0 })} className="relative block">
-                      <img src={r.images[0]} alt="" className="aspect-[4/3] w-full cursor-zoom-in object-cover" />
+                    <button type="button" aria-label="View review photos" onClick={() => setLightbox({ review: r, index: 0 })} className="relative block">
+                      <img src={r.images[0]} alt="" className="aspect-[4/3] w-full cursor-pointer object-cover" />
                       {r.images.length > 1 && <span className="absolute right-2 top-2 rounded bg-black/55 px-1.5 py-0.5 text-[10px] text-white">+{r.images.length - 1}</span>}
                     </button>
                   )}
@@ -871,7 +926,7 @@ export default function ProductDetail() {
         </div>
       </section>
 
-      {lightbox && <ImageLightbox images={lightbox.images} index={lightbox.index} onClose={() => setLightbox(null)} />}
+      {lightbox && <ReviewPreview review={lightbox.review} index={lightbox.index} onClose={() => setLightbox(null)} />}
 
       {related.length > 0 && (
         <div className="mt-16">
