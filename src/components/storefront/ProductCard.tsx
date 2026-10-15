@@ -16,8 +16,10 @@ export function ProductCard({ product }: { product: Product }) {
   const [hovered, setHovered] = useState(false)
 
   const sortedImages = [...(product.images ?? [])].sort((a, b) => (a.is_primary === b.is_primary ? a.sort_order - b.sort_order : a.is_primary ? -1 : 1))
-  const primaryImage = sortedImages[0]?.url ?? 'https://placehold.co/600x600/F1EBD8/722F37?text=HerStyleCode'
-  const secondaryImage = sortedImages[1]?.url ?? primaryImage
+  // A dedicated card thumbnail (set in admin) wins on the card; the gallery's first photo then becomes the hover image.
+  const thumb = product.thumbnail_url || null
+  const primaryImage = thumb ?? sortedImages[0]?.url ?? 'https://placehold.co/600x600/F1EBD8/722F37?text=HerStyleCode'
+  const secondaryImage = (thumb ? sortedImages[0]?.url : sortedImages[1]?.url) ?? primaryImage
   const image = hovered ? secondaryImage : primaryImage
   const pct = discountPercent(product.price, product.compare_at_price)
   const outOfStock = product.track_inventory !== false && product.stock_quantity <= 0

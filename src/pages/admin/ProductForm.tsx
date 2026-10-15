@@ -21,7 +21,7 @@ interface FormState {
   show_purchase_proof: boolean; online_discount_type: 'amount' | 'percent'; online_discount_value: string;
   cod_advance_type: 'none' | 'amount' | 'percent'; cod_advance_value: string;
   is_active: boolean; is_featured: boolean; is_new_arrival: boolean; is_bestseller: boolean; is_trending: boolean; is_on_sale: boolean;
-  seo_title: string; seo_description: string;
+  seo_title: string; seo_description: string; thumbnail_url: string;
 }
 
 const EMPTY_FORM: FormState = {
@@ -30,7 +30,7 @@ const EMPTY_FORM: FormState = {
   whats_included: '', delivery_info: '', return_eligible: true, cod_available: true, tags: '', video_url: '',
   show_purchase_proof: true, online_discount_type: 'amount', online_discount_value: '', cod_advance_type: 'none', cod_advance_value: '',
   is_active: true, is_featured: false, is_new_arrival: false, is_bestseller: false, is_trending: false, is_on_sale: false,
-  seo_title: '', seo_description: '',
+  seo_title: '', seo_description: '', thumbnail_url: '',
 }
 
 interface VariantRow extends Partial<ProductVariant> {
@@ -83,6 +83,7 @@ export default function ProductForm() {
           is_active: product.is_active, is_featured: product.is_featured, is_new_arrival: product.is_new_arrival,
           is_bestseller: product.is_bestseller, is_trending: product.is_trending, is_on_sale: product.is_on_sale,
           seo_title: product.seo_title ?? '', seo_description: product.seo_description ?? '',
+          thumbnail_url: product.thumbnail_url ?? '',
         })
       }
       setImages((imgs as ProductImage[]) ?? [])
@@ -150,6 +151,28 @@ export default function ProductForm() {
       setImages((prev) => [...prev, { id: crypto.randomUUID(), product_id: id ?? '', variant_id: null, url: publicUrl.publicUrl, alt_text: form.name, sort_order: prev.length, is_primary: prev.length === 0 }])
     }
     setUploading(false)
+  }
+
+  const [uploadingThumb, setUploadingThumb] = useState(false)
+  const handleThumbUpload = async (file: File | undefined) => {
+    if (!file) return
+    setUploadingThumb(true)
+    const base = `${form.slug || 'product'}-thumb-${Date.now()}`
+    try {
+      const [md, sm] = await Promise.all([resizeImage(file, 800, 0.82), resizeImage(file, 240, 0.8)])
+      const opts = { contentType: 'image/jpeg', cacheControl: '31536000' }
+      const results = await Promise.all([
+        supabase.storage.from('product-images').upload(`${base}.jpg`, md, opts),
+        supabase.storage.from('product-images').upload(`${base}-md.jpg`, md, opts),
+        supabase.storage.from('product-images').upload(`${base}-sm.jpg`, sm, opts),
+      ])
+      const err = results.find((r) => r.error)?.error
+      if (err) throw new Error(err.message)
+      setForm((f) => ({ ...f, thumbnail_url: supabase.storage.from('product-images').getPublicUrl(`${base}.jpg`).data.publicUrl }))
+    } catch (err) {
+      toast.error(`Upload failed: ${err instanceof Error ? err.message : 'Could not process image'}`)
+    }
+    setUploadingThumb(false)
   }
 
   const setPrimaryImage = (imgId: string) => {
@@ -228,6 +251,7 @@ export default function ProductForm() {
       is_on_sale: form.is_on_sale,
       seo_title: form.seo_title || null,
       seo_description: form.seo_description || null,
+      thumbnail_url: form.thumbnail_url || null,
     }
 
     let productId = id
@@ -423,6 +447,25 @@ export default function ProductForm() {
         </div>
 
         <div className="space-y-6">
+          <Card>
+            <h3 className="mb-1 font-serif text-lg">Card Thumbnail</h3>
+            <p className="mb-3 text-xs text-ink-300">Shown only on product cards (shop, home, menus) — not inside the product page. Leave empty to use the first gallery image.</p>
+            <div className="flex items-center gap-3">
+              {form.thumbnail_url && (
+                <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-xl border border-blush-100">
+                  <img src={form.thumbnail_url} alt="" className="h-full w-full object-cover" />
+                  <button type="button" onClick={() => setForm({ ...form, thumbnail_url: '' })} className="absolute right-1 top-1 rounded-full bg-white/90 p-1" aria-label="Remove thumbnail">
+                    <Trash2 size={12} className="text-red-500" />
+                  </button>
+                </div>
+              )}
+              <label className="block flex-1 cursor-pointer rounded-xl border-2 border-dashed border-blush-200 p-4 text-center text-xs text-ink-300 hover:border-brand-300">
+                {uploadingThumb ? 'Uploading...' : form.thumbnail_url ? 'Replace thumbnail' : 'Click to upload thumbnail'}
+                <input type="file" accept="image/*" hidden disabled={uploadingThumb} onChange={(e) => { handleThumbUpload(e.target.files?.[0]); e.target.value = '' }} />
+              </label>
+            </div>
+          </Card>
+
           <Card>
             <h3 className="mb-4 font-serif text-lg">Images</h3>
             <div className="mb-3 grid grid-cols-3 gap-2">

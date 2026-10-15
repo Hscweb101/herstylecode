@@ -83,6 +83,7 @@ export interface Product {
   cod_advance_type: 'none' | 'amount' | 'percent'
   cod_advance_value: number
   video_url: string | null
+  thumbnail_url?: string | null
   tags: string[]
   is_active: boolean
   is_featured: boolean

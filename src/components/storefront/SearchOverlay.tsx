@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { X, Search } from 'lucide-react'
 import { useUIStore } from '@/store/uiStore'
 import { supabase } from '@/lib/supabase'
+import { HIDE_MIXED_FILTER } from '@/lib/queries'
 import type { Product } from '@/types'
 import { formatINR } from '@/lib/utils'
 import { Spinner } from '@/components/ui/Misc'
@@ -31,6 +32,7 @@ export function SearchOverlay() {
         .from('products')
         .select('id, name, slug, price, compare_at_price, sku, images:product_images(url, is_primary)')
         .eq('is_active', true)
+        .or(HIDE_MIXED_FILTER)
         .or(`name.ilike.%${query}%,sku.ilike.%${query}%,tags.cs.{${query}}`)
         .limit(8)
       setResults((data as unknown as Product[]) ?? [])

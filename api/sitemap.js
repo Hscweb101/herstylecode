@@ -35,7 +35,7 @@ export default async function handler(req, res) {
   let products, categories, collections, posts, pages
   try {
     ;[products, categories, collections, posts, pages] = await Promise.all([
-    rest('products?select=slug,updated_at,images:product_images(url,is_primary,sort_order)&is_active=eq.true&order=updated_at.desc&limit=5000'),
+    rest('products?select=slug,updated_at,images:product_images(url,is_primary,sort_order)&is_active=eq.true&or=(material.is.null,material.not.ilike.mixed)&order=updated_at.desc&limit=5000'),
     rest('categories?select=slug&is_active=eq.true&limit=1000'),
     rest('collections?select=slug&is_active=eq.true&limit=1000'),
     rest('blog_posts?select=slug,updated_at,cover_image_url&is_published=eq.true&order=published_at.desc&limit=2000'),

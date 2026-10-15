@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useParams, useSearchParams, useNavigate, Link } from 'react-router-dom'
 import { ChevronDown, SlidersHorizontal, X } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
-import { fetchProducts, type ProductFilters } from '@/lib/queries'
+import { fetchProducts, HIDE_MIXED_FILTER, type ProductFilters } from '@/lib/queries'
 import type { Product } from '@/types'
 import { ProductCard } from '@/components/storefront/ProductCard'
 import { EmptyState, FullPageSpinner } from '@/components/ui/Misc'
@@ -163,6 +163,7 @@ export default function Shop({ mode }: { mode: 'all' | 'collection' | 'category'
       .from('products')
       .select('price')
       .eq('is_active', true)
+      .or(HIDE_MIXED_FILTER)
       .then(({ data }) => {
         const prices = (data ?? []).map((r) => Number(r.price)).filter((n) => Number.isFinite(n))
         if (prices.length === 0) return
@@ -181,6 +182,7 @@ export default function Shop({ mode }: { mode: 'all' | 'collection' | 'category'
         search: search || undefined,
         minPrice: minPriceParam ? Number(minPriceParam) : undefined,
         maxPrice: maxPriceParam ? Number(maxPriceParam) : undefined,
+        includeMixed: materialParam.toLowerCase() === 'mixed',
       }
       if (mode === 'category' && slug) filters.categorySlug = slug
       if (mode === 'collection' && slug) {
@@ -192,7 +194,7 @@ export default function Shop({ mode }: { mode: 'all' | 'collection' | 'category'
       setLoading(false)
     }
     load()
-  }, [mode, slug, serverSort, search, minPriceParam, maxPriceParam])
+  }, [mode, slug, serverSort, search, minPriceParam, maxPriceParam, materialParam])
 
   const visibleProducts = useMemo(() => {
     let list = products
@@ -280,9 +282,10 @@ export default function Shop({ mode }: { mode: 'all' | 'collection' | 'category'
       <div className="h-16 animate-pulse rounded-xl bg-blush-50" />
     )
 
+  // Mixed stays hidden until the Earrings Under 399 link opens it.
   const materialChips = (
     <>
-      {[...materials.filter((m) => m.toLowerCase() !== 'mixed'), 'Mixed'].map((m) => ({ value: m, label: m })).map(({ value, label }) => {
+      {[...materials.filter((m) => m.toLowerCase() !== 'mixed'), ...(materialParam.toLowerCase() === 'mixed' ? ['Mixed'] : [])].map((m) => ({ value: m, label: m })).map(({ value, label }) => {
         const on = materialParam.toLowerCase() === value.toLowerCase()
         return (
           <button
@@ -487,7 +490,11 @@ export default function Shop({ mode }: { mode: 'all' | 'collection' | 'category'
           {loading ? (
             <FullPageSpinner />
           ) : visibleProducts.length === 0 ? (
-            <EmptyState title="No products found" description="Try adjusting your filters or check back soon for new arrivals." />
+            <EmptyState
+              title={mode === 'collection' && slug === 'sale' ? 'No sale items right now' : 'No products found'}
+              description={mode === 'collection' && slug === 'sale' ? 'There are no products on sale at the moment. Have a look at the rest of our collection.' : 'Try adjusting your filters or check back soon for new arrivals.'}
+              action={<Link to="/shop" className="mt-2 inline-flex items-center rounded-full bg-brand-600 px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-brand-700">Explore other products</Link>}
+            />
           ) : (
             <>
               <div className="grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-6">

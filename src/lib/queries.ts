@@ -4,7 +4,7 @@ import type { Product } from '@/types'
 export const PRODUCT_CARD_SELECT = `
   id, name, slug, sku, price, compare_at_price, stock_quantity, track_inventory,
   is_active, is_featured, is_new_arrival, is_bestseller, is_trending, is_on_sale,
-  rating_avg, rating_count, category_id, tags, created_at, material, colour,
+  rating_avg, rating_count, category_id, tags, created_at, material, colour, thumbnail_url,
   images:product_images(url, is_primary, sort_order)
 `
 
@@ -26,7 +26,12 @@ export interface ProductFilters {
   material?: string
   sort?: 'newest' | 'price_asc' | 'price_desc' | 'popularity' | 'rating'
   limit?: number
+  /** Mixed-material products (the Earrings Under 399 range) stay hidden unless this is set. */
+  includeMixed?: boolean
 }
+
+/** Hides Mixed-material products; they only appear via the Earrings Under 399 link. */
+export const HIDE_MIXED_FILTER = 'material.is.null,material.not.ilike.mixed'
 
 export async function fetchProducts(filters: ProductFilters): Promise<Product[]> {
   let query = supabase.from('products').select(PRODUCT_CARD_SELECT).eq('is_active', true)
@@ -47,6 +52,7 @@ export async function fetchProducts(filters: ProductFilters): Promise<Product[]>
     } else return []
   }
 
+  if (!filters.includeMixed) query = query.or(HIDE_MIXED_FILTER)
   if (filters.flag) query = query.eq(filters.flag, true)
   if (filters.search) query = query.or(`name.ilike.%${filters.search}%,sku.ilike.%${filters.search}%`)
   if (filters.minPrice !== undefined) query = query.gte('price', filters.minPrice)
