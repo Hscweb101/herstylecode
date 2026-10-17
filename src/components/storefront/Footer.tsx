@@ -1,7 +1,8 @@
 import { Link, useLocation } from 'react-router-dom'
-import { ArrowUpRight, Mail, MessageCircle, Phone } from 'lucide-react'
+import { ArrowRight, ArrowUpRight, Mail, MessageCircle, Phone } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import logo from '@/assets/logo.png'
+import sectionBg from '@/assets/bgforbloganddesignedforyou.jpeg'
 import { useStoreSettings } from '@/hooks/useStoreSettings'
 import { supabase } from '@/lib/supabase'
 import type { BlogPost } from '@/types'
@@ -114,10 +115,10 @@ export function BlogTeaser() {
 
   return (
     <section className="mx-auto mt-10 w-full max-w-7xl px-4 md:mt-16 md:px-8">
-      <div className="rounded-3xl bg-blush-50 py-4 md:p-8">
+      <div className="rounded-3xl bg-blush-50 bg-cover bg-center py-4 md:p-8" style={{ backgroundImage: `url(${sectionBg})` }}>
         <div className="mb-3 flex items-center justify-between px-4 md:mb-5 md:px-0">
-          <h3 className="font-serif text-lg text-ink-900 md:text-2xl">From the Blog</h3>
-          <Link to="/blog" className="inline-flex items-center gap-1 text-sm font-medium text-brand-600 hover:underline">
+          <h3 className="font-serif text-xl text-brand-700 md:text-4xl">From the <span className="text-brand-400">Blog</span></h3>
+          <Link to="/blog" className="inline-flex items-center gap-1 rounded-full bg-brand-700 px-4 py-2 text-sm font-medium text-white hover:bg-brand-800">
             View All <ArrowUpRight size={14} />
           </Link>
         </div>
@@ -127,15 +128,16 @@ export function BlogTeaser() {
             <Link
               key={p.id}
               to={`/blog/${p.slug}`}
-              className="group block w-[58%] shrink-0 snap-start overflow-hidden rounded-2xl bg-white shadow-luxe-sm sm:w-auto"
+              className="group block w-[58%] shrink-0 snap-start overflow-hidden rounded-2xl bg-white shadow-luxe sm:w-auto"
             >
               <div className="aspect-[16/9] overflow-hidden bg-blush-100 sm:aspect-[16/10]">
                 {p.cover_image_url && (
                   <img src={p.cover_image_url} alt={p.title} loading="lazy" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
                 )}
               </div>
-              <div className="p-2.5 sm:p-3">
-                <p className="line-clamp-2 text-[13px] font-medium leading-snug text-ink-900 sm:text-sm">{p.title}</p>
+              <div className="flex items-center justify-between gap-2 bg-blush-50 p-2.5 sm:p-4">
+                <p className="line-clamp-2 font-serif text-[13px] leading-snug text-ink-900 sm:text-base">{p.title}</p>
+                <span className="hidden h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blush-200 text-brand-700 sm:flex"><ArrowRight size={14} /></span>
               </div>
             </Link>
           ))}

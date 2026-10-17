@@ -7,7 +7,7 @@ import { BrandStoryText, Emphasis, Lines, Para, ScriptLine } from '@/components/
 import heroImg from '@/assets/about/aboutbg.webp'
 import storyImg from '@/assets/about/aboutimg1.webp'
 import beliefImg from '@/assets/about/aboutimg2.webp'
-import philosophyImg from '@/assets/about/aboutimg3.webp'
+import philosophyImg from '@/assets/about/ourphilosophyimage.jpeg'
 import brandImg from '@/assets/about/aboutimg4.webp'
 
 function Reveal({ children, className, threshold = 0.15 }: { children: React.ReactNode; className?: string; threshold?: number }) {

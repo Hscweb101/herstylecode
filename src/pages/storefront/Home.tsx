@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
-  Truck, ShieldCheck, RotateCcw, Sparkles, ChevronLeft, ChevronRight, Gem, CircleDot, BadgeCheck, Package, Heart,
+  Truck, ShieldCheck, Sparkles, ChevronLeft, ChevronRight, Gem, CircleDot, BadgeCheck, Package, Heart,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { fetchProducts } from '@/lib/queries'
@@ -17,6 +17,7 @@ import { useStoreSettings } from '@/hooks/useStoreSettings'
 import { useInView } from '@/hooks/useInView'
 import { cn } from '@/lib/utils'
 import { useSeo } from '@/hooks/useSeo'
+import sectionBg from '@/assets/bgforbloganddesignedforyou.jpeg'
 import storyImg from '@/assets/about/aboutimg1.webp'
 
 function SectionHeader({ eyebrow, title, subtitle, tagline, viewAllHref }: { eyebrow: string; title: string; subtitle: string; tagline?: string; viewAllHref?: string }) {
@@ -152,11 +153,12 @@ function HeroCarousel({ banners }: { banners: Banner[] }) {
 
 function UspStrip() {
   const items = [
-    { icon: Truck, label: 'Pan-India Delivery' },
-    { icon: ShieldCheck, label: 'Secure Payments' },
-    { icon: RotateCcw, label: '7-Day Easy Returns' },
+    { icon: BadgeCheck, label: 'Get Flat 5% OFF Your Next Order — Use Code HSC5.' },
+    { icon: Gem, label: 'Timeless Elegance, Everyday Style' },
+    { icon: Sparkles, label: 'An Exclusive Touch of Elegance' },
+    { icon: Heart, label: 'Every Piece Tells a Story' },
     { icon: Sparkles, label: 'Premium Quality' },
-    { icon: Gem, label: 'Handpicked Designs' },
+    { icon: Truck, label: 'Pan-India Delivery' },
   ]
   return (
     <section className="bg-gradient-to-r from-brand-600 via-brand-500 to-brand-600 py-4 shadow-luxe-sm">
@@ -307,7 +309,7 @@ function momentHref(m: Moment): string {
 function MomentsSection({ moments }: { moments: Moment[] }) {
   if (moments.length === 0) return null
   return (
-    <section className="bg-blush-50 py-14">
+    <section className="bg-blush-50 bg-cover bg-center py-14" style={{ backgroundImage: `url(${sectionBg})` }}>
       <div className="mx-auto max-w-7xl px-4 md:px-8">
         <SectionHeading eyebrow="Designed For Your" title="Every Moment" />
         <div className="grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 md:grid-cols-5 md:gap-6">
@@ -415,9 +417,9 @@ function BrandBand() {
 
 /* Static on purpose (not loaded from the database). Edit the text below to change what shows on the home page. */
 const TESTIMONIALS = [
-  { quote: 'The earrings look so much more expensive than they are. I wore them to a wedding and got compliments all night.', name: 'Priya S.', place: 'Mumbai', item: 'Statement Earrings' },
-  { quote: 'Lightweight, no skin irritation and the shine is still perfect after weeks. The packaging felt like a gift.', name: 'Ananya R.', place: 'Bengaluru', item: 'Necklace Set' },
-  { quote: 'Finally a jewellery brand that gets my style. Delivery was quick and the pieces match the photos exactly.', name: 'Neha K.', place: 'Delhi', item: 'Jhumka Collection' },
+  { quote: 'The earrings look so much more expensive than they are. I wore them to a wedding and got compliments all night.', name: 'Priya S.', place: 'Mumbai', item: 'Statement Set' },
+  { quote: 'Lightweight, no skin irritation and the shine is still perfect after weeks. The packaging felt like a gift.', name: 'Ananya R.', place: 'Bengaluru', item: 'Necklace' },
+  { quote: 'Finally a jewellery brand that gets my style. Delivery was quick and the pieces match the photos exactly.', name: 'Neha K.', place: 'Delhi', item: 'Earrings' },
 ]
 
 function ReviewsRail() {
