@@ -114,8 +114,8 @@ export function BlogTeaser() {
   if (hidden || posts.length === 0) return null
 
   return (
-    <section className="mx-auto mt-10 w-full max-w-7xl px-4 md:mt-16 md:px-8">
-      <div className="rounded-3xl bg-blush-50 bg-cover bg-center py-4 md:p-8" style={{ backgroundImage: `url(${sectionBg})` }}>
+    <section className="mt-10 w-full bg-blush-50 bg-cover bg-center py-8 md:mt-16 md:py-12" style={{ backgroundImage: `url(${sectionBg})` }}>
+      <div className="mx-auto w-full max-w-7xl md:px-8">
         <div className="mb-3 flex items-center justify-between px-4 md:mb-5 md:px-0">
           <h3 className="font-serif text-xl text-brand-700 md:text-4xl">From the <span className="text-brand-400">Blog</span></h3>
           <Link to="/blog" className="inline-flex items-center gap-1 rounded-full bg-brand-700 px-4 py-2 text-sm font-medium text-white hover:bg-brand-800">
