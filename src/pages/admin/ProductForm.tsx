@@ -47,6 +47,7 @@ export default function ProductForm() {
   const [uploading, setUploading] = useState(false)
   const [uploadingVariantId, setUploadingVariantId] = useState<string | null>(null)
   const [variants, setVariants] = useState<VariantRow[]>([])
+  const [existingVariantIds, setExistingVariantIds] = useState<string[]>([])
   const [loading, setLoading] = useState(!isNew)
   const [saving, setSaving] = useState(false)
   const { materials, save: saveMaterials } = useMaterials()
@@ -88,6 +89,7 @@ export default function ProductForm() {
       }
       setImages((imgs as ProductImage[]) ?? [])
       setVariants(((vars as ProductVariant[]) ?? []).map((v) => ({ ...v, tempId: v.id })))
+      setExistingVariantIds(((vars as ProductVariant[]) ?? []).map((v) => v.id))
       setLoading(false)
     }
     load()
@@ -123,9 +125,10 @@ export default function ProductForm() {
     setForm((f) => ({ ...f, name, slug: isNew ? slugify(name) : f.slug }))
   }
 
-  const handleImageUpload = async (files: FileList | null) => {
+  const handleImageUpload = async (files: FileList | null, variantKey: string | null = null) => {
     if (!files || files.length === 0) return
-    setUploading(true)
+    if (variantKey) setUploadingVariantId(variantKey)
+    else setUploading(true)
     for (const file of Array.from(files)) {
       // Store a web-sized original plus small copies for cards (-md) and thumbnails (-sm).
       const base = `${form.slug || 'product'}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`
@@ -148,9 +151,10 @@ export default function ProductForm() {
         continue
       }
       const { data: publicUrl } = supabase.storage.from('product-images').getPublicUrl(path)
-      setImages((prev) => [...prev, { id: crypto.randomUUID(), product_id: id ?? '', variant_id: null, url: publicUrl.publicUrl, alt_text: form.name, sort_order: prev.length, is_primary: prev.length === 0 }])
+      setImages((prev) => [...prev, { id: crypto.randomUUID(), product_id: id ?? '', variant_id: variantKey, url: publicUrl.publicUrl, alt_text: form.name, sort_order: prev.length, is_primary: variantKey === null && !prev.some((i) => !i.variant_id) }])
     }
-    setUploading(false)
+    if (variantKey) setUploadingVariantId(null)
+    else setUploading(false)
   }
 
   const [uploadingThumb, setUploadingThumb] = useState(false)
@@ -176,24 +180,11 @@ export default function ProductForm() {
   }
 
   const setPrimaryImage = (imgId: string) => {
-    setImages((prev) => prev.map((img) => ({ ...img, is_primary: img.id === imgId })))
+    setImages((prev) => prev.map((img) => (img.variant_id ? img : { ...img, is_primary: img.id === imgId })))
   }
 
   const removeImage = (imgId: string) => {
     setImages((prev) => prev.filter((img) => img.id !== imgId))
-  }
-
-  const handleVariantImageUpload = async (tempId: string, file: File) => {
-    setUploadingVariantId(tempId)
-    const path = `${form.slug || 'product'}-variant-${Date.now()}-${file.name}`
-    const { error: uploadError } = await supabase.storage.from('product-images').upload(path, file)
-    setUploadingVariantId(null)
-    if (uploadError) {
-      toast.error(`Upload failed: ${uploadError.message}`)
-      return
-    }
-    const { data: publicUrl } = supabase.storage.from('product-images').getPublicUrl(path)
-    updateVariant(tempId, { image_url: publicUrl.publicUrl })
   }
 
   const addVariant = () => {
@@ -206,6 +197,7 @@ export default function ProductForm() {
 
   const removeVariant = (tempId: string) => {
     setVariants((prev) => prev.filter((v) => v.tempId !== tempId))
+    setImages((prev) => prev.filter((i) => i.variant_id !== tempId))
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -272,29 +264,42 @@ export default function ProductForm() {
       }
     }
 
-    // Reconcile images: delete removed ones (only those that existed before), insert current set fresh.
-    await supabase.from('product_images').delete().eq('product_id', productId)
-    if (images.length > 0) {
-      await supabase.from('product_images').insert(
-        images.map((img, idx) => ({
-          product_id: productId, variant_id: img.variant_id, url: img.url, alt_text: img.alt_text,
-          sort_order: idx, is_primary: img.is_primary,
-        })),
-      )
+    // Variants: keep existing rows (and their ids, which carts/orders point to), add new ones, remove deleted ones.
+    const keptVariants = variants.filter((v) => v.variant_name && v.sku)
+    const variantRow = (v: VariantRow, idx: number) => ({
+      product_id: productId, sku: v.sku, variant_name: v.variant_name, colour: v.colour || null,
+      size: v.size || null, finish: v.finish || null, price: v.price || null, compare_at_price: v.compare_at_price || null,
+      stock_quantity: v.stock_quantity ?? 0,
+      image_url: images.find((i) => i.variant_id === v.tempId)?.url ?? null,
+      is_active: v.is_active ?? true, sort_order: idx,
+    })
+    const idMap = new Map<string, string>()
+    const keptExisting = keptVariants.filter((v) => existingVariantIds.includes(v.tempId))
+    const removedIds = existingVariantIds.filter((vid) => !keptExisting.some((v) => v.tempId === vid))
+    if (removedIds.length > 0) await supabase.from('product_variants').delete().in('id', removedIds)
+    for (const v of keptExisting) {
+      const { error } = await supabase.from('product_variants').update(variantRow(v, keptVariants.indexOf(v))).eq('id', v.tempId)
+      if (error) toast.error(`Variant ${v.variant_name}: ${error.message}`)
+      idMap.set(v.tempId, v.tempId)
     }
+    for (const v of keptVariants.filter((x) => !existingVariantIds.includes(x.tempId))) {
+      const { data, error } = await supabase.from('product_variants').insert(variantRow(v, keptVariants.indexOf(v))).select('id').single()
+      if (error) toast.error(`Variant ${v.variant_name}: ${error.message}`)
+      else idMap.set(v.tempId, data.id)
+    }
+    setExistingVariantIds([...idMap.values()])
+    setVariants((prev) => prev.map((v) => (idMap.has(v.tempId) ? { ...v, tempId: idMap.get(v.tempId)! } : v)))
+    setImages((prev) => prev.map((i) => (i.variant_id && idMap.has(i.variant_id) ? { ...i, variant_id: idMap.get(i.variant_id)! } : i)))
 
-    // Reconcile variants similarly.
-    await supabase.from('product_variants').delete().eq('product_id', productId)
-    if (variants.length > 0) {
-      const rows = variants
-        .filter((v) => v.variant_name && v.sku)
-        .map((v, idx) => ({
-          product_id: productId, sku: v.sku, variant_name: v.variant_name, colour: v.colour || null,
-          size: v.size || null, finish: v.finish || null, price: v.price || null, compare_at_price: v.compare_at_price || null,
-          stock_quantity: v.stock_quantity ?? 0, image_url: v.image_url || null, is_active: v.is_active ?? true, sort_order: idx,
-        }))
-      if (rows.length > 0) await supabase.from('product_variants').insert(rows)
-    }
+    // Images: gallery images (no variant) plus each variant's own images.
+    await supabase.from('product_images').delete().eq('product_id', productId)
+    const imageRows = images
+      .filter((img) => !img.variant_id || idMap.has(img.variant_id))
+      .map((img, idx) => ({
+        product_id: productId, variant_id: img.variant_id ? idMap.get(img.variant_id)! : null, url: img.url, alt_text: img.alt_text,
+        sort_order: idx, is_primary: !img.variant_id && img.is_primary,
+      }))
+    if (imageRows.length > 0) await supabase.from('product_images').insert(imageRows)
 
     setSaving(false)
     toast.success(isNew ? 'Product created' : 'Product updated')
@@ -394,46 +399,44 @@ export default function ProductForm() {
             </div>
             <div className="space-y-3">
               {variants.map((v) => (
-                <div key={v.tempId} className="grid grid-cols-2 gap-2 rounded-xl border border-blush-100 p-3 sm:grid-cols-7">
-                  <Input placeholder="Name (Gold)" value={v.variant_name ?? ''} onChange={(e) => updateVariant(v.tempId, { variant_name: e.target.value })} />
-                  <Input placeholder="SKU" value={v.sku ?? ''} onChange={(e) => updateVariant(v.tempId, { sku: e.target.value })} />
-                  <Input placeholder="Colour" value={v.colour ?? ''} onChange={(e) => updateVariant(v.tempId, { colour: e.target.value })} />
-                  <Input placeholder="Price" type="number" value={v.price ?? ''} onChange={(e) => updateVariant(v.tempId, { price: Number(e.target.value) })} />
-                  <Input placeholder="Stock" type="number" value={v.stock_quantity ?? 0} onChange={(e) => updateVariant(v.tempId, { stock_quantity: Number(e.target.value) })} />
-                  <div className="relative">
-                    <label className="flex h-[42px] cursor-pointer items-center justify-center gap-1.5 overflow-hidden rounded-xl border border-dashed border-blush-200 px-2 text-center text-[11px] text-ink-300 hover:border-brand-300">
-                      {uploadingVariantId === v.tempId ? (
-                        'Uploading...'
-                      ) : v.image_url ? (
-                        <img src={v.image_url} alt="" className="h-full w-full object-cover" />
-                      ) : (
-                        'Upload image'
-                      )}
+                <div key={v.tempId} className="space-y-2 rounded-xl border border-blush-100 p-3">
+                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-6">
+                    <Input placeholder="Name (Gold / Gold - Large)" value={v.variant_name ?? ''} onChange={(e) => updateVariant(v.tempId, { variant_name: e.target.value })} />
+                    <Input placeholder="SKU" value={v.sku ?? ''} onChange={(e) => updateVariant(v.tempId, { sku: e.target.value })} />
+                    <Input placeholder="Colour (Gold)" value={v.colour ?? ''} onChange={(e) => updateVariant(v.tempId, { colour: e.target.value })} />
+                    <Input placeholder="Size (Small / 2.4)" value={v.size ?? ''} onChange={(e) => updateVariant(v.tempId, { size: e.target.value })} />
+                    <Input placeholder="Price (blank = product price)" type="number" value={v.price ?? ''} onChange={(e) => updateVariant(v.tempId, { price: e.target.value === '' ? null : Number(e.target.value) })} />
+                    <div className="flex items-center gap-2">
+                      <Input placeholder="Stock" type="number" value={v.stock_quantity ?? 0} onChange={(e) => updateVariant(v.tempId, { stock_quantity: Number(e.target.value) })} />
+                      <button type="button" onClick={() => removeVariant(v.tempId)} className="text-ink-300 hover:text-red-500" aria-label="Remove variant">
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    {images.filter((i) => i.variant_id === v.tempId).map((img) => (
+                      <div key={img.id} className="relative h-16 w-16 overflow-hidden rounded-lg border border-blush-100">
+                        <img src={img.url} alt="" className="h-full w-full object-cover" />
+                        <button type="button" onClick={() => removeImage(img.id)} className="absolute right-0.5 top-0.5 rounded-full bg-white/90 p-0.5" aria-label="Remove image">
+                          <Trash2 size={11} className="text-red-500" />
+                        </button>
+                      </div>
+                    ))}
+                    <label className="flex h-16 min-w-16 cursor-pointer items-center justify-center rounded-lg border border-dashed border-blush-200 px-2 text-center text-[11px] text-ink-300 hover:border-brand-300">
+                      {uploadingVariantId === v.tempId ? 'Uploading...' : '+ Add images'}
                       <input
                         type="file"
                         accept="image/*"
+                        multiple
                         hidden
                         disabled={uploadingVariantId === v.tempId}
-                        onChange={(e) => e.target.files?.[0] && handleVariantImageUpload(v.tempId, e.target.files[0])}
+                        onChange={(e) => { handleImageUpload(e.target.files, v.tempId); e.target.value = '' }}
                       />
                     </label>
-                    {v.image_url && (
-                      <button
-                        type="button"
-                        onClick={() => updateVariant(v.tempId, { image_url: '' })}
-                        className="absolute -right-1.5 -top-1.5 rounded-full bg-white p-0.5 shadow-luxe-sm"
-                        aria-label="Remove variant image"
-                      >
-                        <Trash2 size={11} className="text-red-500" />
-                      </button>
-                    )}
                   </div>
-                  <button type="button" onClick={() => removeVariant(v.tempId)} className="flex items-center justify-center text-ink-300 hover:text-red-500">
-                    <Trash2 size={16} />
-                  </button>
                 </div>
               ))}
-              {variants.length === 0 && <p className="text-sm text-ink-300">No variants. Add one if this product has Gold/Silver/Size options etc.</p>}
+              {variants.length === 0 && <p className="text-sm text-ink-300">No variants. Add one row per colour, per size, or per colour + size combination (e.g. Gold / Small). Each variant can have several images.</p>}
             </div>
           </Card>
 
@@ -469,7 +472,7 @@ export default function ProductForm() {
           <Card>
             <h3 className="mb-4 font-serif text-lg">Images</h3>
             <div className="mb-3 grid grid-cols-3 gap-2">
-              {images.map((img) => (
+              {images.filter((img) => !img.variant_id).map((img) => (
                 <div key={img.id} className="relative aspect-square overflow-hidden rounded-xl border border-blush-100">
                   <img src={img.url} alt="" className="h-full w-full object-cover" />
                   <button type="button" onClick={() => setPrimaryImage(img.id)} className="absolute left-1 top-1 rounded-full bg-white/90 p-1">

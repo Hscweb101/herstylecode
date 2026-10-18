@@ -15,7 +15,7 @@ export function ProductCard({ product }: { product: Product }) {
   const addItem = useCartStore((s) => s.addItem)
   const [hovered, setHovered] = useState(false)
 
-  const sortedImages = [...(product.images ?? [])].sort((a, b) => (a.is_primary === b.is_primary ? a.sort_order - b.sort_order : a.is_primary ? -1 : 1))
+  const sortedImages = [...(product.images ?? [])].filter((i) => !i.variant_id).sort((a, b) => (a.is_primary === b.is_primary ? a.sort_order - b.sort_order : a.is_primary ? -1 : 1))
   // A dedicated card thumbnail (set in admin) wins on the card; the gallery's first photo then becomes the hover image.
   const thumb = product.thumbnail_url || null
   const primaryImage = thumb ?? sortedImages[0]?.url ?? 'https://placehold.co/600x600/F1EBD8/722F37?text=HerStyleCode'

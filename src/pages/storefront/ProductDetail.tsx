@@ -447,9 +447,45 @@ export default function ProductDetail() {
   const [showStickyBar, setShowStickyBar] = useState(false)
   const actionsRef = useRef<HTMLDivElement>(null)
 
+  const [selColour, setSelColour] = useState<string | null>(null)
+  const [selSize, setSelSize] = useState<string | null>(null)
+  const variantRef = useRef<HTMLDivElement>(null)
+
   const selectVariant = (v: ProductVariant | null) => {
     setSelectedVariant(v)
     if (v?.image_url) setActiveImage(v.image_url)
+  }
+
+  /* Colour and size are picked separately; a variant is chosen once every option the product has is picked. */
+  const applySelection = (p: Product, colour: string | null, size: string | null) => {
+    const active = (p.variants ?? []).filter((v) => v.is_active)
+    const needsColour = active.some((v) => v.colour)
+    const needsSize = active.some((v) => v.size)
+    setSelColour(colour)
+    setSelSize(size)
+    const complete = (!needsColour || colour !== null) && (!needsSize || size !== null)
+    const match = complete
+      ? active.find((v) => (!needsColour || v.colour === colour) && (!needsSize || v.size === size)) ?? null
+      : null
+    setSelectedVariant(match)
+    const shown = match ?? (colour ? active.find((v) => v.colour === colour) : undefined)
+    if (shown) {
+      const own = (p.images ?? []).filter((i) => i.variant_id === shown.id).sort((a, b) => a.sort_order - b.sort_order)[0]?.url ?? shown.image_url
+      if (own) setActiveImage(own)
+    }
+  }
+
+  const initSelection = (p: Product) => {
+    const active = (p.variants ?? []).filter((v) => v.is_active)
+    if (active.length === 0) return
+    if (!active.some((v) => v.colour || v.size)) {
+      // Older products: variants only have a name; a single one is pre-selected, otherwise the shopper chooses.
+      selectVariant(active.length === 1 ? active[0] : null)
+      return
+    }
+    const colours = [...new Set(active.map((v) => v.colour).filter(Boolean))] as string[]
+    const sizes = [...new Set(active.map((v) => v.size).filter(Boolean))] as string[]
+    applySelection(p, colours.length === 1 ? colours[0] : null, sizes.length === 1 ? sizes[0] : null)
   }
 
   const addItem = useCartStore((s) => s.addItem)
@@ -466,8 +502,9 @@ export default function ProductDetail() {
       if (!active) return
       setProduct(p)
       if (p) {
-        setActiveImage(p.images?.find((i) => i.is_primary)?.url ?? p.images?.[0]?.url ?? null)
-        selectVariant(p.variants?.find((v) => v.is_active) ?? null)
+        const gallery = (p.images ?? []).filter((i) => !i.variant_id)
+        setActiveImage(gallery.find((i) => i.is_primary)?.url ?? gallery[0]?.url ?? null)
+        initSelection(p)
         pushRecentlyViewed(p.slug)
         supabase.from('products').update({ view_count: p.view_count + 1 }).eq('id', p.id).then(() => {})
 
@@ -521,7 +558,7 @@ export default function ProductDetail() {
     return () => document.body.classList.remove('has-sticky-bar')
   }, [showStickyBar])
 
-  const productImages = (product?.images ?? []).slice().sort((a, b) => Number(b.is_primary) - Number(a.is_primary) || a.sort_order - b.sort_order)
+  const productImages = (product?.images ?? []).filter((i) => !i.variant_id).slice().sort((a, b) => Number(b.is_primary) - Number(a.is_primary) || a.sort_order - b.sort_order)
   const inStock = product ? !product.track_inventory || product.stock_quantity > 0 : true
   useSeo({
     title: product ? product.seo_title || `${product.name} - Buy Online in India` : 'Product',
@@ -578,23 +615,63 @@ export default function ProductDetail() {
 
   const displayPrice = selectedVariant?.price ?? product.price
   const displayCompareAt = selectedVariant?.compare_at_price ?? product.compare_at_price
+  const activeVariants = (product.variants ?? []).filter((v) => v.is_active)
+  const hasVariants = activeVariants.length > 0
+  const tracked = product.track_inventory !== false
+  const needsColour = activeVariants.some((v) => v.colour)
+  const needsSize = activeVariants.some((v) => v.size)
+  const legacyOptions = hasVariants && !needsColour && !needsSize
+  const colourOptions = [...new Set(activeVariants.map((v) => v.colour).filter(Boolean))] as string[]
+  const sizeOptions = [...new Set(activeVariants.map((v) => v.size).filter(Boolean))] as string[]
+  const awaitingChoice = hasVariants && !selectedVariant
+  const missing = legacyOptions
+    ? ['an option']
+    : [needsColour && !selColour ? 'a colour' : '', needsSize && !selSize ? 'a size' : ''].filter(Boolean)
   const displayStock = selectedVariant ? selectedVariant.stock_quantity : product.stock_quantity
   const colourLabel = selectedVariant?.colour || selectedVariant?.variant_name || product.colour
-  const outOfStock = product.track_inventory !== false && displayStock <= 0
+  const outOfStock = tracked && (awaitingChoice ? activeVariants.every((v) => v.stock_quantity <= 0) : displayStock <= 0)
   const pct = discountPercent(displayPrice, displayCompareAt)
-  const images = selectedVariant?.image_url
-    ? [{ url: selectedVariant.image_url }, ...(product.images ?? [])]
-    : product.images ?? []
+  const gallery = (product.images ?? []).filter((i) => !i.variant_id)
+  const imgVariant = selectedVariant ?? (selColour ? activeVariants.find((v) => v.colour === selColour) : undefined)
+  const variantImgs = imgVariant ? (product.images ?? []).filter((i) => i.variant_id === imgVariant.id) : []
+  const images = variantImgs.length > 0
+    ? [...variantImgs, ...gallery]
+    : imgVariant?.image_url
+      ? [{ url: imgVariant.image_url }, ...gallery]
+      : gallery
+
+  /* Blocks add-to-cart / buy-now until the shopper has picked every option (colour, size). */
+  const needChoice = () => {
+    if (!awaitingChoice) return false
+    toast.error(`Please select ${missing.join(' and ')}`)
+    variantRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    return true
+  }
 
   const handleAddToCart = () => {
-    if (outOfStock) return
+    if (outOfStock || needChoice()) return
     addItem(product.id, selectedVariant?.id ?? null, qty)
     toast.success('Added to cart')
   }
 
   const handleBuyNow = () => {
-    if (outOfStock) return
+    if (outOfStock || needChoice()) return
     setQuickCheckoutOpen(true)
+  }
+
+  const chooseColour = (c: string) => {
+    const sizesForColour = activeVariants.filter((v) => v.colour === c).map((v) => v.size).filter(Boolean) as string[]
+    const keep = selSize && sizesForColour.includes(selSize) ? selSize : sizesForColour.length === 1 ? sizesForColour[0] : null
+    applySelection(product, c, keep)
+  }
+
+  const chooseSize = (sz: string) => {
+    let colour = selColour
+    if (needsColour && !colour) {
+      const coloursForSize = activeVariants.filter((v) => v.size === sz).map((v) => v.colour).filter(Boolean) as string[]
+      colour = new Set(coloursForSize).size === 1 ? coloursForSize[0] : null
+    }
+    applySelection(product, colour, sz)
   }
 
   const handleShare = async () => {
@@ -653,34 +730,94 @@ export default function ProductDetail() {
             </p>
           )}
 
-          {product.variants && product.variants.length > 0 && (
-            <div className="mt-6">
-              <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-500">
-                Colour{selectedVariant ? <span className="ml-1.5 font-medium normal-case tracking-normal text-ink-900">: {selectedVariant.colour || selectedVariant.variant_name}</span> : null}
-              </h4>
-              <div className="flex flex-wrap gap-2">
-                {product.variants.filter((v) => v.is_active).map((v) => (
-                  <button
-                    key={v.id}
-                    onClick={() => selectVariant(v)}
-                    className={cn(
-                      'flex items-center gap-2 rounded-full border px-4 py-2 text-sm',
-                      selectedVariant?.id === v.id ? 'border-brand-500 bg-blush-50 text-brand-700' : 'border-blush-200 text-ink-700',
-                      v.stock_quantity <= 0 && product.track_inventory !== false && 'opacity-50',
-                    )}
-                  >
-                    <span className="h-3.5 w-3.5 shrink-0 rounded-full ring-1 ring-ink-300/60" style={{ background: colourSwatch(v.colour || v.variant_name) }} aria-hidden />
-                    {v.variant_name}
-                  </button>
-                ))}
-              </div>
+          {hasVariants && (
+            <div ref={variantRef} className="mt-6 space-y-4">
+              {legacyOptions && (
+                <div>
+                  <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-500">
+                    Colour{selectedVariant ? <span className="ml-1.5 font-medium normal-case tracking-normal text-ink-900">: {selectedVariant.variant_name}</span> : null}
+                  </h4>
+                  <div className="flex flex-wrap gap-2">
+                    {activeVariants.map((v) => (
+                      <button
+                        key={v.id}
+                        onClick={() => selectVariant(v)}
+                        className={cn(
+                          'flex items-center gap-2 rounded-full border px-4 py-2 text-sm',
+                          selectedVariant?.id === v.id ? 'border-brand-500 bg-blush-50 text-brand-700' : 'border-blush-200 text-ink-700',
+                          v.stock_quantity <= 0 && tracked && 'opacity-50',
+                        )}
+                      >
+                        <span className="h-3.5 w-3.5 shrink-0 rounded-full ring-1 ring-ink-300/60" style={{ background: colourSwatch(v.variant_name) }} aria-hidden />
+                        {v.variant_name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {colourOptions.length > 0 && (
+                <div>
+                  <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-500">
+                    Colour{selColour ? <span className="ml-1.5 font-medium normal-case tracking-normal text-ink-900">: {selColour}</span> : null}
+                  </h4>
+                  <div className="flex flex-wrap gap-2">
+                    {colourOptions.map((c) => {
+                      const soldOut = tracked && activeVariants.filter((v) => v.colour === c).every((v) => v.stock_quantity <= 0)
+                      return (
+                        <button
+                          key={c}
+                          onClick={() => chooseColour(c)}
+                          className={cn(
+                            'flex items-center gap-2 rounded-full border px-4 py-2 text-sm',
+                            selColour === c ? 'border-brand-500 bg-blush-50 text-brand-700' : 'border-blush-200 text-ink-700',
+                            soldOut && 'opacity-50',
+                          )}
+                        >
+                          <span className="h-3.5 w-3.5 shrink-0 rounded-full ring-1 ring-ink-300/60" style={{ background: colourSwatch(c) }} aria-hidden />
+                          {c}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+              {sizeOptions.length > 0 && (
+                <div>
+                  <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-500">
+                    Size{selSize ? <span className="ml-1.5 font-medium normal-case tracking-normal text-ink-900">: {selSize}</span> : null}
+                  </h4>
+                  <div className="flex flex-wrap gap-2">
+                    {sizeOptions.map((sz) => {
+                      const forColour = activeVariants.filter((v) => v.size === sz && (!selColour || v.colour === selColour))
+                      const unavailable = forColour.length === 0
+                      const soldOut = tracked && !unavailable && forColour.every((v) => v.stock_quantity <= 0)
+                      return (
+                        <button
+                          key={sz}
+                          disabled={unavailable}
+                          onClick={() => chooseSize(sz)}
+                          className={cn(
+                            'rounded-full border px-4 py-2 text-sm',
+                            selSize === sz ? 'border-brand-500 bg-blush-50 text-brand-700' : 'border-blush-200 text-ink-700',
+                            (soldOut || unavailable) && 'opacity-40',
+                            unavailable && 'cursor-not-allowed line-through',
+                          )}
+                        >
+                          {sz}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+              {awaitingChoice && <p className="text-xs text-brand-600">Please select {missing.join(' and ')} to continue.</p>}
             </div>
           )}
 
           <div className="mt-4">
             {outOfStock ? (
               <Badge tone="neutral">Out of Stock</Badge>
-            ) : displayStock <= 5 ? (
+            ) : awaitingChoice ? null : displayStock <= 5 ? (
               <Badge tone="gold">Only {displayStock} left</Badge>
             ) : (
               <Badge tone="success">In Stock</Badge>

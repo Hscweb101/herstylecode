@@ -72,7 +72,7 @@ function useMenuProducts(key: string | null, filters: ProductFilters) {
 }
 
 function MegaProductCard({ product, onNavigate }: { product: Product; onNavigate: () => void }) {
-  const sorted = [...(product.images ?? [])].sort((a, b) => (a.is_primary === b.is_primary ? a.sort_order - b.sort_order : a.is_primary ? -1 : 1))
+  const sorted = [...(product.images ?? [])].filter((i) => !i.variant_id).sort((a, b) => (a.is_primary === b.is_primary ? a.sort_order - b.sort_order : a.is_primary ? -1 : 1))
   const image = sorted[0]?.url
   const pct = discountPercent(product.price, product.compare_at_price)
   return (
