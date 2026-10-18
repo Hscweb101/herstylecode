@@ -2,7 +2,6 @@ import { Link, useLocation } from 'react-router-dom'
 import { ArrowRight, ArrowUpRight, Mail, MessageCircle, Phone } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import logo from '@/assets/logo.png'
-import sectionBg from '@/assets/bgforbloganddesignedforyou.jpeg'
 import { useStoreSettings } from '@/hooks/useStoreSettings'
 import { supabase } from '@/lib/supabase'
 import type { BlogPost } from '@/types'
@@ -113,8 +112,14 @@ export function BlogTeaser() {
   if (hidden || posts.length === 0) return null
 
   return (
-    <section className="mt-10 w-full bg-blush-50 bg-cover bg-center py-8 md:mt-16 md:py-12" style={{ backgroundImage: `url(${sectionBg})` }}>
-      <div className="mx-auto w-full max-w-7xl md:px-8">
+    <section className="relative mt-10 w-full overflow-hidden py-8 md:mt-16 md:py-12">
+      <img
+        src="https://images.unsplash.com/photo-1611591437281-460bfbe1220a?q=80&w=1600&auto=format&fit=crop"
+        alt=""
+        className="absolute inset-0 h-full w-full object-cover"
+      />
+      <div className="absolute inset-0 bg-gradient-to-br from-cream/90 via-cream/80 to-blush-100/80" />
+      <div className="relative mx-auto w-full max-w-7xl md:px-8">
         <div className="mb-3 flex items-center justify-between px-4 md:mb-5 md:px-0">
           <h3 className="font-serif text-xl text-brand-700 md:text-4xl">From the <span className="text-brand-400">Blog</span></h3>
           <Link to="/blog" className="inline-flex items-center gap-1 rounded-full bg-brand-700 px-4 py-2 text-sm font-medium text-white hover:bg-brand-800">
