@@ -3,6 +3,7 @@
 // payment.captured, payment.failed, refund.created, refund.processed.
 import { createClient } from 'jsr:@supabase/supabase-js@2'
 import { jsonResponse } from '../_shared/cors.ts'
+import { triggerAutoShip } from '../_shared/autoShip.ts'
 
 async function hmacHex(secret: string, message: string): Promise<string> {
   const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign'])
@@ -54,6 +55,7 @@ Deno.serve(async (req) => {
             await admin.from('orders').update({ status: 'paid', payment_status: 'paid' }).eq('id', order.id)
             await admin.from('order_status_history').insert({ order_id: order.id, status: 'paid', note: 'Payment captured (webhook)' })
           }
+          triggerAutoShip(order.id)
         }
       }
     }

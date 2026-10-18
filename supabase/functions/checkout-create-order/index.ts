@@ -3,6 +3,7 @@
 // payment) or confirms it immediately (Cash on Delivery).
 import { createClient } from 'jsr:@supabase/supabase-js@2'
 import { corsHeaders, handleOptions, jsonResponse } from '../_shared/cors.ts'
+import { triggerAutoShip } from '../_shared/autoShip.ts'
 
 interface CheckoutItem {
   productId: string
@@ -228,6 +229,7 @@ Deno.serve(async (req) => {
       const { data: cart } = await admin.from('carts').select('id').eq('customer_id', user.id).maybeSingle()
       if (cart) await admin.from('cart_items').delete().eq('cart_id', cart.id)
 
+      triggerAutoShip(order.id)
       return jsonResponse({ orderId: order.id, orderNumber: order.order_number, codConfirmed: true })
     }
 

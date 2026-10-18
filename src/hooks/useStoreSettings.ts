@@ -22,6 +22,7 @@ const DEFAULTS: StoreSettingsMap = {
   social_links: DEFAULT_SOCIAL_LINKS,
   shipping: { free_shipping_threshold: 999, standard_shipping_fee: 59, cod_available: true, cod_fee: 0 },
   tax: { gst_percentage: 0, prices_include_tax: true },
+  shiprocket: { auto_ship: true },
   announcement_bar: {
     enabled: true,
     speed_seconds: 22,

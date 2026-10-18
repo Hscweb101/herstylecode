@@ -4,6 +4,7 @@
 // (browser closed mid-redirect, network drop, etc).
 import { createClient } from 'jsr:@supabase/supabase-js@2'
 import { corsHeaders, handleOptions, jsonResponse } from '../_shared/cors.ts'
+import { triggerAutoShip } from '../_shared/autoShip.ts'
 
 async function hmacHex(secret: string, message: string): Promise<string> {
   const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign'])
@@ -75,6 +76,7 @@ Deno.serve(async (req) => {
         const { data: cart } = await admin.from('carts').select('id').eq('customer_id', order.customer_id).maybeSingle()
         if (cart) await admin.from('cart_items').delete().eq('cart_id', cart.id)
       }
+      triggerAutoShip(orderId)
     }
 
     if (payment) {

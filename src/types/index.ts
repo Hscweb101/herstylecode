@@ -357,6 +357,7 @@ export interface StoreSettingsMap {
     cod_fee: number
   }
   tax: { gst_percentage: number; prices_include_tax: boolean }
+  shiprocket: { auto_ship: boolean }
   announcement_bar: { enabled: boolean; speed_seconds: number; items: string[] }
   analytics: { ga4_id: string; meta_pixel_id: string; gsc_verification: string }
   payment_offers: PaymentOffers

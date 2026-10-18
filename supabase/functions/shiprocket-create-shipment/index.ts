@@ -1,5 +1,8 @@
-// Admin-only. Creates a Shiprocket order for one of our orders, assigns the
-// recommended courier (AWB) and saves tracking details on the order.
+// Creates a Shiprocket order for one of our orders, assigns a courier (AWB) and
+// saves tracking details on the order.
+// Callers: an admin (button / bulk action), or our own checkout/payment functions
+// with the service-role key and { auto: true } right after an order is confirmed.
+// Deploy with --no-verify-jwt: authorisation is checked below.
 import { createClient } from 'jsr:@supabase/supabase-js@2'
 import { handleOptions, jsonResponse } from '../_shared/cors.ts'
 import { shiprocket, shiprocketToken } from '../_shared/shiprocket.ts'
@@ -8,19 +11,48 @@ Deno.serve(async (req) => {
   const opt = handleOptions(req)
   if (opt) return opt
 
-  try {
-    const url = Deno.env.get('SUPABASE_URL')!
-    const caller = createClient(url, Deno.env.get('SUPABASE_ANON_KEY')!, {
-      global: { headers: { Authorization: req.headers.get('Authorization') ?? '' } },
-    })
-    const { data: isAdmin } = await caller.rpc('is_admin')
-    if (!isAdmin) return jsonResponse({ error: 'Admins only' }, 403)
+  const url = Deno.env.get('SUPABASE_URL')!
+  const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+  const admin = createClient(url, serviceKey)
+  let auto = false
+  let claimedId: string | null = null
+  let orderStatus = 'new'
 
-    const { order_id, weight, length, breadth, height } = await req.json()
-    const admin = createClient(url, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!)
+  try {
+    const authHeader = req.headers.get('Authorization') ?? ''
+    const isService = authHeader.replace(/^Bearer\s+/i, '') === serviceKey
+    if (!isService) {
+      const caller = createClient(url, Deno.env.get('SUPABASE_ANON_KEY')!, { global: { headers: { Authorization: authHeader } } })
+      const { data: isAdmin } = await caller.rpc('is_admin')
+      if (!isAdmin) return jsonResponse({ error: 'Admins only' }, 403)
+    }
+
+    const { order_id, weight, length, breadth, height, auto: autoFlag } = await req.json()
+    auto = isService && !!autoFlag
+
+    if (auto) {
+      const { data: setting } = await admin.from('store_settings').select('value').eq('key', 'shiprocket').maybeSingle()
+      if (!(setting?.value as { auto_ship?: boolean } | undefined)?.auto_ship) return jsonResponse({ skipped: 'auto shipping is off' })
+      // Claim the order so the payment-verify call and the webhook cannot both create a shipment.
+      const { data: claimed } = await admin
+        .from('orders')
+        .update({ shiprocket_order_id: 'creating' })
+        .eq('id', order_id)
+        .is('shiprocket_order_id', null)
+        .is('tracking_number', null)
+        .select('id')
+      if (!claimed?.length) return jsonResponse({ skipped: 'already handled' })
+      claimedId = order_id
+    }
+
     const { data: order } = await admin.from('orders').select('*, items:order_items(*)').eq('id', order_id).single()
     if (!order) return jsonResponse({ error: 'Order not found' }, 404)
+    orderStatus = order.status
     if (order.tracking_number) return jsonResponse({ error: 'This order already has a shipment' }, 400)
+    if (auto && ['cancelled', 'returned', 'refunded', 'delivered'].includes(order.status)) {
+      await admin.from('orders').update({ shiprocket_order_id: null }).eq('id', order_id)
+      return jsonResponse({ skipped: 'order not shippable' })
+    }
 
     const a = order.shipping_address as Record<string, string>
     const isCod = order.payment_method === 'cod'
@@ -29,7 +61,7 @@ Deno.serve(async (req) => {
 
     const token = await shiprocketToken()
     let shipmentId: string | number | undefined = order.shiprocket_shipment_id ?? undefined
-    let srOrderId: string | number | undefined = order.shiprocket_order_id ?? undefined
+    let srOrderId: string | number | undefined = order.shiprocket_shipment_id ? order.shiprocket_order_id : undefined
     if (!shipmentId) {
       const created = await shiprocket(token, '/orders/create/adhoc', {
         order_id: order.order_number,
@@ -83,33 +115,39 @@ Deno.serve(async (req) => {
       lastErr = typeof d === 'string' ? d : (res.message ?? lastErr)
     }
     const awb = awbData.awb_code as string | undefined
-    if (!awb) {
-      return jsonResponse({ error: `No courier could be assigned. Shiprocket says: ${lastErr || 'check wallet balance / serviceability'}` }, 422)
-    }
-    const created = { shipment_id: shipmentId, order_id: srOrderId }
+    if (!awb) throw new Error(`No courier could be assigned. Shiprocket says: ${lastErr || 'check wallet balance / serviceability'}`)
 
     let label: string | null = null
     try {
-      const l = await shiprocket(token, '/courier/generate/label', { shipment_id: [created.shipment_id] })
+      const l = await shiprocket(token, '/courier/generate/label', { shipment_id: [shipmentId] })
       label = l.label_url ?? null
     } catch (e) {
       console.error('label failed', e)
     }
 
     await admin.from('orders').update({
-      shiprocket_order_id: String(created.order_id),
-      shiprocket_shipment_id: String(created.shipment_id),
+      shiprocket_order_id: String(srOrderId),
+      shiprocket_shipment_id: String(shipmentId),
       shipping_provider: awbData.courier_name ?? 'Shiprocket',
       tracking_number: awb,
       tracking_url: `https://shiprocket.co/tracking/${awb}`,
       shipping_label_url: label,
       status: ['new', 'paid', 'processing', 'packed'].includes(order.status) ? 'packed' : order.status,
     }).eq('id', order.id)
-    await admin.from('order_status_history').insert({ order_id: order.id, status: 'packed', note: `Shiprocket shipment created, AWB ${awb}` })
+    await admin.from('order_status_history').insert({
+      order_id: order.id, status: 'packed', note: `Shiprocket shipment ${auto ? 'auto-' : ''}created, AWB ${awb}`,
+    })
 
     return jsonResponse({ awb, courier: awbData.courier_name, label_url: label })
   } catch (err) {
     console.error(err)
-    return jsonResponse({ error: (err as Error).message ?? 'Unexpected error' }, 500)
+    const message = (err as Error).message ?? 'Unexpected error'
+    if (claimedId) {
+      // Release the claim (unless a Shiprocket order now exists) and leave a visible note for the admin.
+      const { data: o } = await admin.from('orders').select('shiprocket_order_id, shiprocket_shipment_id').eq('id', claimedId).single()
+      if (o && !o.shiprocket_shipment_id) await admin.from('orders').update({ shiprocket_order_id: null }).eq('id', claimedId)
+      await admin.from('order_status_history').insert({ order_id: claimedId, status: orderStatus, note: `Auto-shipment failed: ${message}. Use "Create Shiprocket shipment" to retry.` })
+    }
+    return jsonResponse({ error: message }, auto ? 200 : 422)
   }
 })

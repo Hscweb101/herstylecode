@@ -14,6 +14,7 @@ const DEFAULTS: StoreSettingsMap = {
   social_links: DEFAULT_SOCIAL_LINKS,
   shipping: { free_shipping_threshold: 999, standard_shipping_fee: 59, cod_available: true, cod_fee: 0 },
   tax: { gst_percentage: 0, prices_include_tax: true },
+  shiprocket: { auto_ship: true },
   announcement_bar: {
     enabled: true,
     speed_seconds: 22,
@@ -135,6 +136,17 @@ export default function SettingsAdmin() {
               <input type="checkbox" checked={settings.shipping.cod_available} onChange={(e) => update('shipping', { cod_available: e.target.checked })} /> Enable Cash on Delivery
             </label>
           </div>
+        </Card>
+
+        <Card>
+          <h3 className="mb-4 font-serif text-lg">Shiprocket</h3>
+          <label className="flex items-start gap-2 text-sm">
+            <input type="checkbox" className="mt-1" checked={settings.shiprocket.auto_ship} onChange={(e) => update('shiprocket', { auto_ship: e.target.checked })} />
+            <span>
+              Create the Shiprocket shipment automatically when an order is confirmed
+              <span className="block text-xs text-ink-300">COD orders ship as soon as they are placed; online orders after payment. Each shipment is charged to your Shiprocket wallet. Turn off to create shipments yourself from the Orders tab.</span>
+            </span>
+          </label>
         </Card>
 
         <Card>
