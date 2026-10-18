@@ -10,6 +10,7 @@ import type { Banner } from '@/types'
 
 const EMPTY = {
   id: '', placement: 'hero' as Banner['placement'], title: '', subtitle: '', image_url: '', mobile_image_url: '', link_url: '', cta_text: '', sort_order: '0', is_active: true,
+  hide_title_mobile: false, hide_subtitle_mobile: false, hide_button_mobile: false,
 }
 
 export default function BannersAdmin() {
@@ -49,6 +50,7 @@ export default function BannersAdmin() {
       image_url: editing.image_url || null, mobile_image_url: editing.mobile_image_url || null,
       link_url: editing.link_url || null, cta_text: editing.cta_text || null,
       sort_order: Number(editing.sort_order), is_active: editing.is_active,
+      hide_title_mobile: editing.hide_title_mobile, hide_subtitle_mobile: editing.hide_subtitle_mobile, hide_button_mobile: editing.hide_button_mobile,
     }
     const { error } = editing.id
       ? await supabase.from('banners').update(payload).eq('id', editing.id)
@@ -89,6 +91,7 @@ export default function BannersAdmin() {
                     ...b, title: b.title ?? '', subtitle: b.subtitle ?? '', image_url: b.image_url ?? '',
                     mobile_image_url: b.mobile_image_url ?? '',
                     link_url: b.link_url ?? '', cta_text: b.cta_text ?? '', sort_order: String(b.sort_order),
+                    hide_title_mobile: !!b.hide_title_mobile, hide_subtitle_mobile: !!b.hide_subtitle_mobile, hide_button_mobile: !!b.hide_button_mobile,
                   })}><Pencil size={15} /></IconButton>
                   <IconButton onClick={() => setDeleteTarget(b)}><Trash2 size={15} /></IconButton>
                 </div>
@@ -99,7 +102,8 @@ export default function BannersAdmin() {
       </Table>
 
       {editing && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-ink-900/40 px-4 py-8">
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-ink-900/40">
+          <div className="flex min-h-full items-center justify-center px-4 py-8">
           <Card className="w-full max-w-lg">
             <form onSubmit={handleSave} className="space-y-4">
               <h3 className="font-serif text-lg">{editing.id ? 'Edit' : 'Add'} Banner</h3>
@@ -125,6 +129,12 @@ export default function BannersAdmin() {
                 </label>
               </div>
               <Input label="Sort Order" type="number" value={editing.sort_order} onChange={(e) => setEditing({ ...editing, sort_order: e.target.value })} />
+              <div className="space-y-2 rounded-xl border border-blush-200 p-3">
+                <p className="text-sm font-medium">Hide on mobile</p>
+                <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={editing.hide_title_mobile} onChange={(e) => setEditing({ ...editing, hide_title_mobile: e.target.checked })} /> Hide title</label>
+                <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={editing.hide_subtitle_mobile} onChange={(e) => setEditing({ ...editing, hide_subtitle_mobile: e.target.checked })} /> Hide subtitle</label>
+                <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={editing.hide_button_mobile} onChange={(e) => setEditing({ ...editing, hide_button_mobile: e.target.checked })} /> Hide button</label>
+              </div>
               <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={editing.is_active} onChange={(e) => setEditing({ ...editing, is_active: e.target.checked })} /> Active</label>
               <div className="flex justify-end gap-2">
                 <Button type="button" variant="ghost" onClick={() => setEditing(null)}>Cancel</Button>
@@ -132,6 +142,7 @@ export default function BannersAdmin() {
               </div>
             </form>
           </Card>
+          </div>
         </div>
       )}
       <ConfirmModal open={!!deleteTarget} title="Delete Banner" onConfirm={handleDelete} onCancel={() => setDeleteTarget(null)} />

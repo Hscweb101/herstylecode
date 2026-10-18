@@ -171,9 +171,9 @@ export default function ProductsList() {
                 <Td>
                   <div className="flex items-center gap-3">
                     {image ? (
-                      <SmartImage src={image} variant="sm" alt="" loading="lazy" className="h-10 w-10 rounded-lg object-cover" />
+                      <SmartImage src={image} variant="md" alt="" loading="lazy" className="h-20 w-20 shrink-0 rounded-lg object-cover" />
                     ) : (
-                      <div className="h-10 w-10 rounded-lg bg-blush-50" />
+                      <div className="h-20 w-20 shrink-0 rounded-lg bg-blush-50" />
                     )}
                     <span className="font-medium">{p.name}</span>
                   </div>

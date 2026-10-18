@@ -78,18 +78,18 @@ function HeroSlide({ banner }: { banner: Banner | null }) {
           className="absolute inset-0 h-full w-full object-cover"
         />
       </picture>
-      <div className="relative flex h-full flex-col items-start justify-center pb-[10%] pl-[5.5vw] pr-[6vw] md:pb-[3%] md:pl-[16vw]">
-        <p className="text-[3.1vw] font-semibold uppercase tracking-[0.2em] text-brand-400 md:text-[0.9vw]">Your Style. Your Rules.</p>
-        <h1 className="mt-[1.6vw] max-w-[8.5em] text-balance text-[10vw] font-medium leading-[1.04] tracking-tight text-brand-600 md:mt-[0.8vw] md:text-[4.5vw]">
+      <div className="relative flex h-full flex-col items-start justify-center pb-[10%] pl-[5.5vw] pr-[6vw] md:pb-[3%] md:pl-[7vw]">
+        <p className={`text-[3.1vw] font-semibold uppercase tracking-[0.2em] text-brand-400 md:block md:text-[0.9vw] ${banner?.hide_title_mobile ? 'hidden' : ''}`}>Your Style. Your Rules.</p>
+        <h1 className={`mt-[1.6vw] max-w-[8.5em] text-balance text-[10vw] font-medium leading-[1.04] tracking-tight text-brand-600 md:mt-[0.8vw] md:block md:text-[4.5vw] ${banner?.hide_title_mobile ? 'hidden' : ''}`}>
           {banner?.title ?? 'Jewellery That Speaks Your Story'}
         </h1>
-        <span className="my-[3vw] block h-[2px] w-[20vw] bg-brand-600 md:my-[1.6vw] md:w-[7vw]" />
-        <p className="max-w-[12em] font-serif text-[4.5vw] leading-snug text-brand-600 md:max-w-[12.5em] md:text-[1.5vw]">
+        <span className={`my-[3vw] h-[2px] w-[20vw] bg-brand-600 md:my-[1.6vw] md:block md:w-[7vw] ${banner?.hide_title_mobile && banner?.hide_subtitle_mobile ? 'hidden' : 'block'}`} />
+        <p className={`max-w-[12em] font-serif text-[4.5vw] leading-snug text-brand-600 md:block md:max-w-[12.5em] md:text-[1.5vw] ${banner?.hide_subtitle_mobile ? 'hidden' : ''}`}>
           {banner?.subtitle ?? 'Curated fashion (artificial) jewellery for every mood, every occasion, every version of you.'}
         </p>
         <Link
           to={banner?.link_url ?? '/collections/new-arrivals'}
-          className="mt-[5vw] inline-flex items-center gap-[2vw] rounded-full bg-brand-600 px-[7vw] py-[3.2vw] font-serif text-[4.6vw] text-cream shadow-luxe transition-transform hover:scale-105 hover:bg-brand-700 md:mt-[2.2vw] md:gap-[0.8vw] md:px-[2.3vw] md:py-[0.95vw] md:text-[1.35vw]"
+          className={`mt-[5vw] items-center gap-[2vw] rounded-full bg-brand-600 px-[7vw] py-[3.2vw] font-serif text-[4.6vw] text-cream shadow-luxe transition-transform hover:scale-105 hover:bg-brand-700 md:mt-[2.2vw] md:inline-flex md:gap-[0.8vw] md:px-[2.3vw] md:py-[0.95vw] md:text-[1.35vw] ${banner?.hide_button_mobile ? 'hidden' : 'inline-flex'}`}
         >
           {banner?.cta_text ?? 'Shop New Arrivals'}
           <ChevronRight className="h-[1.1em] w-[1.1em]" />

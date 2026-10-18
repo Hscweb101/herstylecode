@@ -252,6 +252,9 @@ export interface Banner {
   mobile_image_url: string | null
   link_url: string | null
   cta_text: string | null
+  hide_title_mobile?: boolean
+  hide_subtitle_mobile?: boolean
+  hide_button_mobile?: boolean
   sort_order: number
   is_active: boolean
 }

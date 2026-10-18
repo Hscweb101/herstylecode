@@ -12,7 +12,6 @@ const CONTACT_BLOCK_SLUGS = new Set([
   'privacy-policy',
   'shipping-policy',
   'returns-refund-policy',
-  'cancellation-policy',
 ])
 
 export default function StaticPage() {

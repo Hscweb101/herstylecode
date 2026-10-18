@@ -61,10 +61,9 @@ const supportLinks = [
 
 const policyLinks = [
   { label: 'Shipping Policy', to: '/page/shipping-policy' },
-  { label: 'Returns & Refund', to: '/page/returns-refund-policy' },
+  { label: 'Returns / Refunds / Cancellations', to: '/page/returns-refund-policy' },
   { label: 'Privacy Policy', to: '/page/privacy-policy' },
   { label: 'Terms & Conditions', to: '/page/terms-conditions' },
-  { label: 'Cancellation Policy', to: '/page/cancellation-policy' },
 ]
 
 const paymentLogos = [
