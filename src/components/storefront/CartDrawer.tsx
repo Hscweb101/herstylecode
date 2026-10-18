@@ -43,7 +43,7 @@ export function CartDrawer() {
                           <Trash2 size={15} className="text-ink-300 hover:text-red-500" />
                         </button>
                       </div>
-                      {item.variant?.variant_name && <p className="text-xs text-ink-300">{item.variant.variant_name}</p>}
+                      {(item.variant?.variant_name || item.product?.colour || item.product?.size) && <p className="text-xs text-ink-300">{item.variant?.variant_name ?? [item.product?.colour, item.product?.size].filter(Boolean).join(' / ')}</p>}
                       <div className="mt-auto flex items-center justify-between">
                         <div className="flex items-center rounded-full border border-blush-200">
                           <button className="p-1.5" onClick={() => updateQty(item.id, item.quantity - 1)}>

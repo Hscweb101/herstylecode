@@ -104,7 +104,7 @@ Deno.serve(async (req) => {
         product_id: product.id,
         variant_id: item.variantId,
         product_name: product.name,
-        variant_name: (variant?.variant_name as string | undefined) ?? null,
+        variant_name: (variant?.variant_name as string | undefined) ?? ([product.colour, product.size].filter(Boolean).join(' / ') || null),
         sku: (variant?.sku as string | undefined) ?? product.sku,
         image_url: image ?? null,
         unit_price: unitPrice,

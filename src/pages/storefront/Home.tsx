@@ -78,7 +78,7 @@ function HeroSlide({ banner }: { banner: Banner | null }) {
           className="absolute inset-0 h-full w-full object-cover"
         />
       </picture>
-      <div className="relative flex h-full flex-col items-start justify-end pb-[9%] pl-[5.5vw] pr-[6vw] md:justify-center md:pb-[3%] md:pl-[7vw]">
+      <div className="relative flex h-full flex-col items-start justify-start pt-[40svh] pb-[4%] pl-[5.5vw] pr-[6vw] md:justify-center md:pt-0 md:pb-[3%] md:pl-[7vw]">
         <p className={`text-[3.1vw] font-semibold uppercase tracking-[0.2em] text-brand-400 md:block md:text-[0.9vw] ${banner?.hide_title_mobile ? 'hidden' : ''}`}>Your Style. Your Rules.</p>
         <h1 className={`mt-[1.6vw] max-w-[8.5em] text-balance text-[10vw] font-medium leading-[1.04] tracking-tight text-brand-600 md:mt-[0.8vw] md:block md:text-[4.5vw] ${banner?.hide_title_mobile ? 'hidden' : ''}`}>
           {banner?.title ?? 'Jewellery That Speaks Your Story'}

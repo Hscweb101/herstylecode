@@ -265,7 +265,9 @@ export default function ProductForm() {
     }
 
     // Variants: keep existing rows (and their ids, which carts/orders point to), add new ones, remove deleted ones.
-    const keptVariants = variants.filter((v) => v.variant_name && v.sku)
+    // The order record stores the variant name, so it is built from colour / size when those are filled in.
+    const labelled = variants.map((v) => ({ ...v, variant_name: [v.colour, v.size].filter(Boolean).join(' / ') || v.variant_name }))
+    const keptVariants = labelled.filter((v) => v.variant_name && v.sku)
     const variantRow = (v: VariantRow, idx: number) => ({
       product_id: productId, sku: v.sku, variant_name: v.variant_name, colour: v.colour || null,
       size: v.size || null, finish: v.finish || null, price: v.price || null, compare_at_price: v.compare_at_price || null,
@@ -397,11 +399,12 @@ export default function ProductForm() {
               <h3 className="font-serif text-lg">Variants</h3>
               <Button type="button" size="sm" variant="outline" onClick={addVariant}><Plus size={14} /> Add Variant</Button>
             </div>
+            <p className="mb-3 text-xs text-ink-500">The product itself (its Colour / Size above, its main Images and Stock) is the default option. Add only the <strong>other</strong> options here, e.g. default = Green, variant = Blue. Each variant shows only its own images.</p>
             <div className="space-y-3">
               {variants.map((v) => (
                 <div key={v.tempId} className="space-y-2 rounded-xl border border-blush-100 p-3">
                   <div className="grid grid-cols-2 gap-2 sm:grid-cols-6">
-                    <Input placeholder="Name (Gold / Gold - Large)" value={v.variant_name ?? ''} onChange={(e) => updateVariant(v.tempId, { variant_name: e.target.value })} />
+                    <Input placeholder="Name (auto from colour / size)" value={v.variant_name ?? ''} onChange={(e) => updateVariant(v.tempId, { variant_name: e.target.value })} />
                     <Input placeholder="SKU" value={v.sku ?? ''} onChange={(e) => updateVariant(v.tempId, { sku: e.target.value })} />
                     <Input placeholder="Colour (Gold)" value={v.colour ?? ''} onChange={(e) => updateVariant(v.tempId, { colour: e.target.value })} />
                     <Input placeholder="Size (Small / 2.4)" value={v.size ?? ''} onChange={(e) => updateVariant(v.tempId, { size: e.target.value })} />
@@ -470,7 +473,8 @@ export default function ProductForm() {
           </Card>
 
           <Card>
-            <h3 className="mb-4 font-serif text-lg">Images</h3>
+            <h3 className="mb-1 font-serif text-lg">Images</h3>
+            <p className="mb-3 text-xs text-ink-500">Photos of the default colour / size. Other colours and sizes get their own photos under Variants.</p>
             <div className="mb-3 grid grid-cols-3 gap-2">
               {images.filter((img) => !img.variant_id).map((img) => (
                 <div key={img.id} className="relative aspect-square overflow-hidden rounded-xl border border-blush-100">

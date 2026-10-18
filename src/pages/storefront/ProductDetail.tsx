@@ -431,6 +431,25 @@ function Gallery({
   )
 }
 
+const DEFAULT_OPTION_ID = '__default__'
+
+/* The product's own Colour/Size (the images in the main gallery) is the default option; each variant adds another option. */
+function variantOptions(p: Product): ProductVariant[] {
+  const active = (p.variants ?? []).filter((v) => v.is_active)
+  if (active.length === 0) return []
+  const same = (a: string | null | undefined, b: string | null | undefined) => (a ?? '').trim().toLowerCase() === (b ?? '').trim().toLowerCase()
+  const addDefault = (p.colour || p.size) && active.every((v) => v.colour || v.size) && !active.some((v) => same(v.colour, p.colour) && same(v.size, p.size))
+  if (!addDefault) return active
+  const base: ProductVariant = {
+    id: DEFAULT_OPTION_ID, product_id: p.id, sku: p.sku, variant_name: [p.colour, p.size].filter(Boolean).join(' / '),
+    colour: p.colour || null, size: p.size || null, price: null, compare_at_price: null, stock_quantity: p.stock_quantity,
+    image_url: null, finish: null, is_active: true, sort_order: -1,
+  }
+  return [base, ...active]
+}
+
+const optionLabel = (v: ProductVariant) => [v.colour, v.size].filter(Boolean).join(' / ') || v.variant_name
+
 export default function ProductDetail() {
   const { slug } = useParams()
   const [product, setProduct] = useState<Product | null>(null)
@@ -458,34 +477,32 @@ export default function ProductDetail() {
 
   /* Colour and size are picked separately; a variant is chosen once every option the product has is picked. */
   const applySelection = (p: Product, colour: string | null, size: string | null) => {
-    const active = (p.variants ?? []).filter((v) => v.is_active)
-    const needsColour = active.some((v) => v.colour)
-    const needsSize = active.some((v) => v.size)
+    const options = variantOptions(p)
+    const needsColour = options.some((v) => v.colour)
+    const needsSize = options.some((v) => v.size)
     setSelColour(colour)
     setSelSize(size)
     const complete = (!needsColour || colour !== null) && (!needsSize || size !== null)
     const match = complete
-      ? active.find((v) => (!needsColour || v.colour === colour) && (!needsSize || v.size === size)) ?? null
+      ? options.find((v) => (!needsColour || (v.colour ?? null) === colour) && (!needsSize || (v.size ?? null) === size)) ?? null
       : null
     setSelectedVariant(match)
-    const shown = match ?? (colour ? active.find((v) => v.colour === colour) : undefined)
-    if (shown) {
-      const own = (p.images ?? []).filter((i) => i.variant_id === shown.id).sort((a, b) => a.sort_order - b.sort_order)[0]?.url ?? shown.image_url
-      if (own) setActiveImage(own)
-    }
+    const shown = match ?? (colour ? options.find((v) => v.colour === colour) : undefined)
+    const gallery = (p.images ?? []).filter((i) => !i.variant_id)
+    const own = shown ? (p.images ?? []).filter((i) => i.variant_id === shown.id).sort((x, y) => x.sort_order - y.sort_order)[0]?.url ?? shown.image_url : null
+    setActiveImage(own ?? gallery.find((i) => i.is_primary)?.url ?? gallery[0]?.url ?? null)
   }
 
+  /* Opens on the first option that is in stock, so a choice is always already made. */
   const initSelection = (p: Product) => {
-    const active = (p.variants ?? []).filter((v) => v.is_active)
-    if (active.length === 0) return
-    if (!active.some((v) => v.colour || v.size)) {
-      // Older products: variants only have a name; a single one is pre-selected, otherwise the shopper chooses.
-      selectVariant(active.length === 1 ? active[0] : null)
+    const options = variantOptions(p)
+    if (options.length === 0) return
+    const first = options.find((v) => p.track_inventory === false || v.stock_quantity > 0) ?? options[0]
+    if (!options.some((v) => v.colour || v.size)) {
+      selectVariant(first)
       return
     }
-    const colours = [...new Set(active.map((v) => v.colour).filter(Boolean))] as string[]
-    const sizes = [...new Set(active.map((v) => v.size).filter(Boolean))] as string[]
-    applySelection(p, colours.length === 1 ? colours[0] : null, sizes.length === 1 ? sizes[0] : null)
+    applySelection(p, first.colour ?? null, first.size ?? null)
   }
 
   const addItem = useCartStore((s) => s.addItem)
@@ -615,7 +632,7 @@ export default function ProductDetail() {
 
   const displayPrice = selectedVariant?.price ?? product.price
   const displayCompareAt = selectedVariant?.compare_at_price ?? product.compare_at_price
-  const activeVariants = (product.variants ?? []).filter((v) => v.is_active)
+  const activeVariants = variantOptions(product)
   const hasVariants = activeVariants.length > 0
   const tracked = product.track_inventory !== false
   const needsColour = activeVariants.some((v) => v.colour)
@@ -634,11 +651,13 @@ export default function ProductDetail() {
   const gallery = (product.images ?? []).filter((i) => !i.variant_id)
   const imgVariant = selectedVariant ?? (selColour ? activeVariants.find((v) => v.colour === selColour) : undefined)
   const variantImgs = imgVariant ? (product.images ?? []).filter((i) => i.variant_id === imgVariant.id) : []
+  // Only the chosen colour/size's own photos are shown; the main gallery is the default option's set.
   const images = variantImgs.length > 0
-    ? [...variantImgs, ...gallery]
-    : imgVariant?.image_url
-      ? [{ url: imgVariant.image_url }, ...gallery]
+    ? variantImgs
+    : imgVariant && imgVariant.id !== DEFAULT_OPTION_ID && imgVariant.image_url
+      ? [{ url: imgVariant.image_url }]
       : gallery
+  const orderVariant = selectedVariant && selectedVariant.id !== DEFAULT_OPTION_ID ? selectedVariant : null
 
   /* Blocks add-to-cart / buy-now until the shopper has picked every option (colour, size). */
   const needChoice = () => {
@@ -650,7 +669,7 @@ export default function ProductDetail() {
 
   const handleAddToCart = () => {
     if (outOfStock || needChoice()) return
-    addItem(product.id, selectedVariant?.id ?? null, qty)
+    addItem(product.id, orderVariant?.id ?? null, qty)
     toast.success('Added to cart')
   }
 
@@ -660,8 +679,10 @@ export default function ProductDetail() {
   }
 
   const chooseColour = (c: string) => {
-    const sizesForColour = activeVariants.filter((v) => v.colour === c).map((v) => v.size).filter(Boolean) as string[]
-    const keep = selSize && sizesForColour.includes(selSize) ? selSize : sizesForColour.length === 1 ? sizesForColour[0] : null
+    const forColour = activeVariants.filter((v) => v.colour === c)
+    const keep = forColour.some((v) => v.size === selSize)
+      ? selSize
+      : (forColour.find((v) => !tracked || v.stock_quantity > 0) ?? forColour[0])?.size ?? null
     applySelection(product, c, keep)
   }
 
@@ -810,7 +831,6 @@ export default function ProductDetail() {
                   </div>
                 </div>
               )}
-              {awaitingChoice && <p className="text-xs text-brand-600">Please select {missing.join(' and ')} to continue.</p>}
             </div>
           )}
 
@@ -1145,7 +1165,8 @@ export default function ProductDetail() {
       {quickCheckoutOpen && (
         <QuickCheckoutModal
           product={product}
-          variant={selectedVariant}
+          variant={orderVariant}
+          optionLabel={selectedVariant ? optionLabel(selectedVariant) : null}
           qty={qty}
           onClose={() => setQuickCheckoutOpen(false)}
         />

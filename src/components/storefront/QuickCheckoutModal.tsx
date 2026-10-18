@@ -132,11 +132,13 @@ function Stat({ label, value, green, bold }: { label: string; value: string; gre
 interface QuickCheckoutModalProps {
   product: Product
   variant: ProductVariant | null
+  /** Selected colour / size text, also shown when the default option (no variant row) is chosen. */
+  optionLabel?: string | null
   qty: number
   onClose: () => void
 }
 
-export function QuickCheckoutModal({ product, variant, qty: initialQty, onClose }: QuickCheckoutModalProps) {
+export function QuickCheckoutModal({ product, variant, optionLabel, qty: initialQty, onClose }: QuickCheckoutModalProps) {
   const navigate = useNavigate()
   const { profile, isAnonymous, userId } = useAuthStore()
   const { settings } = useStoreSettings()
@@ -378,7 +380,7 @@ export function QuickCheckoutModal({ product, variant, qty: initialQty, onClose 
             </div>
             <div className="min-w-0 flex-1">
               <p className="line-clamp-2 text-sm font-semibold leading-snug text-ink-900">{product.name}</p>
-              {variant?.variant_name && <p className="text-xs text-ink-500">{variant.variant_name}</p>}
+              {(optionLabel || variant?.variant_name) && <p className="text-xs text-ink-500">{optionLabel || variant?.variant_name}</p>}
               <p className="mt-0.5 text-xs text-ink-500">{formatINR(price)} each</p>
               {quantity >= maxQty && product.track_inventory !== false && <p className="text-[11px] text-gold-500">Only {maxQty} available</p>}
             </div>

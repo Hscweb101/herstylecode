@@ -87,7 +87,7 @@ export default function CartPage() {
                       <Link to={`/product/${item.product?.slug}`} className="font-medium text-ink-900 hover:text-brand-600">
                         {item.product?.name}
                       </Link>
-                      {item.variant?.variant_name && <p className="text-xs text-ink-300">{item.variant.variant_name}</p>}
+                      {(item.variant?.variant_name || item.product?.colour || item.product?.size) && <p className="text-xs text-ink-300">{item.variant?.variant_name ?? [item.product?.colour, item.product?.size].filter(Boolean).join(' / ')}</p>}
                     </div>
                     <button onClick={() => removeItem(item.id)}>
                       <Trash2 size={16} className="text-ink-300 hover:text-red-500" />
