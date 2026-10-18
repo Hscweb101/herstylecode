@@ -122,8 +122,9 @@ export default function OrdersList() {
   const canShip = (o: Order) =>
     !o.tracking_number && !isUnpaidOnlineOrder(o) && !['cancelled', 'returned', 'refunded', 'delivered'].includes(o.status)
 
-  const handleBulkShip = async () => {
-    const targets = orders.filter((o) => selected.has(o.id) && canShip(o))
+  const handleBulkShip = async (mode: 'push' | 'ship') => {
+    const targets = orders.filter((o) => selected.has(o.id) && canShip(o) && (mode === 'ship' || !o.shiprocket_shipment_id))
+    if (mode === 'ship' && targets.length && !window.confirm(`Book couriers for ${targets.length} orders now? This charges your Shiprocket wallet for each one.`)) return
     const skipped = selected.size - targets.length
     if (targets.length === 0) {
       toast.error('Nothing to ship: the selected orders already have a shipment or are cancelled / unpaid')
@@ -135,14 +136,16 @@ export default function OrdersList() {
     const queue = [...targets]
     const worker = async () => {
       for (let o = queue.shift(); o; o = queue.shift()) {
-        const { data, error } = await supabase.functions.invoke('shiprocket-create-shipment', { body: { order_id: o.id } })
+        const { data, error } = await supabase.functions.invoke('shiprocket-create-shipment', { body: { order_id: o.id, mode } })
         let msg = data?.error as string | undefined
         if (!msg && error) {
           msg = 'context' in error ? (await (error as { context: Response }).context.json().catch(() => null))?.error : undefined
           msg = msg ?? 'Request failed'
         }
         if (msg) failures.push(`${o.order_number}: ${msg}`)
-        else {
+        else if (mode === 'push') {
+          setOrders((prev) => prev.map((x) => (x.id === o.id ? { ...x, shiprocket_shipment_id: data.shiprocket_order_id ?? 'pushed' } : x)))
+        } else {
           setOrders((prev) => prev.map((x) => (x.id === o.id ? { ...x, tracking_number: data.awb, shipping_provider: data.courier ?? 'Shiprocket', status: x.status === 'shipped' ? x.status : 'packed' } : x)))
         }
         done += 1
@@ -152,7 +155,7 @@ export default function OrdersList() {
     await Promise.all([worker(), worker(), worker()])
     setShipProgress(null)
     const ok = targets.length - failures.length
-    if (ok) toast.success(`${ok} shipments created${skipped ? ` (${skipped} skipped)` : ''}`)
+    if (ok) toast.success(`${ok} ${mode === 'push' ? 'orders sent to Shiprocket' : 'shipments booked'}${skipped ? ` (${skipped} skipped)` : ''}`)
     if (failures.length) {
       console.error(failures)
       toast.error(`${failures.length} failed. First error: ${failures[0]}`, { duration: 10000 })
@@ -188,7 +191,8 @@ export default function OrdersList() {
       {selected.size > 0 && (
         <div className="sticky top-2 z-10 mb-3 flex flex-wrap items-center gap-3 rounded-xl border border-brand-200 bg-white px-4 py-3 shadow-md">
           <span className="text-sm font-medium">{selected.size} selected</span>
-          <Button onClick={handleBulkShip} loading={!!shipProgress}><Truck size={15} /> {shipProgress ? `Creating ${shipProgress.done}/${shipProgress.total}...` : 'Create Shiprocket shipments'}</Button>
+          <Button variant="outline" disabled={!!shipProgress} onClick={() => handleBulkShip('push')}><Truck size={15} /> Send to Shiprocket</Button>
+          <Button onClick={() => handleBulkShip('ship')} loading={!!shipProgress}><Truck size={15} /> {shipProgress ? `Working ${shipProgress.done}/${shipProgress.total}...` : 'Ship now (books courier)'}</Button>
           <Button variant="outline" disabled={!!shipProgress} onClick={() => setBulkDeleteOpen(true)}><Trash2 size={15} /> Delete selected</Button>
           <Button variant="ghost" disabled={!!shipProgress} onClick={() => setSelected(new Set())}><X size={15} /> Clear</Button>
         </div>
@@ -205,7 +209,7 @@ export default function OrdersList() {
               <Td><Badge tone={o.payment_status === 'paid' ? 'success' : o.payment_status === 'failed' ? 'danger' : o.payment_status === 'partially_paid' ? 'gold' : 'neutral'}>{o.payment_status.replace('_', ' ')}</Badge></Td>
               <Td><Badge tone={['cancelled', 'returned', 'refunded'].includes(o.status) ? 'danger' : 'brand'}>{STATUS_LABELS[o.status]}</Badge></Td>
               <Td>{formatINR(o.total_amount)}</Td>
-              <Td>{o.tracking_number ? <span className="text-xs">{o.shipping_provider}<br /><span className="text-ink-300">{o.tracking_number}</span></span> : <span className="text-xs text-ink-300">Not shipped</span>}</Td>
+              <Td>{o.tracking_number ? <span className="text-xs">{o.shipping_provider}<br /><span className="text-ink-300">{o.tracking_number}</span></span> : <span className="text-xs text-ink-300">{o.shiprocket_shipment_id ? 'In Shiprocket, not shipped' : 'Not sent'}</span>}</Td>
               <Td>
                 <div className="flex gap-1">
                   <IconButton title="Download packing slip" onClick={() => handlePackingSlip(o)}><FileDown size={15} /></IconButton>

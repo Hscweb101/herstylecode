@@ -193,6 +193,7 @@ export interface Order {
   tracking_number: string | null
   tracking_url: string | null
   shipping_label_url?: string | null
+  shiprocket_shipment_id?: string | null
   internal_notes: string | null
   placed_at: string
   created_at: string

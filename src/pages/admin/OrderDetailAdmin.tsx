@@ -111,10 +111,11 @@ export default function OrderDetailAdmin() {
     load()
   }, [id])
 
-  const handleShiprocket = async () => {
+  const handleShiprocket = async (mode: 'push' | 'ship') => {
     if (!order) return
+    if (mode === 'ship' && !window.confirm('Book the courier now? This charges your Shiprocket wallet.')) return
     setShipping(true)
-    const { data, error } = await supabase.functions.invoke('shiprocket-create-shipment', { body: { order_id: order.id } })
+    const { data, error } = await supabase.functions.invoke('shiprocket-create-shipment', { body: { order_id: order.id, mode } })
     setShipping(false)
     if (error || data?.error) {
       let msg = data?.error as string | undefined
@@ -122,7 +123,7 @@ export default function OrderDetailAdmin() {
       toast.error(msg ?? 'Could not create shipment')
       return
     }
-    toast.success(`Shipment created. AWB ${data.awb}`)
+    toast.success(mode === 'push' ? 'Order sent to Shiprocket (no courier booked yet)' : `Shipment booked. AWB ${data.awb}`)
     load()
   }
 
@@ -240,9 +241,13 @@ export default function OrderDetailAdmin() {
             </div>
             <div className="mt-4 flex flex-wrap gap-2">
               <Button onClick={handleSave} loading={saving}>Save Changes</Button>
-              {!order.tracking_number && (
-                <Button variant="outline" onClick={handleShiprocket} loading={shipping}><Truck size={15} /> Create Shiprocket shipment</Button>
+              {!order.tracking_number && !order.shiprocket_shipment_id && (
+                <Button variant="outline" onClick={() => handleShiprocket('push')} loading={shipping}><Truck size={15} /> Send to Shiprocket</Button>
               )}
+              {!order.tracking_number && (
+                <Button variant="outline" onClick={() => handleShiprocket('ship')} loading={shipping}><Truck size={15} /> Ship now (books courier)</Button>
+              )}
+              {!order.tracking_number && order.shiprocket_shipment_id && <span className="self-center text-xs text-ink-500">In Shiprocket, courier not booked yet</span>}
               {order.shipping_label_url && (
                 <a href={order.shipping_label_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 rounded-full border border-blush-200 px-4 py-2 text-sm hover:border-brand-300"><FileDown size={15} /> Shipping label</a>
               )}

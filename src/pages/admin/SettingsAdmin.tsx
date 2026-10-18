@@ -143,8 +143,8 @@ export default function SettingsAdmin() {
           <label className="flex items-start gap-2 text-sm">
             <input type="checkbox" className="mt-1" checked={settings.shiprocket.auto_ship} onChange={(e) => update('shiprocket', { auto_ship: e.target.checked })} />
             <span>
-              Create the Shiprocket shipment automatically when an order is confirmed
-              <span className="block text-xs text-ink-300">COD orders ship as soon as they are placed; online orders after payment. Each shipment is charged to your Shiprocket wallet. Turn off to create shipments yourself from the Orders tab.</span>
+              Send new orders to Shiprocket automatically when they are confirmed
+              <span className="block text-xs text-ink-300">The order only appears in Shiprocket. No courier is booked and nothing is charged until you click Ship now.</span>
             </span>
           </label>
         </Card>

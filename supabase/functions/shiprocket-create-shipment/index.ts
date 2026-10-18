@@ -1,5 +1,8 @@
-// Creates a Shiprocket order for one of our orders, assigns a courier (AWB) and
-// saves tracking details on the order.
+// Two steps, chosen with `mode`:
+//   'push' - creates the order inside Shiprocket only. No courier is booked, nothing is charged.
+//   'ship' - (default) books a courier / AWB (this is what charges the Shiprocket wallet),
+//            creating the Shiprocket order first if it was not pushed yet.
+// Auto calls (from checkout/payment functions) are always 'push'.
 // Callers: an admin (button / bulk action), or our own checkout/payment functions
 // with the service-role key and { auto: true } right after an order is confirmed.
 // Deploy with --no-verify-jwt: authorisation is checked below.
@@ -27,8 +30,9 @@ Deno.serve(async (req) => {
       if (!isAdmin) return jsonResponse({ error: 'Admins only' }, 403)
     }
 
-    const { order_id, weight, length, breadth, height, auto: autoFlag } = await req.json()
+    const { order_id, weight, length, breadth, height, auto: autoFlag, mode: modeIn } = await req.json()
     auto = isService && !!autoFlag
+    const mode: 'push' | 'ship' = auto || modeIn === 'push' ? 'push' : 'ship'
 
     if (auto) {
       const { data: setting } = await admin.from('store_settings').select('value').eq('key', 'shiprocket').maybeSingle()
@@ -49,6 +53,10 @@ Deno.serve(async (req) => {
     if (!order) return jsonResponse({ error: 'Order not found' }, 404)
     orderStatus = order.status
     if (order.tracking_number) return jsonResponse({ error: 'This order already has a shipment' }, 400)
+    if (mode === 'push' && order.shiprocket_shipment_id) {
+      if (auto) await admin.from('orders').update({ shiprocket_order_id: order.shiprocket_order_id }).eq('id', order_id)
+      return jsonResponse({ pushed: true, already: true })
+    }
     if (auto && ['cancelled', 'returned', 'refunded', 'delivered'].includes(order.status)) {
       await admin.from('orders').update({ shiprocket_order_id: null }).eq('id', order_id)
       return jsonResponse({ skipped: 'order not shippable' })
@@ -90,6 +98,10 @@ Deno.serve(async (req) => {
       await admin.from('orders').update({
         shiprocket_order_id: String(srOrderId), shiprocket_shipment_id: String(shipmentId),
       }).eq('id', order.id)
+    }
+
+    if (mode === 'push') {
+      return jsonResponse({ pushed: true, shiprocket_order_id: String(srOrderId) })
     }
 
     // Shiprocket's own auto-pick can fail (e.g. a courier out of AWB numbers), so try
@@ -135,7 +147,7 @@ Deno.serve(async (req) => {
       status: ['new', 'paid', 'processing', 'packed'].includes(order.status) ? 'packed' : order.status,
     }).eq('id', order.id)
     await admin.from('order_status_history').insert({
-      order_id: order.id, status: 'packed', note: `Shiprocket shipment ${auto ? 'auto-' : ''}created, AWB ${awb}`,
+      order_id: order.id, status: 'packed', note: `Shiprocket shipment created, AWB ${awb}`,
     })
 
     return jsonResponse({ awb, courier: awbData.courier_name, label_url: label })
@@ -146,7 +158,7 @@ Deno.serve(async (req) => {
       // Release the claim (unless a Shiprocket order now exists) and leave a visible note for the admin.
       const { data: o } = await admin.from('orders').select('shiprocket_order_id, shiprocket_shipment_id').eq('id', claimedId).single()
       if (o && !o.shiprocket_shipment_id) await admin.from('orders').update({ shiprocket_order_id: null }).eq('id', claimedId)
-      await admin.from('order_status_history').insert({ order_id: claimedId, status: orderStatus, note: `Auto-shipment failed: ${message}. Use "Create Shiprocket shipment" to retry.` })
+      await admin.from('order_status_history').insert({ order_id: claimedId, status: orderStatus, note: `Could not send to Shiprocket automatically: ${message}. Use "Send to Shiprocket" to retry.` })
     }
     return jsonResponse({ error: message }, auto ? 200 : 422)
   }
