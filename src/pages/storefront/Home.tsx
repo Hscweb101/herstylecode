@@ -373,13 +373,7 @@ function BrandBand() {
     { icon: Package, label: 'Beautifully Packaged' },
   ]
   return (
-    <section className="relative overflow-hidden py-14 text-center">
-      <img
-        src="https://images.unsplash.com/photo-1611591437281-460bfbe1220a?q=80&w=1600&auto=format&fit=crop"
-        alt=""
-        className="absolute inset-0 h-full w-full object-cover"
-      />
-      <div className="absolute inset-0 bg-gradient-to-br from-cream/90 via-cream/80 to-blush-100/80" />
+    <section className="relative overflow-hidden bg-blush-50 bg-cover bg-center py-14 text-center" style={{ backgroundImage: `url(${sectionBg})` }}>
       <svg className="absolute -left-6 -top-6 h-28 w-28 text-brand-300/50 md:h-36 md:w-36" viewBox="0 0 100 100" fill="none">
         <path d="M10 90C10 60 20 20 60 10M20 55C30 55 42 50 45 38M28 72C36 72 46 68 50 58" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
       </svg>
