@@ -192,6 +192,7 @@ export interface Order {
   shipping_provider: string | null
   tracking_number: string | null
   tracking_url: string | null
+  shipping_label_url?: string | null
   internal_notes: string | null
   placed_at: string
   created_at: string

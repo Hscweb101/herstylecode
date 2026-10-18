@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { Check, ChevronDown, FileDown } from 'lucide-react'
+import { Check, ChevronDown, FileDown, Truck } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { downloadPackingSlip } from '@/lib/packingSlip'
 import { downloadInvoice } from '@/lib/invoice'
@@ -89,6 +89,7 @@ export default function OrderDetailAdmin() {
   const [notes, setNotes] = useState('')
   const [saving, setSaving] = useState(false)
   const [slipLoading, setSlipLoading] = useState(false)
+  const [shipping, setShipping] = useState(false)
   const { settings } = useStoreSettings()
 
   const load = async () => {
@@ -109,6 +110,21 @@ export default function OrderDetailAdmin() {
   useEffect(() => {
     load()
   }, [id])
+
+  const handleShiprocket = async () => {
+    if (!order) return
+    setShipping(true)
+    const { data, error } = await supabase.functions.invoke('shiprocket-create-shipment', { body: { order_id: order.id } })
+    setShipping(false)
+    if (error || data?.error) {
+      let msg = data?.error as string | undefined
+      if (!msg && error && 'context' in error) msg = (await (error as { context: Response }).context.json().catch(() => null))?.error
+      toast.error(msg ?? 'Could not create shipment')
+      return
+    }
+    toast.success(`Shipment created. AWB ${data.awb}`)
+    load()
+  }
 
   const handleSave = async () => {
     if (!order) return
@@ -222,7 +238,15 @@ export default function OrderDetailAdmin() {
               <Input label="Tracking URL" value={tracking.url} onChange={(e) => setTracking({ ...tracking, url: e.target.value })} />
               <Textarea label="Internal Notes" className="sm:col-span-2" value={notes} onChange={(e) => setNotes(e.target.value)} />
             </div>
-            <Button className="mt-4" onClick={handleSave} loading={saving}>Save Changes</Button>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <Button onClick={handleSave} loading={saving}>Save Changes</Button>
+              {!order.tracking_number && (
+                <Button variant="outline" onClick={handleShiprocket} loading={shipping}><Truck size={15} /> Create Shiprocket shipment</Button>
+              )}
+              {order.shipping_label_url && (
+                <a href={order.shipping_label_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 rounded-full border border-blush-200 px-4 py-2 text-sm hover:border-brand-300"><FileDown size={15} /> Shipping label</a>
+              )}
+            </div>
           </Card>
 
           <Card className="print:hidden">
