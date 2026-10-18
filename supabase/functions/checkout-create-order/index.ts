@@ -61,7 +61,7 @@ Deno.serve(async (req) => {
 
     const { data: products, error: productsError } = await admin
       .from('products')
-      .select('id, name, sku, price, stock_quantity, track_inventory, is_active, return_eligible, cod_available')
+      .select('id, name, sku, colour, size, price, stock_quantity, track_inventory, is_active, return_eligible, cod_available')
       .in('id', productIds)
     if (productsError) throw productsError
 
