@@ -52,7 +52,7 @@ export function colourSwatch(name: string | null | undefined): string {
   if (SWATCHES[key]) return SWATCHES[key]
   if (/^#[0-9a-f]{3,8}$/.test(key)) return key
   // "Light Pink", "Gold & Pearl": use the longest known colour word/phrase inside the name.
-  const known = Object.keys(SWATCHES).sort((a, b) => b.length - a.length).find((k) => new RegExp(`\b${k}\b`).test(key))
+  const known = Object.keys(SWATCHES).sort((a, b) => b.length - a.length).find((k) => (' ' + key.replace(/[^a-z]+/g, ' ') + ' ').includes(' ' + k + ' '))
   if (known) return SWATCHES[known]
   // Any other CSS colour name (turquoise, tomato, ...), tried on the whole name and then on each word.
   const supports = typeof CSS !== 'undefined' && typeof CSS.supports === 'function'
