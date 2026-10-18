@@ -4,11 +4,11 @@ import { useInView } from '@/hooks/useInView'
 import { cn } from '@/lib/utils'
 import { useSeo } from '@/hooks/useSeo'
 import { BrandStoryText, Emphasis, Lines, Para, ScriptLine } from '@/components/storefront/BrandCopy'
-import heroImg from '@/assets/about/aboutbg.webp'
+import heroImg from '@/assets/about/aboutusherstylecode.jpeg'
 import storyImg from '@/assets/about/aboutimg1.webp'
 import beliefImg from '@/assets/about/aboutimg2.webp'
 import philosophyImg from '@/assets/about/ourphilosophyimage.jpeg'
-import brandImg from '@/assets/about/aboutimg4.webp'
+import brandImg from '@/assets/about/behindthedream.jpeg'
 
 function Reveal({ children, className, threshold = 0.15 }: { children: React.ReactNode; className?: string; threshold?: number }) {
   const { ref, visible } = useInView<HTMLDivElement>(threshold)
