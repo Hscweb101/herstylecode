@@ -586,10 +586,9 @@ export function QuickCheckoutModal({ product, variant, optionLabel, qty: initial
                   <AlertTriangle size={14} /> Please read before ordering
                 </p>
                 <p className="mt-1">
-                  For Cash on Delivery, pay <strong>{formatINR(codAdvance)}</strong> online now to confirm your order. The remaining{' '}
+                  For Cash on Delivery, pay <strong>{formatINR(codAdvance)}</strong> <strong className="text-red-700">(non-refundable)</strong> online now to confirm your order. The remaining{' '}
                   <strong>{formatINR(total - codAdvance)}</strong> is paid in cash on delivery.
                 </p>
-                <p className="mt-1 font-bold text-red-700">The {formatINR(codAdvance)} advance payment is non-refundable.</p>
               </div>
             )}
 

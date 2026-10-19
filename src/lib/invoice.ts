@@ -282,14 +282,14 @@ export async function downloadInvoice(order: Order, settings?: { address?: strin
     for (const x of COLS) doc.line(x, y, x, y + h)
     if (!item) return
     const name = clean(item.product_name)
-    const variant = clean(item.variant_name) || `SKU: ${clean(item.sku)}`
+    const subLines = [clean(item.variant_name), `SKU: ${clean(item.sku)}`].filter(Boolean)
     const nameLines = doc.setFont('helvetica', 'normal').setFontSize(8).splitTextToSize(name, 195) as string[]
-    const textH = (nameLines.length + 1) * 11
+    const textH = (nameLines.length + subLines.length) * 11
     const ty = y + (h - textH) / 2 + 8.5
     set('normal', 8, TEXT)
     doc.text(nameLines, 52, ty, { lineHeightFactor: 1.375 })
     set('normal', 8, GREY)
-    doc.text(variant, 52, ty + nameLines.length * 11)
+    doc.text(subLines, 52, ty + nameLines.length * 11, { lineHeightFactor: 1.375 })
     const vy = y + h / 2 + 3
     set('normal', 8, TEXT)
     doc.text(String(item.quantity), CENTERS[0], vy, { align: 'center' })
@@ -310,7 +310,7 @@ export async function downloadInvoice(order: Order, settings?: { address?: strin
     let h = ROW_H
     if (item) {
       const lines = (doc.setFont('helvetica', 'normal').setFontSize(8).splitTextToSize(clean(item.product_name), 195) as string[]).length
-      h = Math.max(ROW_H, (lines + 1) * 11 + 16)
+      h = Math.max(ROW_H, (lines + (clean(item.variant_name) ? 2 : 1)) * 11 + 16)
     }
     if (y + h > PAGE_H - 36) {
       doc.addPage()
