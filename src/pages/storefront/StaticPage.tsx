@@ -51,10 +51,9 @@ export default function StaticPage() {
         <div className="mt-10 rounded-2xl bg-white p-6 shadow-luxe-sm">
           <h2 className="mb-3 font-serif text-xl">Contact us</h2>
           <ul className="space-y-1 text-sm text-ink-700">
-            <li><span className="text-ink-300">Business name:</span> {store.name}</li>
             {store.address && <li><span className="text-ink-300">Address:</span> {store.address}</li>}
             <li><span className="text-ink-300">Email:</span> <a href={`mailto:${store.support_email}`}>{store.support_email}</a></li>
-            <li><span className="text-ink-300">Phone:</span> <a href={`tel:${store.support_phone.replace(/\s/g, '')}`}>{store.support_phone}</a></li>
+            <li><span className="text-ink-300">Phone:</span> <a href={`tel:${store.support_phone.replace(/\s/g, '')}`}>{store.support_phone}</a> (WhatsApp only)</li>
           </ul>
         </div>
       )}

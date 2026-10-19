@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { Banknote, CreditCard, Flag, Hash, Home, Mail, MapPin, Minus, Phone, Plus, ShieldCheck, Trash2, User, X } from 'lucide-react'
+import { AlertTriangle, Banknote, CreditCard, Flag, Hash, Home, Mail, MapPin, Minus, Phone, Plus, ShieldCheck, Trash2, User, X } from 'lucide-react'
 import { FunctionsHttpError } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/store/authStore'
@@ -581,10 +581,16 @@ export function QuickCheckoutModal({ product, variant, optionLabel, qty: initial
             </div>
 
             {codAvailable && codAdvance > 0 && (
-              <p className="rounded-lg bg-blush-50 px-3 py-2 text-center text-[11px] leading-snug text-ink-700">
-                For Cash on Delivery, pay <strong>{formatINR(codAdvance)}</strong> online now to confirm your order. The remaining{' '}
-                <strong>{formatINR(total - codAdvance)}</strong> is paid in cash on delivery.
-              </p>
+              <div className="rounded-lg border-2 border-amber-400 bg-amber-50 px-3 py-2.5 text-center text-[12px] leading-snug text-ink-900">
+                <p className="flex items-center justify-center gap-1.5 font-bold text-amber-800">
+                  <AlertTriangle size={14} /> Please read before ordering
+                </p>
+                <p className="mt-1">
+                  For Cash on Delivery, pay <strong>{formatINR(codAdvance)}</strong> online now to confirm your order. The remaining{' '}
+                  <strong>{formatINR(total - codAdvance)}</strong> is paid in cash on delivery.
+                </p>
+                <p className="mt-1 font-bold text-red-700">The {formatINR(codAdvance)} advance payment is non-refundable.</p>
+              </div>
             )}
 
             <div className="pt-1">

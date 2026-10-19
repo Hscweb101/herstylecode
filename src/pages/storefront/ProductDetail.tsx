@@ -204,34 +204,10 @@ function ReviewForm({ productId, onSubmitted }: { productId: string; onSubmitted
   )
 }
 
-function TrustStrip({ returnEligible, codAvailable }: { returnEligible: boolean; codAvailable: boolean }) {
-  // Icons: Google Material Symbols (Apache-2.0), tinted with the brand colour via CSS mask.
-  const items = [
-    { icon: 'shipping.svg', title: 'Free Shipping', sub: 'Prepaid ₹999+' },
-    { icon: 'returns.svg', title: returnEligible ? '7-Day Returns' : 'Final Sale', sub: returnEligible ? 'Easy & hassle-free' : 'Not returnable' },
-    { icon: 'cod.svg', title: codAvailable ? 'COD Available' : 'Prepaid Only', sub: codAvailable ? 'Pay when it arrives' : 'UPI, cards & more' },
-    { icon: 'secure.svg', title: 'Secure Payments', sub: '100% safe checkout' },
-  ]
+function TrustStrip() {
   return (
-    <div className="mt-6 overflow-hidden rounded-2xl border border-blush-200 bg-gradient-to-br from-white via-blush-50 to-white p-3 shadow-luxe-sm md:p-4">
-      <div className="grid grid-cols-4 divide-x divide-blush-200">
-        {items.map(({ icon, title, sub }) => (
-          <div key={title} className="flex flex-col items-center gap-1.5 px-1 text-center md:gap-2 md:px-2">
-            <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white shadow-luxe-sm ring-1 ring-brand-300/50 md:h-12 md:w-12">
-              <span
-                aria-hidden
-                className="h-6 w-6 bg-brand-700 md:h-7 md:w-7"
-                style={{
-                  WebkitMask: `url(/trust/${icon}) center / contain no-repeat`,
-                  mask: `url(/trust/${icon}) center / contain no-repeat`,
-                }}
-              />
-            </span>
-            <span className="text-[10.5px] font-semibold leading-tight text-ink-900 md:text-xs">{title}</span>
-            <span className="text-[9px] leading-tight text-ink-500 md:text-[10.5px]">{sub}</span>
-          </div>
-        ))}
-      </div>
+    <div className="mt-6">
+      <img src="/trust/features.png" alt="Free shipping, true-to-image product details, secure shopping, secure payments, COD available, premium packaging" className="h-auto w-full" loading="lazy" />
     </div>
   )
 }
@@ -937,7 +913,7 @@ export default function ProductDetail() {
             </div>
           )}
 
-          <TrustStrip returnEligible={!!product.return_eligible} codAvailable={!!product.cod_available} />
+          <TrustStrip />
           <p className="mt-3 hidden items-center gap-2 text-xs text-ink-500 md:flex">
             <Truck size={14} className="text-brand-500" /> {product.delivery_info ?? 'Delivered in 4-7 business days across India.'}
           </p>
