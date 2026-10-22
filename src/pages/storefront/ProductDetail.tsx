@@ -374,7 +374,7 @@ function Gallery({
             loading="eager"
             fetchPriority="high"
             draggable={false}
-            className="h-full w-full animate-[fadeIn_.25s_ease-out] object-cover transition-transform duration-150 ease-out"
+            className="h-full w-full animate-[fadeIn_.25s_ease-out] object-contain transition-transform duration-150 ease-out"
             style={zoom ? { transform: 'scale(2.2)', transformOrigin: `${zoom.x}% ${zoom.y}%` } : undefined}
           />
         )}
