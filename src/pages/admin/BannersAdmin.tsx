@@ -11,6 +11,7 @@ import type { Banner } from '@/types'
 const EMPTY = {
   id: '', placement: 'hero' as Banner['placement'], title: '', subtitle: '', image_url: '', mobile_image_url: '', link_url: '', cta_text: '', sort_order: '0', is_active: true,
   hide_title_mobile: false, hide_subtitle_mobile: false, hide_button_mobile: false,
+  hide_title_desktop: false, hide_subtitle_desktop: false, hide_button_desktop: false,
 }
 
 export default function BannersAdmin() {
@@ -51,6 +52,7 @@ export default function BannersAdmin() {
       link_url: editing.link_url || null, cta_text: editing.cta_text || null,
       sort_order: Number(editing.sort_order), is_active: editing.is_active,
       hide_title_mobile: editing.hide_title_mobile, hide_subtitle_mobile: editing.hide_subtitle_mobile, hide_button_mobile: editing.hide_button_mobile,
+      hide_title_desktop: editing.hide_title_desktop, hide_subtitle_desktop: editing.hide_subtitle_desktop, hide_button_desktop: editing.hide_button_desktop,
     }
     const { error } = editing.id
       ? await supabase.from('banners').update(payload).eq('id', editing.id)
@@ -92,6 +94,7 @@ export default function BannersAdmin() {
                     mobile_image_url: b.mobile_image_url ?? '',
                     link_url: b.link_url ?? '', cta_text: b.cta_text ?? '', sort_order: String(b.sort_order),
                     hide_title_mobile: !!b.hide_title_mobile, hide_subtitle_mobile: !!b.hide_subtitle_mobile, hide_button_mobile: !!b.hide_button_mobile,
+                    hide_title_desktop: !!b.hide_title_desktop, hide_subtitle_desktop: !!b.hide_subtitle_desktop, hide_button_desktop: !!b.hide_button_desktop,
                   })}><Pencil size={15} /></IconButton>
                   <IconButton onClick={() => setDeleteTarget(b)}><Trash2 size={15} /></IconButton>
                 </div>
@@ -134,6 +137,12 @@ export default function BannersAdmin() {
                 <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={editing.hide_title_mobile} onChange={(e) => setEditing({ ...editing, hide_title_mobile: e.target.checked })} /> Hide title</label>
                 <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={editing.hide_subtitle_mobile} onChange={(e) => setEditing({ ...editing, hide_subtitle_mobile: e.target.checked })} /> Hide subtitle</label>
                 <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={editing.hide_button_mobile} onChange={(e) => setEditing({ ...editing, hide_button_mobile: e.target.checked })} /> Hide button</label>
+              </div>
+              <div className="space-y-2 rounded-xl border border-blush-200 p-3">
+                <p className="text-sm font-medium">Hide on desktop / laptop</p>
+                <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={editing.hide_title_desktop} onChange={(e) => setEditing({ ...editing, hide_title_desktop: e.target.checked })} /> Hide title</label>
+                <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={editing.hide_subtitle_desktop} onChange={(e) => setEditing({ ...editing, hide_subtitle_desktop: e.target.checked })} /> Hide subtitle</label>
+                <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={editing.hide_button_desktop} onChange={(e) => setEditing({ ...editing, hide_button_desktop: e.target.checked })} /> Hide button</label>
               </div>
               <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={editing.is_active} onChange={(e) => setEditing({ ...editing, is_active: e.target.checked })} /> Active</label>
               <div className="flex justify-end gap-2">

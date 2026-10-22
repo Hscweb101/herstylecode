@@ -257,6 +257,9 @@ export interface Banner {
   hide_title_mobile?: boolean
   hide_subtitle_mobile?: boolean
   hide_button_mobile?: boolean
+  hide_title_desktop?: boolean
+  hide_subtitle_desktop?: boolean
+  hide_button_desktop?: boolean
   sort_order: number
   is_active: boolean
 }
