@@ -348,7 +348,7 @@ function Gallery({
       )}
 
       <div
-        className={cn('relative aspect-[4/5] min-w-0 flex-1 overflow-hidden rounded-3xl bg-blush-50', main && 'cursor-zoom-in')}
+        className={cn('relative min-w-0 flex-1 overflow-hidden rounded-3xl bg-blush-50', main && 'cursor-zoom-in')}
         onClick={() => main && setPreview(true)}
         onMouseMove={(e) => {
           if (!window.matchMedia('(hover: hover)').matches) return
@@ -374,7 +374,7 @@ function Gallery({
             loading="eager"
             fetchPriority="high"
             draggable={false}
-            className="h-full w-full animate-[fadeIn_.25s_ease-out] object-contain transition-transform duration-150 ease-out"
+            className="block h-auto w-full animate-[fadeIn_.25s_ease-out] transition-transform duration-150 ease-out"
             style={zoom ? { transform: 'scale(2.2)', transformOrigin: `${zoom.x}% ${zoom.y}%` } : undefined}
           />
         )}
