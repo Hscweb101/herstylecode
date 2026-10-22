@@ -65,35 +65,47 @@ function ProductRail({
   )
 }
 
-function HeroSlide({ banner }: { banner: Banner | null }) {
+function HeroSlide({ banner }: { banner: Banner }) {
   /* Sizes are in vw so the text block scales with the image exactly like the design reference
      (text sits left, burgundy serif title, dusty-pink eyebrow, short rule, burgundy pill button). */
   return (
     <div className="relative h-[82svh] min-h-[500px] w-full overflow-hidden bg-blush-100 md:aspect-[16/9] md:h-auto md:max-h-[92vh] md:min-h-0">
-      <picture>
-        {banner?.mobile_image_url && <source media="(max-width: 767px)" srcSet={banner.mobile_image_url} />}
-        <img
-          src={banner?.image_url ?? 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?q=80&w=1600&auto=format&fit=crop'}
-          alt={banner?.title ?? 'HerStyleCode jewellery'}
-          className="absolute inset-0 h-full w-full object-cover"
-        />
-      </picture>
+      {(banner.image_url || banner.mobile_image_url) && (
+        <picture>
+          {banner.mobile_image_url && <source media="(max-width: 767px)" srcSet={banner.mobile_image_url} />}
+          <img
+            src={banner.image_url ?? banner.mobile_image_url ?? ''}
+            alt={banner.title ?? ''}
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+        </picture>
+      )}
       <div className="relative flex h-full flex-col items-start justify-start pt-[40svh] pb-[4%] pl-[5.5vw] pr-[6vw] md:justify-center md:pt-0 md:pb-[3%] md:pl-[7vw]">
-        <p className={`text-[3.1vw] font-semibold uppercase tracking-[0.2em] text-brand-400 md:block md:text-[0.9vw] ${banner?.hide_title_mobile ? 'hidden' : ''}`}>Your Style. Your Rules.</p>
-        <h1 className={`mt-[1.6vw] max-w-[8.5em] text-balance text-[10vw] font-medium leading-[1.04] tracking-tight text-brand-600 md:mt-[0.8vw] md:block md:text-[4.5vw] ${banner?.hide_title_mobile ? 'hidden' : ''}`}>
-          {banner?.title ?? 'Jewellery That Speaks Your Story'}
-        </h1>
-        <span className={`my-[3vw] h-[2px] w-[20vw] bg-brand-600 md:my-[1.6vw] md:block md:w-[7vw] ${banner?.hide_title_mobile && banner?.hide_subtitle_mobile ? 'hidden' : 'block'}`} />
-        <p className={`max-w-[12em] font-serif text-[4.5vw] leading-snug text-brand-600 md:block md:max-w-[12.5em] md:text-[1.5vw] ${banner?.hide_subtitle_mobile ? 'hidden' : ''}`}>
-          {banner?.subtitle ?? 'Curated fashion (artificial) jewellery for every mood, every occasion, every version of you.'}
-        </p>
-        <Link
-          to={banner?.link_url ?? '/collections/new-arrivals'}
-          className={`mt-[5vw] items-center gap-[2vw] rounded-full bg-brand-600 px-[7vw] py-[3.2vw] font-serif text-[4.6vw] text-cream shadow-luxe transition-transform hover:scale-105 hover:bg-brand-700 md:mt-[2.2vw] md:inline-flex md:gap-[0.8vw] md:px-[2.3vw] md:py-[0.95vw] md:text-[1.35vw] ${banner?.hide_button_mobile ? 'hidden' : 'inline-flex'}`}
-        >
-          {banner?.cta_text ?? 'Shop New Arrivals'}
-          <ChevronRight className="h-[1.1em] w-[1.1em]" />
-        </Link>
+        {banner.title && (
+          <>
+            <p className={`text-[3.1vw] font-semibold uppercase tracking-[0.2em] text-brand-400 md:block md:text-[0.9vw] ${banner.hide_title_mobile ? 'hidden' : ''}`}>Your Style. Your Rules.</p>
+            <h1 className={`mt-[1.6vw] max-w-[8.5em] text-balance text-[10vw] font-medium leading-[1.04] tracking-tight text-brand-600 md:mt-[0.8vw] md:block md:text-[4.5vw] ${banner.hide_title_mobile ? 'hidden' : ''}`}>
+              {banner.title}
+            </h1>
+          </>
+        )}
+        {banner.title && banner.subtitle && (
+          <span className={`my-[3vw] h-[2px] w-[20vw] bg-brand-600 md:my-[1.6vw] md:block md:w-[7vw] ${banner.hide_title_mobile && banner.hide_subtitle_mobile ? 'hidden' : 'block'}`} />
+        )}
+        {banner.subtitle && (
+          <p className={`max-w-[12em] font-serif text-[4.5vw] leading-snug text-brand-600 md:block md:max-w-[12.5em] md:text-[1.5vw] ${banner.hide_subtitle_mobile ? 'hidden' : ''}`}>
+            {banner.subtitle}
+          </p>
+        )}
+        {banner.cta_text && banner.link_url && (
+          <Link
+            to={banner.link_url}
+            className={`mt-[5vw] items-center gap-[2vw] rounded-full bg-brand-600 px-[7vw] py-[3.2vw] font-serif text-[4.6vw] text-cream shadow-luxe transition-transform hover:scale-105 hover:bg-brand-700 md:mt-[2.2vw] md:inline-flex md:gap-[0.8vw] md:px-[2.3vw] md:py-[0.95vw] md:text-[1.35vw] ${banner.hide_button_mobile ? 'hidden' : 'inline-flex'}`}
+          >
+            {banner.cta_text}
+            <ChevronRight className="h-[1.1em] w-[1.1em]" />
+          </Link>
+        )}
       </div>
     </div>
   )
@@ -101,7 +113,7 @@ function HeroSlide({ banner }: { banner: Banner | null }) {
 
 function HeroCarousel({ banners }: { banners: Banner[] }) {
   const [active, setActive] = useState(0)
-  const slides = banners.length > 0 ? banners : [null]
+  const slides = banners
 
   useEffect(() => {
     if (slides.length <= 1) return
@@ -109,11 +121,13 @@ function HeroCarousel({ banners }: { banners: Banner[] }) {
     return () => clearInterval(timer)
   }, [slides.length])
 
+  if (slides.length === 0) return null
+
   return (
     <section className="group relative overflow-hidden">
       <div className="flex transition-transform duration-700 ease-out" style={{ transform: `translateX(-${active * 100}%)` }}>
         {slides.map((b, i) => (
-          <div key={b?.id ?? i} className="w-full shrink-0">
+          <div key={b.id} className="w-full shrink-0">
             <HeroSlide banner={b} />
           </div>
         ))}
