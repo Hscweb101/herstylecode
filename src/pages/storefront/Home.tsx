@@ -65,7 +65,7 @@ function ProductRail({
   )
 }
 
-const hideClass = (mobile?: boolean, desktop?: boolean) => `${mobile ? 'max-md:hidden' : ''} ${desktop ? 'md:hidden' : ''}`
+const hideClass = (mobile?: boolean) => (mobile ? 'max-md:hidden' : '')
 
 function HeroSlide({ banner }: { banner: Banner }) {
   /* Sizes are in vw so the text block scales with the image exactly like the design reference
@@ -85,24 +85,24 @@ function HeroSlide({ banner }: { banner: Banner }) {
       <div className="relative flex h-full flex-col items-start justify-start pt-[40svh] pb-[4%] pl-[5.5vw] pr-[6vw] md:justify-center md:pt-0 md:pb-[3%] md:pl-[7vw]">
         {banner.title && (
           <>
-            <p className={`text-[3.1vw] font-semibold uppercase tracking-[0.2em] text-brand-400 md:text-[0.9vw] ${hideClass(banner.hide_title_mobile, banner.hide_title_desktop)}`}>Your Style. Your Rules.</p>
-            <h1 className={`mt-[1.6vw] max-w-[8.5em] text-balance text-[10vw] font-medium leading-[1.04] tracking-tight text-brand-600 md:mt-[0.8vw] md:text-[4.5vw] ${hideClass(banner.hide_title_mobile, banner.hide_title_desktop)}`}>
+            <p className={`text-[3.1vw] font-semibold uppercase tracking-[0.2em] text-brand-400 md:text-[0.9vw] ${hideClass(banner.hide_title_mobile)}`}>Your Style. Your Rules.</p>
+            <h1 className={`mt-[1.6vw] max-w-[8.5em] text-balance text-[10vw] font-medium leading-[1.04] tracking-tight text-brand-600 md:mt-[0.8vw] md:text-[4.5vw] ${hideClass(banner.hide_title_mobile)}`}>
               {banner.title}
             </h1>
           </>
         )}
         {banner.title && banner.subtitle && (
-          <span className={`my-[3vw] h-[2px] w-[20vw] bg-brand-600 md:my-[1.6vw] md:w-[7vw] ${hideClass(banner.hide_title_mobile || banner.hide_subtitle_mobile, banner.hide_title_desktop || banner.hide_subtitle_desktop)}`} />
+          <span className={`my-[3vw] h-[2px] w-[20vw] bg-brand-600 md:my-[1.6vw] md:w-[7vw] ${hideClass(banner.hide_title_mobile || banner.hide_subtitle_mobile)}`} />
         )}
         {banner.subtitle && (
-          <p className={`max-w-[12em] font-serif text-[4.5vw] leading-snug text-brand-600 md:max-w-[12.5em] md:text-[1.5vw] ${hideClass(banner.hide_subtitle_mobile, banner.hide_subtitle_desktop)}`}>
+          <p className={`max-w-[12em] font-serif text-[4.5vw] leading-snug text-brand-600 md:max-w-[12.5em] md:text-[1.5vw] ${hideClass(banner.hide_subtitle_mobile)}`}>
             {banner.subtitle}
           </p>
         )}
         {banner.cta_text && banner.link_url && (
           <Link
             to={banner.link_url}
-            className={`mt-[5vw] inline-flex items-center gap-[2vw] rounded-full bg-brand-600 px-[7vw] py-[3.2vw] font-serif text-[4.6vw] text-cream shadow-luxe transition-transform hover:scale-105 hover:bg-brand-700 md:mt-[2.2vw] md:gap-[0.8vw] md:px-[2.3vw] md:py-[0.95vw] md:text-[1.35vw] ${hideClass(banner.hide_button_mobile, banner.hide_button_desktop)}`}
+            className={`mt-[5vw] inline-flex items-center gap-[2vw] rounded-full bg-brand-600 px-[7vw] py-[3.2vw] font-serif text-[4.6vw] text-cream shadow-luxe transition-transform hover:scale-105 hover:bg-brand-700 md:mt-[2.2vw] md:gap-[0.8vw] md:px-[2.3vw] md:py-[0.95vw] md:text-[1.35vw] ${hideClass(banner.hide_button_mobile)}`}
           >
             {banner.cta_text}
             <ChevronRight className="h-[1.1em] w-[1.1em]" />
