@@ -128,7 +128,7 @@ function HeroCarousel({ banners }: { banners: Banner[] }) {
   return (
     <section className="group relative overflow-hidden">
       <div className="flex transition-transform duration-700 ease-out" style={{ transform: `translateX(-${active * 100}%)` }}>
-        {slides.map((b, i) => (
+        {slides.map((b) => (
           <div key={b.id} className="w-full shrink-0">
             <HeroSlide banner={b} />
           </div>
