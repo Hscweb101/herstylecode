@@ -323,10 +323,10 @@ function Gallery({
   }, [current])
 
   return (
-    <div className="flex gap-2.5 sm:gap-3">
+    <div className="flex items-start self-start gap-2.5 sm:gap-3">
       {images.length > 1 && (
         // Thumbnail rail on the left. Absolutely positioned inside so its height always equals the main image.
-        <div className="relative w-14 shrink-0 sm:w-[72px]">
+        <div className="relative w-14 shrink-0 self-stretch sm:w-[72px]">
           <div ref={railRef} className="absolute inset-0 flex flex-col gap-2 overflow-y-auto scrollbar-none">
             {images.map((img, idx) => (
               <button
