@@ -940,7 +940,10 @@ export default function ProductDetail() {
         )}
         <Accordion title="Shipping & Returns">
           <p>{product.delivery_info ?? 'Delivered in 4-7 business days across India.'}</p>
-          <p className="mt-2">{product.return_eligible ? 'Eligible for 7-day easy returns.' : 'This item is not eligible for return.'}</p>
+          <p className="mt-2">
+            For returns, refunds and cancellations, please read our{' '}
+            <Link to="/page/returns-refund-policy" className="font-medium text-brand-600 underline underline-offset-2">Return &amp; Refund Policy</Link>.
+          </p>
         </Accordion>
       </div>
 
@@ -1088,7 +1091,9 @@ export default function ProductDetail() {
             <p>No. This is fashion (artificial) jewellery with a gold-plated finish. It is not made of real gold, silver or precious stones.</p>
           </Accordion>
           <Accordion title="Can I return or exchange my order?">
-            <p>Eligible items can be returned within 7 days of delivery. Return eligibility is shown on each product page.</p>
+            <p>
+              Please read our <Link to="/page/returns-refund-policy" className="font-medium text-brand-600 underline underline-offset-2">Return &amp; Refund Policy</Link> for what can be returned or exchanged and how.
+            </p>
           </Accordion>
           <Accordion title="How can I track my order?">
             <p>
