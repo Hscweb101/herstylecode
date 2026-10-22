@@ -20,6 +20,14 @@ const TITLES: Record<string, string> = {
   sale: 'Sale',
 }
 
+// These collection pages are the product flags set in the admin, not rows in the collections table.
+const COLLECTION_FLAGS: Record<string, NonNullable<ProductFilters['flag']>> = {
+  'new-arrivals': 'is_new_arrival',
+  'best-sellers': 'is_bestseller',
+  trending: 'is_trending',
+  sale: 'is_on_sale',
+}
+
 const PAGE_SIZE = 12
 const PRICE_STEP = 50
 
@@ -186,7 +194,8 @@ export default function Shop({ mode }: { mode: 'all' | 'collection' | 'category'
       }
       if (mode === 'category' && slug) filters.categorySlug = slug
       if (mode === 'collection' && slug) {
-        if (slug === 'sale') filters.flag = 'is_on_sale'
+        const flag = COLLECTION_FLAGS[slug]
+        if (flag) filters.flag = flag
         else filters.collectionSlug = slug
       }
       const data = await fetchProducts(filters)
