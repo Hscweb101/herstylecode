@@ -208,7 +208,7 @@ function TrustStrip() {
   return (
     <picture>
       <source media="(min-width: 768px)" srcSet="/trust/features.png" />
-      <img src="/trust/mobiletrust.png" alt="Free shipping, true-to-image product details, secure shopping, secure payments, COD available, premium packaging" className="h-auto w-full" loading="lazy" />
+      <img src="/trust/mobiletrust2.png" alt="Free shipping, true-to-image product details, secure shopping, secure payments, COD available, premium packaging" className="h-auto w-full" loading="lazy" />
     </picture>
   )
 }
