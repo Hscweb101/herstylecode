@@ -206,9 +206,10 @@ function ReviewForm({ productId, onSubmitted }: { productId: string; onSubmitted
 
 function TrustStrip() {
   return (
-    <div className="mt-6">
-      <img src="/trust/features.png" alt="Free shipping, true-to-image product details, secure shopping, secure payments, COD available, premium packaging" className="h-auto w-full" loading="lazy" />
-    </div>
+    <picture>
+      <source media="(min-width: 768px)" srcSet="/trust/features.png" />
+      <img src="/trust/mobiletrust.png" alt="Free shipping, true-to-image product details, secure shopping, secure payments, COD available, premium packaging" className="h-auto w-full" loading="lazy" />
+    </picture>
   )
 }
 
@@ -913,11 +914,18 @@ export default function ProductDetail() {
             </div>
           )}
 
-          <TrustStrip />
+          <div className="mt-6 md:hidden">
+            <TrustStrip />
+          </div>
           <p className="mt-3 hidden items-center gap-2 text-xs text-ink-500 md:flex">
             <Truck size={14} className="text-brand-500" /> {product.delivery_info ?? 'Delivered in 4-7 business days across India.'}
           </p>
         </div>
+      </div>
+
+      {/* Desktop: trust strip spans the full page width under the gallery/info columns */}
+      <div className="mt-10 hidden md:block">
+        <TrustStrip />
       </div>
 
       {/* Details - phones: collapsible sections */}
