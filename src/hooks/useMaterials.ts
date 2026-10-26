@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 
-export const DEFAULT_MATERIALS = ['Brass', 'Stones']
+export const DEFAULT_MATERIALS = ['Brass', 'Uncut Stone']
 
 /** The list of material options (Admin > Product > Specifications). Stored in store_settings under "materials". */
 export function useMaterials() {
@@ -34,5 +34,12 @@ export function useMaterials() {
     return null
   }, [])
 
-  return { materials, loading, save }
+  /** Renames a material in the list and on every product that uses it. Returns an error message, or null on success. */
+  const rename = useCallback(async (from: string, to: string, current: string[]): Promise<string | null> => {
+    const { error: prodErr } = await supabase.from('products').update({ material: to }).eq('material', from)
+    if (prodErr) return prodErr.message
+    return save(current.map((m) => (m === from ? to : m)))
+  }, [save])
+
+  return { materials, loading, save, rename }
 }

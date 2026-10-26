@@ -50,7 +50,7 @@ export default function ProductForm() {
   const [existingVariantIds, setExistingVariantIds] = useState<string[]>([])
   const [loading, setLoading] = useState(!isNew)
   const [saving, setSaving] = useState(false)
-  const { materials, save: saveMaterials } = useMaterials()
+  const { materials, save: saveMaterials, rename: renameMaterialEverywhere } = useMaterials()
   const [newMaterial, setNewMaterial] = useState('')
   const [editMaterials, setEditMaterials] = useState(false)
 
@@ -119,6 +119,16 @@ export default function ProductForm() {
     const err = await saveMaterials(materials.filter((m) => m !== name))
     if (err) return toast.error(err)
     if (form.material === name) setForm((f) => ({ ...f, material: '' }))
+  }
+
+  const renameMaterial = async (from: string) => {
+    const to = window.prompt(`Rename "${from}" to (updates every product using it):`, from)?.trim()
+    if (!to || to === from) return
+    if (materials.some((m) => m.toLowerCase() === to.toLowerCase() && m !== from)) return toast.error(`"${to}" already exists`)
+    const err = await renameMaterialEverywhere(from, to, materials)
+    if (err) return toast.error(err)
+    if (form.material === from) setForm((f) => ({ ...f, material: to }))
+    toast.success(`"${from}" renamed to "${to}" on all products`)
   }
 
   const handleNameChange = (name: string) => {
@@ -377,6 +387,7 @@ export default function ProductForm() {
                     {materials.filter((m) => m.toLowerCase() !== 'mixed').map((m) => (
                       <span key={m} className="flex items-center gap-1.5 rounded-full bg-blush-50 px-3 py-1 text-xs text-ink-700">
                         {m}
+                        <button type="button" aria-label={`Rename ${m}`} onClick={() => renameMaterial(m)} className="text-brand-600 underline">rename</button>
                         <button type="button" aria-label={`Remove ${m}`} onClick={() => removeMaterial(m)} className="text-red-500">×</button>
                       </span>
                     ))}
