@@ -9,6 +9,8 @@ import { invokeCreateOrder } from '@/lib/checkoutApi'
 import { useCartStore } from '@/store/cartStore'
 import { useAuthStore } from '@/store/authStore'
 import { useStoreSettings } from '@/hooks/useStoreSettings'
+import { useCoupon } from '@/hooks/useCoupon'
+import { CouponField } from '@/components/storefront/CouponField'
 import { formatINR } from '@/lib/utils'
 import { openRazorpayCheckout } from '@/lib/razorpay'
 import { codAdvanceFor, onlineDiscountFor } from '@/lib/offers'
@@ -16,6 +18,14 @@ import { Button } from '@/components/ui/Button'
 import { Input, Select } from '@/components/ui/Input'
 import { EmptyState, Spinner } from '@/components/ui/Misc'
 import type { Address } from '@/types'
+
+function initialCouponCode(): string | null {
+  try {
+    return (JSON.parse(sessionStorage.getItem('hsc_coupon') ?? 'null') as { code?: string } | null)?.code ?? null
+  } catch {
+    return null
+  }
+}
 
 const INDIAN_STATES = [
   'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh', 'Delhi', 'Goa', 'Gujarat',
@@ -48,12 +58,6 @@ export default function Checkout() {
   const [savedAddresses, setSavedAddresses] = useState<Address[]>([])
   const [selectedAddressId, setSelectedAddressId] = useState<string>('new')
   const [placing, setPlacing] = useState(false)
-  const [coupon, setCoupon] = useState<{ code: string; discount: number } | null>(null)
-
-  useEffect(() => {
-    const raw = sessionStorage.getItem('hsc_coupon')
-    if (raw) setCoupon(JSON.parse(raw))
-  }, [])
 
   useEffect(() => {
     if (!userId || isAnonymous) return
@@ -70,8 +74,11 @@ export default function Checkout() {
   }, [profile])
 
   const sub = subtotal()
-  const shipping = sub >= settings.shipping.free_shipping_threshold ? 0 : settings.shipping.standard_shipping_fee
+  // A coupon applied on the cart page is carried over; shoppers can also apply or change it here.
+  const { coupon, applying: applyingCoupon, error: couponError, apply: applyCoupon, remove: removeCoupon } = useCoupon(sub, initialCouponCode())
   const discount = coupon?.discount ?? 0
+  // Free shipping is judged after the coupon, like the server does when it creates the order.
+  const shipping = sub - discount >= settings.shipping.free_shipping_threshold ? 0 : settings.shipping.standard_shipping_fee
   const total = Math.max(0, sub + shipping - discount)
 
   // Site-wide offers from Admin > Settings (the server re-calculates these when the order is created).
@@ -294,6 +301,9 @@ export default function Checkout() {
                 </div>
               )
             })}
+          </div>
+          <div className="mb-4 border-t border-blush-100 pt-4">
+            <CouponField coupon={coupon} applying={applyingCoupon} error={couponError} onApply={applyCoupon} onRemove={removeCoupon} disabled={placing} />
           </div>
           <div className="space-y-2 border-t border-blush-100 pt-4 text-sm">
             <div className="flex justify-between text-ink-500"><span>Subtotal</span><span>{formatINR(sub)}</span></div>

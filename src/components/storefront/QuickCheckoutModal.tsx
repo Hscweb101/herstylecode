@@ -12,6 +12,8 @@ import { openRazorpayCheckout } from '@/lib/razorpay'
 import { invokeCreateOrder } from '@/lib/checkoutApi'
 import { codAdvanceFor, onlineDiscountFor } from '@/lib/offers'
 import { Spinner } from '@/components/ui/Misc'
+import { useCoupon } from '@/hooks/useCoupon'
+import { CouponField } from '@/components/storefront/CouponField'
 import type { Address, Product, ProductVariant } from '@/types'
 
 const INDIAN_STATES = [
@@ -216,8 +218,11 @@ export function QuickCheckoutModal({ product, variant, optionLabel, qty: initial
   const maxQty = product.track_inventory !== false ? Math.max(1, stock) : 20
   const extrasTotal = extras.reduce((sum, e) => sum + e.price * e.qty, 0)
   const subtotal = price * quantity + extrasTotal
-  const shipping = subtotal >= settings.shipping.free_shipping_threshold ? 0 : settings.shipping.standard_shipping_fee
-  const total = subtotal + shipping
+  const { coupon, applying: applyingCoupon, error: couponError, apply: applyCoupon, remove: removeCoupon } = useCoupon(subtotal)
+  const couponDiscount = coupon?.discount ?? 0
+  // Free shipping is judged after the coupon, like the server does when it creates the order.
+  const shipping = subtotal - couponDiscount >= settings.shipping.free_shipping_threshold ? 0 : settings.shipping.standard_shipping_fee
+  const total = subtotal - couponDiscount + shipping
   const codAvailable = settings.shipping.cod_available && product.cod_available !== false
 
   // Site-wide offers from Admin > Settings: money off for paying online, and an advance payment for COD.
@@ -276,7 +281,7 @@ export function QuickCheckoutModal({ product, variant, optionLabel, qty: initial
       guestName: effective.full_name.trim(),
       guestEmail: effective.email.trim(),
       guestPhone: phone,
-      couponCode: null,
+      couponCode: coupon?.code ?? null,
       paymentMethod,
     }
 
@@ -433,6 +438,11 @@ export function QuickCheckoutModal({ product, variant, optionLabel, qty: initial
             </div>
           ))}
 
+          {/* Coupon */}
+          <div className="mb-2.5">
+            <CouponField coupon={coupon} applying={applyingCoupon} error={couponError} onApply={applyCoupon} onRemove={removeCoupon} disabled={!!placing} />
+          </div>
+
           {/* Totals box */}
           <div className="rounded-lg border border-blush-100 bg-blush-50/70 px-3 py-2.5">
             <div className="grid grid-cols-3 gap-2 text-center">
@@ -440,6 +450,11 @@ export function QuickCheckoutModal({ product, variant, optionLabel, qty: initial
               <Stat label="Shipping" value={shipping === 0 ? 'Free' : formatINR(shipping)} green={shipping === 0} />
               <Stat label="Total" value={formatINR(total)} bold />
             </div>
+            {couponDiscount > 0 && (
+              <p className="mt-1.5 border-t border-dashed border-blush-200 pt-1.5 text-center text-[11px] font-semibold text-emerald-700">
+                Coupon {coupon?.code}: -{formatINR(couponDiscount)}
+              </p>
+            )}
             {onlineDiscount > 0 && (
               <p className="mt-1.5 border-t border-dashed border-blush-200 pt-1.5 text-center text-[11px] font-semibold text-emerald-700">
                 Pay online and save {formatINR(onlineDiscount)}: total {formatINR(onlineTotal)}
