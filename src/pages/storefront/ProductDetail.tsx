@@ -204,6 +204,107 @@ function ReviewForm({ productId, onSubmitted }: { productId: string; onSubmitted
   )
 }
 
+const PINCODE_KEY = 'hsc_pincode'
+
+type PincodeResult = { serviceable: boolean; cod?: boolean; deliver_by?: string }
+
+function PincodeCheck({ weightGrams, codAvailable }: { weightGrams: number | null; codAvailable: boolean }) {
+  const [pin, setPin] = useState(() => {
+    try {
+      return localStorage.getItem(PINCODE_KEY) ?? ''
+    } catch {
+      return ''
+    }
+  })
+  const [checkedPin, setCheckedPin] = useState('')
+  const [result, setResult] = useState<PincodeResult | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+
+  const check = async (value = pin) => {
+    if (!/^[1-9]\d{5}$/.test(value)) {
+      setError('Enter a valid 6-digit pincode')
+      setResult(null)
+      return
+    }
+    setError('')
+    setLoading(true)
+    const { data, error: fnError } = await supabase.functions.invoke('check-pincode', {
+      body: { pincode: value, weight_grams: weightGrams },
+    })
+    setLoading(false)
+    if (fnError || !data || data.error) {
+      setError(data?.error ?? 'Could not check right now. Please try again.')
+      setResult(null)
+      return
+    }
+    setResult(data as PincodeResult)
+    setCheckedPin(value)
+    try {
+      localStorage.setItem(PINCODE_KEY, value)
+    } catch {
+      /* private mode: just skip remembering */
+    }
+  }
+
+  // Re-check a remembered pincode on load (the product weight may differ between products).
+  useEffect(() => {
+    if (/^[1-9]\d{5}$/.test(pin)) void check(pin)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [weightGrams])
+
+  const date = result?.deliver_by
+    ? new Date(`${result.deliver_by}T00:00:00`).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' })
+    : ''
+
+  return (
+    <div className="mt-5 rounded-xl border border-blush-200 bg-white p-4">
+      <p className="mb-2.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-ink-700">
+        <Truck size={14} className="text-brand-500" /> Delivery options
+      </p>
+      <form
+        className="flex gap-2"
+        onSubmit={(e) => {
+          e.preventDefault()
+          void check()
+        }}
+      >
+        <input
+          value={pin}
+          onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 6))}
+          inputMode="numeric"
+          maxLength={6}
+          placeholder="Enter pincode"
+          aria-label="Delivery pincode"
+          className="h-10 min-w-0 flex-1 rounded-lg border border-blush-200 px-3 text-sm outline-none focus:border-brand-500"
+        />
+        <Button type="submit" size="sm" loading={loading}>
+          {result ? 'Change' : 'Check'}
+        </Button>
+      </form>
+      {error && <p className="mt-2 text-xs text-red-600">{error}</p>}
+      {result && !error && (
+        <div className="mt-3 space-y-1 text-sm text-ink-700">
+          {result.serviceable ? (
+            <>
+              <p>
+                Get it by <strong>{date}</strong> <span className="text-xs text-ink-500">({checkedPin})</span>
+              </p>
+              {codAvailable && result.cod && (
+                <p className="flex items-center gap-1.5 text-xs text-emerald-700">
+                  <Banknote size={14} /> Pay on delivery available
+                </p>
+              )}
+            </>
+          ) : (
+            <p className="text-red-600">Sorry, we don't deliver to {checkedPin} yet.</p>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 function TrustStrip() {
   return (
     <picture>
@@ -888,6 +989,8 @@ export default function ProductDetail() {
               Buy Now
             </Button>
           </div>
+
+          <PincodeCheck weightGrams={product.weight_grams} codAvailable={product.cod_available} />
 
           {/* Secure checkout strip */}
           <div className="mt-3">
